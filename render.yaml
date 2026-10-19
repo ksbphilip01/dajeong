@@ -1,0 +1,15 @@
+# Render Blueprint: 정적 사이트 (무료). GitHub에 올린 뒤 Render → New → Blueprint 로 연결하면 자동 배포됩니다.
+services:
+  - type: web
+    name: dajeong
+    runtime: static
+    staticPublishPath: public
+    buildCommand: ""
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
