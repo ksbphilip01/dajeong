@@ -902,8 +902,13 @@ async function paint(){
   const db_=$('#dm-badge'); if(db_){ const n=dmUnread(); db_.hidden=!n; db_.textContent=n>99?'99+':n; }
   const nb_=$('#nt-badge'); if(nb_){ const n=S.tab==='notif'?0:notifUnread(); nb_.hidden=!n; nb_.textContent=n>99?'99+':n; }
   const a=document.activeElement, fid=a&&a.id&&$('#view').contains(a)?a.id:null, sel=fid&&a.selectionStart;
+  /* 화면이 실시간으로 다시 그려져도 입력 중인 내용이 지워지지 않도록 보존 */
+  const keep={}; $('#view').querySelectorAll('input[id],textarea[id]').forEach(el=>{ if(el.type!=='file'&&el.type!=='checkbox'&&el.type!=='radio'&&el.dataset.dirty) keep[el.id]=el.value; });
+  const se=fid&&a.selectionEnd, st=fid&&a.scrollTop;
   $('#view').innerHTML = viewHtml();
-  if(fid){ const el=document.getElementById(fid); if(el){ el.focus(); try{ el.setSelectionRange(sel,sel); }catch(_){} } }
+  for(const [id,v] of Object.entries(keep)){ const el=document.getElementById(id); if(el&&$('#view').contains(el)){ el.value=v; el.dataset.dirty='1'; } }
+  if(fid){ const el=document.getElementById(fid); if(el&&typeof st==='number') el.scrollTop=st; }
+  if(fid){ const el=document.getElementById(fid); if(el){ el.focus(); try{ el.setSelectionRange(sel,se); }catch(_){} } }
   document.querySelectorAll('.tab[data-tab]').forEach(b=>b.setAttribute('aria-current', b.dataset.tab===S.tab?'page':'false'));
   const landing=S.tab==='landing'; $('.tabs').hidden=landing; const lb=$('#landing-bar'); if(lb) lb.hidden=!landing;
   refreshSheet();
@@ -1338,7 +1343,7 @@ function bannedAdminHtml(){ const words=(S.mod.get('banned')||{}).words||[];
     <textarea id="ban-words" style="width:100%;min-height:90px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)" placeholder="홍길동&#10;김아무개">${esc(words.join('\n'))}</textarea>
     <div class="rep-acts" style="margin-top:6px"><button class="btn sm pri" data-act="ban-save">금지어 저장</button></div>`; }
 async function saveBanned(){ const words=[...new Set($('#ban-words').value.split(/\n|,/).map(x=>x.trim()).filter(x=>x.length>=2))];
-  try{ await S.db.doc('mod/banned').set({words,at:Date.now(),by:S.uid}); toast(`금지어 ${words.length}개를 저장했어요`); }catch(e){ writeErr(e); } }
+  try{ await S.db.doc('mod/banned').set({words,at:Date.now(),by:S.uid}); const ta=$('#ban-words'); if(ta) delete ta.dataset.dirty; toast(`금지어 ${words.length}개를 저장했어요`); schedule(); }catch(e){ writeErr(e); } }
 
 /* ---------- 회원 탈퇴 ---------- */
 function withdrawPlan(){
@@ -2583,6 +2588,7 @@ document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.
   if(e.target.id==='uq'){ S.uq=e.target.value; schedule(); }
   if(e.target.id==='st-text'){ S.stText=e.target.value; const p=$('#st-prev p'); if(p) p.textContent=e.target.value||'여기에 글귀가 보여요'; }
   if(e.target.id==='dm-q'){ S.dmQ=e.target.value; const sel=$('#dm-as'), as=sel&&sel.value; const pos=e.target.selectionStart; panel().innerHTML=dmNewSheet(); if(as&&$('#dm-as')) $('#dm-as').value=as; const q=$('#dm-q'); q.focus(); try{ q.setSelectionRange(pos,pos); }catch(_){} } });
+document.addEventListener('input', e=>{ const t=e.target; if(t&&t.id&&t.closest&&t.closest('#view')) t.dataset.dirty='1'; });
 document.addEventListener('change', e=>{ const i=e.target;
   if(i.id==='rq-q'){ const w=document.getElementById('rq-own-wrap'); if(w) w.hidden=i.value!=='__own'; }
   if(i.id==='ob-faith'){ const w=document.getElementById('ob-faith-etc-wrap'); if(w) w.hidden=i.value!=='기타'; }
