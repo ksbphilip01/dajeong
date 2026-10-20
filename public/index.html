@@ -108,6 +108,8 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .th-x{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:14px;line-height:1;display:grid;place-items:center}
 .th.add{display:flex;flex-direction:column;align-items:center;justify-content:center;border-style:dashed;color:var(--muted);font-size:22px;cursor:pointer;gap:2px}
 .th.add span{font-size:10.5px}
+.pf-move{display:flex;align-items:center;gap:8px;margin:8px 0 2px;font-size:12.5px;color:var(--muted)}.pf-move span{flex:1}
+.cmp-prev .ph .pick-btn{background:#fff;color:var(--sea);font-weight:700;font-size:15px;opacity:1;padding:10px 18px;border-radius:999px}
 .th .ed{position:absolute;right:3px;bottom:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);display:grid;place-items:center}
 .th .ed svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2}
 .th img{cursor:pointer}
@@ -1498,12 +1500,12 @@ function postForm(orgId, post){
   const adv=[pf.hideLikes?'좋아요 수 숨김':'',pf.commentsOff?'댓글 해제':''].filter(Boolean).join(' · ');
   const askCfg=ASK[pf.kind];
   return `<div class="cmp-top gut"><button class="btn sm" data-act="close" style="color:var(--muted)">취소</button><h3>${post?'게시물 수정':'새 게시물'}</h3><button class="btn pri sm" type="submit" form="post-form" id="p-submit">${post?(asMember?'승인 요청':'완료'):'공유'}</button></div>
-  <div class="panel-b"><form id="post-form" style="display:flex;flex-direction:column">
+  <div class="panel-b"><form id="post-form" style="display:flex;flex-direction:column"><input id="p-file" type="file" accept="image/*" multiple hidden>
     ${S.assets?`<div class="cmp-prev" style="aspect-ratio:${R.css}">${thumbs.length?`<img src="${thumbs[cur].src}" alt="">${thumbs[cur].key[0]==='f'?`<button type="button" class="btn sm" data-crop="${thumbs[cur].key.slice(1)}" style="position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.55);color:#fff">⤢ 구도 맞추기</button>`:''}<span class="car-n">${cur+1}/${thumbs.length}</span>`
-        :`<div class="ph"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg><span>사진을 골라 주세요 · 최대 ${MAX_IMG}장</span><label for="p-file" aria-label="사진 선택"></label></div>`}</div>
+        :`<div class="ph"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg><span class="pick-btn">앨범에서 사진 고르기</span><span>여러 장을 한 번에 고를 수 있어요 · 최대 ${MAX_IMG}장</span><span style="font-size:12px;opacity:.8">누른 순서대로 1, 2, 3… 순서로 올라가요</span><label for="p-file" aria-label="앨범에서 사진 여러 장 고르기"></label></div>`}</div>
       <div class="gut">
         ${!pf.existing.length?`<div class="seg" role="radiogroup" aria-label="사진 비율" style="margin-top:10px">${Object.entries(RATIOS).map(([k,r])=>`<label style="flex:1;display:flex"><input type="radio" name="p-ratio" value="${k}"${pf.ratio===k?' checked':''} style="position:absolute;opacity:0;pointer-events:none"><span class="rb${pf.ratio===k?' on':''}" style="padding:6px 4px"><i style="aspect-ratio:${r.css};width:18px"></i>${r.label}</span></label>`).join('')}</div>`:''}
-        <div class="cmp-strip">${thumbs.map((t,i)=>`<div class="th${i===cur?' cur':''}" data-pfcur="${i}"><img src="${t.src}" alt=""><span class="n">${i+1}</span><button type="button" class="th-x" data-th="${t.key}" aria-label="사진 빼기">×</button></div>`).join('')}${thumbs.length<MAX_IMG?`<label class="th add" for="p-file">+<input id="p-file" type="file" accept="image/*" multiple hidden></label>`:''}</div>
+        <div class="cmp-strip">${thumbs.map((t,i)=>`<div class="th${i===cur?' cur':''}" data-pfcur="${i}"><img src="${t.src}" alt=""><span class="n">${i+1}</span><button type="button" class="th-x" data-th="${t.key}" aria-label="사진 빼기">×</button></div>`).join('')}${thumbs.length<MAX_IMG?`<label class="th add" for="p-file">+<span>여러 장</span></label>`:''}</div>${thumbs.length>1?`<div class="pf-move"><span>${cur+1}번째 사진</span><button type="button" class="btn sm ghost" data-pfmove="-1"${cur===0?' disabled':''}>‹ 앞으로</button><button type="button" class="btn sm ghost" data-pfmove="1"${cur===thumbs.length-1?' disabled':''}>뒤로 ›</button></div>`:''}
       </div>`
       :`<div class="gut"><p class="muted" style="margin:12px 0 0;padding:10px 12px;background:var(--bg);border-radius:10px;font-size:13px">이 화면에서는 사진을 올릴 수 없어서 글귀 카드로 보여요.</p></div>`}
     <div class="gut">
@@ -2494,6 +2496,9 @@ document.addEventListener('click', e=>{
     const g=e.target.closest('[data-tab]:not([data-tab="home"]),[data-org],[data-member],[data-hash],[data-story],[data-responders],[data-like],[data-save],[data-share],[data-act="search"],[data-act="notif"],[data-act="dm"],[data-act="dm-new"],[data-act="new-post"],[data-act="new-story"],[data-act="report"],[data-report]');
     if(g&&!e.target.closest('[data-more],[data-car]')){ e.preventDefault(); e.stopPropagation(); return guestGate(); } }
   const svb=e.target.closest('[data-sv]'); if(svb){ e.stopPropagation(); return svAction(svb.dataset.sv, svb); }
+  const pmv=e.target.closest('[data-pfmove]'); if(pmv&&S.pf){ pfCollect(); const d=+pmv.dataset.pfmove, ne=S.pf.existing.length, a=S.pfCur, b=a+d; const tot=ne+S.pf.files.length; if(b<0||b>=tot) return;
+    if((a<ne)!==(b<ne)){ toast('이미 올린 사진과 새로 고른 사진은 서로 자리를 바꿀 수 없어요'); return; }
+    const arr=a<ne?S.pf.existing:S.pf.files, off=a<ne?0:ne; [arr[a-off],arr[b-off]]=[arr[b-off],arr[a-off]]; S.pfCur=b; rerenderPostForm(); return; }
   const pc=e.target.closest('[data-pfcur]'); if(pc&&S.pf&&!e.target.closest('[data-th]')){ S.pfCur=+pc.dataset.pfcur; pfCollect(); panel().innerHTML=postForm(null,S.pf.editPost||null); return; }
   const cr=e.target.closest('[data-crop]'); if(cr&&S.pf){ e.preventDefault(); return openCrop(+cr.dataset.crop); }
   const th=e.target.closest('[data-th]'); if(th&&S.pf){ const k=th.dataset.th, n=+k.slice(1); if(k[0]==='e') S.pf.existing.splice(n,1); else { try{ URL.revokeObjectURL(S.pf.files[n].url); }catch(_){} S.pf.files.splice(n,1); } rerenderPostForm(); return; }
@@ -2630,7 +2635,7 @@ document.addEventListener('change', e=>{ const i=e.target;
   if(i.name==='p-ratio'&&S.pf){ pfCollect(); /* 비율이 바뀌면 이전 비율로 잡은 구도 미리보기를 원본으로 되돌림 */ for(const f of S.pf.files){ if(f.crop&&f.crop.ratio!==S.pf.ratio){ if(f.srcUrl) f.url=f.srcUrl; } } rerenderPostForm(); return; }
   if(i.id==='p-file'&&S.pf){ const room=MAX_IMG-S.pf.existing.length-S.pf.files.length; const picked=[...i.files].filter(f=>f.type.startsWith('image/'));
     if(picked.length>room) toast(`사진은 한 게시물에 최대 ${MAX_IMG}장까지예요. ${room}장만 추가했어요`);
-    picked.slice(0,Math.max(0,room)).forEach(f=>S.pf.files.push({file:f,url:URL.createObjectURL(f)})); S.pfCur=S.pf.existing.length+S.pf.files.length-1; rerenderPostForm(); return; }
+    const first=S.pf.existing.length+S.pf.files.length; picked.slice(0,Math.max(0,room)).forEach(f=>S.pf.files.push({file:f,url:URL.createObjectURL(f)})); i.value=''; if(picked.length) S.pfCur=first; rerenderPostForm(); if(picked.length>1) toast(`사진 ${Math.min(picked.length,room)}장을 고른 순서대로 넣었어요`); return; }
   if(i.id==='st-file'&&i.files[0]){ S.stImgFile=i.files[0]; S.stImgUrl=URL.createObjectURL(i.files[0]); rerenderStoryForm(); return; }
   if(i.name==='st-bg'){ S.stBg=i.value; const p=$('#st-prev'); if(p) p.className='st-prev k-'+i.value; return; }
   if(i.name&&i.name.endsWith('-rg')){ const all=document.querySelectorAll(`input[name="${i.name}"]`);
