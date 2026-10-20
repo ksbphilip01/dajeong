@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1B5876">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
@@ -34,18 +34,6 @@ body{margin:0;font:14px system-ui,-apple-system,sans-serif} img{max-width:100%} 
   --f-display:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
 }
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#0B151C; --surface:#121E26; --ink:#E6EDF0; --muted:#93A4AE; --line:#223139; --night:#081822; --night-ink:#F3F6F4; --sand:#2A2418;
-  --sea:#72B6D6; --sea-soft:#163040; --camellia:#F2596E; --camellia-soft:#3B1A21; --leaf:#5FC79A; --leaf-soft:#123528;
-  --k-talent:#B6A6F0; --k-volunteer:#7FD0A8; --k-donation:#F0A17C; --k-share:#E6C266; --k-recruit:#72B6D6; --k-need:#6FD0D8;
-  --k-talent-bg:#251F3D; --k-volunteer-bg:#14302A; --k-donation-bg:#3A2219; --k-share-bg:#352B12; --k-recruit-bg:#163040; --k-need-bg:#10343A;
-  --scrim:rgba(0,0,0,.6); --shadow:0 10px 40px rgba(0,0,0,.5); color-scheme:dark }}
-:root[data-theme="dark"]{
-  --bg:#0B151C; --surface:#121E26; --ink:#E6EDF0; --muted:#93A4AE; --line:#223139; --night:#081822; --night-ink:#F3F6F4; --sand:#2A2418;
-  --sea:#72B6D6; --sea-soft:#163040; --camellia:#F2596E; --camellia-soft:#3B1A21; --leaf:#5FC79A; --leaf-soft:#123528;
-  --k-talent:#B6A6F0; --k-volunteer:#7FD0A8; --k-donation:#F0A17C; --k-share:#E6C266; --k-recruit:#72B6D6; --k-need:#6FD0D8;
-  --k-talent-bg:#251F3D; --k-volunteer-bg:#14302A; --k-donation-bg:#3A2219; --k-share-bg:#352B12; --k-recruit-bg:#163040; --k-need-bg:#10343A;
-  --scrim:rgba(0,0,0,.6); --shadow:0 10px 40px rgba(0,0,0,.5); color-scheme:dark }
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
@@ -724,6 +712,9 @@ img,video,canvas{max-width:100%}
 .rc-badge{align-self:flex-start;font-size:11.5px;font-weight:700;color:#1F7A5A;background:#E3F3EC;border-radius:999px;padding:3px 10px}
 .consent{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);font-size:12.5px;line-height:1.65}.consent p{margin:0 0 10px;color:var(--muted)}.consent label{display:flex;gap:8px;align-items:flex-start}.consent input{margin-top:3px;flex:none;width:18px;height:18px}
 .tg-rule{margin-top:10px!important;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.16);font-size:12.5px!important}
+.ch-h{font-size:13px;color:var(--muted);font-weight:600;margin:16px 0 4px}.ch-list{display:flex;flex-direction:column}.ch-row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);text-align:left;width:100%}.ch-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ch-main b{font-size:15px;font-weight:600}.ch-main small{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ch-side{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}.ch-side small{font-size:11px;color:var(--muted)}
+.bubble .del{display:none;font-size:11px;margin-top:4px;opacity:.7}.bubble:hover .del,.bubble:focus-within .del{display:inline-block}.bubble.me{background:var(--night);color:#fff}
+[data-dm-to],[data-share-dm],#share-dm{display:none!important}
 .tg-cbtn{align-self:flex-start;font-size:13px;color:var(--muted);padding:0}.tg-cm{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}.tg-cform{display:flex;gap:8px}.tg-cform input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 .tg-hero{background:linear-gradient(150deg,#1F7A5A,#3AA37B)}.pr-cheer.tg.on{background:#1F7A5A}.tg-card.closed{opacity:.7}
 .adm-cat{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);flex:none}.adm-cat select{font-size:12.5px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:120px}
@@ -817,14 +808,13 @@ body{font-size:15px}
 .av{font-family:var(--f-body)}
 .rp-card{border-radius:12px}
 .pw-eye{border-radius:6px}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .htabs,:root:not([data-theme="light"]) .ticker,:root:not([data-theme="light"]) .chip,:root:not([data-theme="light"]) .btn.ghost,:root:not([data-theme="light"]) .join{background:var(--surface)} :root:not([data-theme="light"]) .post{border-bottom-color:#0B151C} :root:not([data-theme="light"]) .chip[aria-pressed="true"]{background:var(--ink);color:var(--surface)} :root:not([data-theme="light"]) .htabs button.on::after{background:var(--ink)} }
 
 </style>
 
 <div class="app">
   <header class="top"><div class="top-in gut">
     <div class="brand"><h1>다정<i>여수</i></h1></div>
-    <div class="top-r"><button class="icon-btn" data-act="notif" aria-label="알림"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg><i class="badge" id="nt-badge" hidden></i></button><button class="icon-btn" data-act="search" aria-label="검색"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></button><button class="icon-btn" data-act="dm" aria-label="메시지"><svg viewBox="0 0 24 24"><path d="M21 3 10.5 13.5M21 3l-6.8 18-3.7-7.5L3 9.8z"/></svg><i class="badge" id="dm-badge" hidden></i></button>
+    <div class="top-r"><button class="icon-btn" data-act="notif" aria-label="알림"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg><i class="badge" id="nt-badge" hidden></i></button><button class="icon-btn" data-act="search" aria-label="검색"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></button><button class="icon-btn" data-act="dm" aria-label="채널"><svg viewBox="0 0 24 24"><path d="M4 5.5h12a2 2 0 0 1 2 2V13a2 2 0 0 1-2 2H9l-4 3.5V15H4a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2z"/><path d="M20 9.5h1a1.5 1.5 0 0 1 1.5 1.5v5.5A1.5 1.5 0 0 1 21 18h-1v3l-3.5-3H12"/></svg><i class="badge" id="dm-badge" hidden></i></button>
     <button class="btn pri sm" id="top-cta" data-act="login">로그인</button></div>
   </div></header>
   <div id="notice" hidden></div>
@@ -1065,7 +1055,7 @@ function viewHtml(){
   if(S.tab==='orgs') return orgsView();
   if(S.tab==='mine') return mineView();
   if(S.tab==='admin' && S.isAdmin) return adminView();
-  if(S.tab==='dm') return dmListView();
+  if(S.tab==='dm'||S.tab==='channels') return channelsView();
   if(S.tab==='search') return searchView();
   if(S.tab==='landing') return landingView();
   if(S.tab==='notif') return notifView();
@@ -1451,7 +1441,7 @@ function mineView(){
         ${pr?'<div class="row"><span class="dm-main"><b>개인 참여자 프로필</b><small>닉네임, 활동 지역, 소개, 사진</small></span><button class="btn sm ghost" data-act="edit-member">수정</button></div>':''}
         ${pr?`<div class="row"><span class="dm-main"><b>내 활동 리포트</b><small>나만 볼 수 있어요 · PNG로 저장 가능</small></span><button class="btn sm ghost" data-act="report" data-member-uid="${S.uid}">보기</button></div>`:''}
         <div class="row"><span class="dm-main"><b>알림</b><small>좋아요·댓글·승인·콜라보 소식</small></span><button class="btn sm ghost" data-act="notif">열기</button></div>
-        <div class="row"><span class="dm-main"><b>메시지</b><small>단체와 1:1 대화</small></span><button class="btn sm ghost" data-act="dm">열기</button></div>
+        <div class="row"><span class="dm-main"><b>채널</b><small>단체가 연 대화방에서 여럿이 함께 이야기해요</small></span><button class="btn sm ghost" data-act="dm">열기</button></div>
         ${window.dj?`<div class="row"><span class="dm-main"><b>비밀번호 변경</b><small>현재 비밀번호를 확인한 뒤 새 비밀번호로 바꿔요</small></span><button class="btn sm ghost" data-act="change-pw">변경</button></div>`:''}
         ${window.dj?`<div class="row"><span class="dm-main"><b>비밀번호 찾기 질문</b><small>${S.hasRq===false?'아직 정하지 않았어요 · 정해 두면 비밀번호를 잊어도 찾을 수 있어요':'비밀번호를 잊었을 때 쓰는 질문과 답변'}</small></span><button class="btn sm ${S.hasRq===false?'pri':'ghost'}" data-act="set-rq">${S.hasRq===false?'정하기':'변경'}</button></div>`:''}
         <div class="row"><span class="dm-main"><b>로그아웃</b><small>이 기기에서 로그아웃해요</small></span><button class="btn sm ghost" data-act="logout">로그아웃</button></div>
@@ -1706,7 +1696,7 @@ const panel = () => $('#sheet .panel');
 function openSheet(kind, data, html){ S.sheet={kind,...data}; panel().innerHTML=html; $('#sheet').hidden=false; document.body.style.overflow='hidden'; }
 function closeSheet(){ S.tempPw=null;
   if(S.sheet&&S.sheet.kind==='crop'&&S.pf){ S.sheet=null; openComposer(S.pf.editPost||null); return; }
-  S.sheet=null; $('#sheet').hidden=true; panel().innerHTML=''; panel().classList.remove('tall'); document.body.style.overflow=''; if(S.dmUnsub){ S.dmUnsub(); S.dmUnsub=null; } S.dmOpen=null; }
+  S.sheet=null; $('#sheet').hidden=true; panel().innerHTML=''; panel().classList.remove('tall'); document.body.style.overflow=''; if(S.dmUnsub){ S.dmUnsub(); S.dmUnsub=null; } S.dmOpen=null; S.chOpen=null; }
 function head(t){ return `<div class="panel-h gut"><h3>${t}</h3><button class="x" data-act="close" aria-label="닫기">×</button></div>`; }
 
 function reportBtn(type, tid, pid){ return `<button class="kebab" data-report="${type}" data-tid="${tid}" data-pid="${pid}" aria-label="${type==='post'?'소식':'댓글'} 신고">${DOTS}</button>`; }
@@ -2420,11 +2410,60 @@ function partyInfo(pid){ const i=pid.indexOf(':'), t=pid.slice(0,i), id=pid.slic
   if(t==='org'){ const o=S.orgs.get(id); return o?{id:pid,kind:'org',name:o.name,sub:(o.category||'단체')+' · '+regionLabel(o),av:s=>avatar(o,s),orgId:id}:{id:pid,kind:'org',name:'삭제된 단체',sub:'',av:s=>avatar({name:'?'},s)}; }
   const pr=(S.people.get(id)||{}).profile||{}; const name=pr.nickname||displayName(id)||'참여자';
   return {id:pid,kind:'member',name,sub:'개인 참여자 · '+regionLabel(pr),av:s=>avatar({name,avatarId:pr.avatarId},s),uid:id}; }
+/* ---------- 채널 (단체 대화방) ---------- */
+function chName(uid,asOrg){ if(asOrg){ const o=S.orgs.get(asOrg); if(o) return o.name; } return displayName(uid)||'이웃'; }
+function myChannels(){ return (S.channels||[]).filter(c=>c.members&&c.members[S.uid]); }
+function channelsView(){
+  if(!S.uid) return `<div class="gut"><div class="empty"><h2>로그인이 필요해요</h2><p>채널은 가입한 회원끼리 쓰는 대화방이에요.</p></div></div>`;
+  if(isGuest()) return `<div class="gut"><div class="empty"><h2>가입하면 채널에 참여할 수 있어요</h2><p>단체가 연 대화방에서 봉사 일정, 나눔 소식을 함께 나눠요.</p><button class="btn pri" data-act="signup">가입하기</button></div></div>`;
+  const all=[...(S.channels||[])].sort((a,b)=>(b.lastAt||b.createdAt||0)-(a.lastAt||a.createdAt||0));
+  const mine=all.filter(c=>c.members&&c.members[S.uid]), others=all.filter(c=>!(c.members&&c.members[S.uid]));
+  const canCreate=S.isAdmin||myApprovedOrgs().length>0;
+  const row=c=>{ const o=c.orgId&&S.orgs.get(c.orgId); const joined=!!(c.members&&c.members[S.uid]);
+    return `<button class="ch-row" data-ch="${c.id}">${o?avatar(o,44):`<span class="av" style="width:44px;height:44px;background:var(--night)">#</span>`}<span class="ch-main"><b>${esc(c.name)}</b><small>${c.lastText?esc(c.lastText):esc(c.desc||'')}</small></span><span class="ch-side"><small>${c.lastAt?rel(c.lastAt):''}</small><small>${c.memberCount||0}명${joined?' · 참여 중':''}</small></span></button>`; };
+  return `<div class="gut"><div class="phead2"><div><h2>채널</h2><p>단체가 연 대화방이에요. 참여하면 누구나 이야기할 수 있어요.</p></div>${canCreate?`<button class="btn sm pri" data-act="ch-new">채널 만들기</button>`:''}</div>
+    ${mine.length?`<h3 class="ch-h">참여 중인 채널</h3><div class="ch-list">${mine.map(row).join('')}</div>`:''}
+    ${others.length?`<h3 class="ch-h">${mine.length?'다른 채널':'모든 채널'}</h3><div class="ch-list">${others.map(row).join('')}</div>`:''}
+    ${all.length?'':`<div class="empty"><h2>아직 열린 채널이 없어요</h2><p>${canCreate?'첫 채널을 만들어 이웃을 초대해 보세요.':'승인된 단체가 채널을 열면 여기에 보여요.'}</p>${canCreate?'<button class="btn pri" data-act="ch-new">채널 만들기</button>':''}</div>`}
+    <p class="muted" style="font-size:12px;margin:18px 0 6px;line-height:1.6">채널 대화는 참여자 모두에게 보여요. 1:1 메시지는 운영하지 않아요. 연락처·주소 같은 개인정보는 올리지 말아 주세요. 금지어와 신고 규칙은 소식과 같아요.</p></div>`;
+}
+function channelForm(){ const orgs=myApprovedOrgs(); if(!orgs.length&&!S.isAdmin){ toast('채널은 승인된 단체 관리자만 만들 수 있어요'); return; }
+  openSheet('ch-form',{},`${head('채널 만들기')}<div class="panel-b"><form class="form gut" id="ch-form">
+    <div class="field"><label for="ch-name">채널 이름 *</label><input id="ch-name" required maxlength="30" lang="ko" placeholder="예: 11월 김장 나눔 봉사단, 돌산 해변 지킴이"></div>
+    <div class="field"><label for="ch-desc">한 줄 소개</label><input id="ch-desc" maxlength="80" lang="ko" placeholder="무엇을 이야기하는 채널인지"></div>
+    <div class="field"><label for="ch-org">여는 단체</label><select id="ch-org">${orgs.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')}${S.isAdmin?'<option value="">다정여수 운영자</option>':''}</select></div>
+    <p class="err" id="ch-err"></p><button class="btn pri" type="submit" id="ch-submit">만들기</button></form></div>`); setTimeout(()=>{ const i=$('#ch-name'); if(i) i.focus(); },50); }
+async function submitChannel(){ const err=$('#ch-err'), btn=$('#ch-submit'); err.textContent='';
+  const name=$('#ch-name').value.trim(), desc=$('#ch-desc').value.trim(), orgId=$('#ch-org').value||null;
+  if(name.length<2){ err.textContent='채널 이름을 2자 이상 적어 주세요'; return; }
+  { const w=bannedHit(name+' '+desc); if(w){ bannedToast(w); return; } }
+  btn.disabled=true;
+  try{ const ref=await S.db.collection('channels').add({name,desc,orgId,ownerUid:S.uid,members:{[S.uid]:Date.now()},memberCount:1,createdAt:Date.now()}); closeSheet(); toast('채널을 만들었어요'); openChannel(ref.id); }
+  catch(e){ btn.disabled=false; writeErr(e); } }
+function openChannel(id){ if(isGuest()) return guestGate(); const c=(S.channels||[]).find(x=>x.id===id); if(!c) return;
+  closeSheet(); S.chOpen={id}; S.chMsgs=[];
+  const o=c.orgId&&S.orgs.get(c.orgId);
+  openSheet('channel',{id},`<div class="panel-h gut"><button class="dm-head" ${o?`data-org="${o.id}"`:''}>${o?avatar(o,36):`<span class="av" style="width:36px;height:36px;background:var(--night)">#</span>`}<span><b>${esc(c.name)}</b><small>${c.memberCount||0}명 참여${o?' · '+esc(o.name):''}</small></span></button><button class="x" data-act="close" aria-label="닫기">×</button></div><div class="panel-b" id="ch-body"></div><div class="panel-f gut" id="ch-foot"></div>`);
+  panel().classList.add('tall'); renderChannel();
+  S.dmUnsub=S.db.collection('channels/'+id+'/msgs').orderBy('at','asc').limit(500).onSnapshot(s=>{ if(!S.chOpen||S.chOpen.id!==id) return; S.chMsgs=s.docs.map(d=>({id:d.id,...d.data()})); renderChannel(true); },()=>{});
+}
+function renderChannel(scroll){ const op=S.chOpen; if(!op||!S.sheet||S.sheet.kind!=='channel') return; const c=(S.channels||[]).find(x=>x.id===op.id); const body=$('#ch-body'), foot=$('#ch-foot'); if(!c||!body) return;
+  const joined=!!(c.members&&c.members[S.uid]), mineOrgs=myApprovedOrgs(); let last=0, lastBy=null;
+  body.innerHTML=`<div class="msgs gut">${c.desc?`<p class="muted" style="text-align:center;font-size:12.5px;margin:0 0 8px">${esc(c.desc)}</p>`:''}${S.chMsgs.length?S.chMsgs.map(x=>{ const mine=x.by===S.uid, gap=x.at-last>20*60e3, showWho=!mine&&(gap||lastBy!==x.by); last=x.at; lastBy=x.by;
+      return `${gap?`<div class="tstamp">${fmtStamp(x.at)}</div>`:''}<div class="bubble ${mine?'me':'them'}">${showWho?`<span class="who">${esc(chName(x.by,x.asOrg))}</span>`:''}<p>${esc(x.text)}</p>${(mine||S.isAdmin)?`<button class="x2 del" data-ch-mdel="${x.id}">삭제</button>`:''}</div>`; }).join('')
+    :`<div class="empty" style="border:0;margin:auto 0"><h2 style="font-size:17px">첫 메시지를 남겨 보세요</h2><p>참여한 모두에게 보여요.</p></div>`}</div>`;
+  if(foot) foot.innerHTML=!joined?`<div class="rep-acts" style="justify-content:space-between;align-items:center"><span class="muted" style="font-size:13px">참여하면 대화할 수 있어요</span><button class="btn pri sm" data-ch-join="${c.id}">참여하기</button></div>`
+    :`<form class="cform" id="ch-send"><input id="ch-text" maxlength="1000" lang="ko" placeholder="메시지를 입력하세요" autocomplete="off" aria-label="메시지"><button class="btn pri sm" type="submit">보내기</button></form>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)">${mineOrgs.length?`<label>보내는 이름 <select id="ch-as" style="font-size:12px;border:0;background:none;color:var(--sea)"><option value="">${esc(displayName(S.uid)||'나')}</option>${mineOrgs.map(o=>`<option value="${o.id}"${S.chAs===o.id?' selected':''}>${esc(o.name)}</option>`).join('')}</select></label>`:''}<span style="flex:1"></span><button class="more" data-ch-join="${c.id}" data-leave="1">나가기</button>${(c.ownerUid===S.uid||S.isAdmin)?`<button class="more" data-ch-del="${c.id}" style="color:var(--camellia)">${S.confirmCh===c.id?'한 번 더 누르면 채널 삭제':'채널 삭제'}</button>`:''}</div>`;
+  if(scroll!==false) body.scrollTop=body.scrollHeight; }
+async function sendChannel(){ const inp=$('#ch-text'), t=inp.value.trim(); if(!t||!needWrite()) return; { const w=bannedHit(t); if(w){ bannedToast(w); return; } }
+  const as=($('#ch-as')||{}).value||null; S.chAs=as; inp.value='';
+  try{ await dj.channelPost(S.chOpen.id,t,as); }catch(e){ inp.value=t; const m=(e&&e.message)||''; toast(/join/.test(m)?'먼저 채널에 참여해 주세요':/not allowed/.test(m)?'가입을 마친 회원만 보낼 수 있어요':'보내지 못했어요: '+m); } }
 function convId(a,b){ return [a,b].sort().join('__'); }
 function myConvs(){ const mine=new Set(myParties());
   return S.dms.filter(c=>(c.parties||[]).some(p=>mine.has(p))).map(c=>{ const me=c.parties.find(p=>mine.has(p)); const other=c.parties.find(p=>p!==me)||me;
     const unread=!!c.lastFrom&&c.lastFrom!==me&&(c.lastAt||0)>((c.read||{})[me]||0); return {...c,me,other,unread}; }); }
-function dmUnread(){ return S.uid?myConvs().filter(c=>c.unread&&!blockedEither(c.other)).length:0; }
+function dmUnread(){ return 0; }
 function fmtStamp(t){ const d=new Date(t); return `${d.getMonth()+1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 function dmListView(){
   if(!S.uid) return `<div class="gut"><button class="back" data-tab="home">‹ 홈으로</button><div class="empty"><h2>로그인이 필요해요</h2><p>로그인하면 메시지를 주고받을 수 있어요.</p></div></div>`;
@@ -2448,7 +2487,8 @@ function dmNewSheet(){
     ${list.length?`<div class="list">${list.map(o=>`<button class="row dm-row" data-dm-to="org:${o.id}" data-from-sheet="1">${avatar(o,44)}<span class="dm-main"><b>${esc(o.name)}</b><small>${esc(o.category||'')} · ${esc(regionLabel(o))}</small></span></button>`).join('')}</div>`:'<p class="muted">받을 수 있는 단체가 없어요.</p>'}
   </div></div>`;
 }
-function startDm(to){
+function startDm(to){ toast('1:1 메시지는 운영하지 않아요. 채널에서 여럿이 함께 이야기해요'); S.hist=[]; go('channels'); return; }
+function startDmOld(to){
   if(!needWrite()) return;
   const parties=myParties(); if(!parties.length){ toast('단체 가입이 승인되거나 개인 참여자로 가입하면 메시지를 보낼 수 있어요'); return; }
   const sel=$('#dm-as'); const from=sel?sel.value:parties[0];
@@ -2604,7 +2644,7 @@ function obRender(){
     <form class="form" id="ob-form"><div class="pledge">
       <section><span class="pn">01</span><div><h3>개인정보를 모으지 않아요</h3>
         <ul><li>다정여수는 회원의 개인정보를 수집하지 않아요. 로그인에 쓰는 이메일은 계정 확인에만 쓰이고 누구에게도 공개되지 않아요.</li>
-        <li><b>1:1 메시지 내용은 수집하지도, 열람하지도 않아요.</b> 운영자도 볼 수 없어요.</li>
+        <li><b>1:1 메시지는 운영하지 않아요.</b> 채널 대화는 참여자 모두에게 보이고, 신고가 들어오면 운영자가 확인할 수 있어요.</li>
         <li>서비스를 더 잘 운영하기 위해 방문 수 같은 <b>익명 활동 통계</b>는 모으며, 월말 정산 자료로 쓰일 수 있어요.</li>
         <li>게시물·댓글·메시지에 직접 적은 연락처 등 개인정보의 관리는 작성자 본인의 몫이며, 다정여수는 이에 대해 책임지지 않아요.</li></ul></div></section>
       <section><span class="pn">02</span><div><h3>이런 소식은 올릴 수 없어요</h3>
@@ -2858,6 +2898,10 @@ document.addEventListener('click', e=>{
   const ntv=e.target.closest('[data-nt-vx]'); if(ntv&&S.nf){ nfCollect(); if(S.nf.videoUrl) try{ URL.revokeObjectURL(S.nf.videoUrl); }catch(_){} S.nf.videoFile=null; S.nf.videoUrl=null; S.nf.video=null; nfRerender(); return; }
   const nte=e.target.closest('[data-notice-edit]'); if(nte){ const n=S.notices.find(x=>x.id===nte.dataset.noticeEdit); if(n) openNoticeForm(n); return; }
   const tgc=e.target.closest('[data-tg-c]'); if(tgc){ S.tgOpen=tgc.dataset.tgC||null; return schedule(); }
+  const chr=e.target.closest('[data-ch]'); if(chr){ return openChannel(chr.dataset.ch); }
+  const chj=e.target.closest('[data-ch-join]'); if(chj){ const id=chj.dataset.chJoin, leave=!!chj.dataset.leave; if(!needWrite()) return; chj.disabled=true; dj.channelJoin(id,!leave).then(()=>{ toast(leave?'채널에서 나갔어요':'채널에 참여했어요'); if(leave) closeSheet(); }).catch(e=>{ chj.disabled=false; toast('처리하지 못했어요'); }); return; }
+  const chd=e.target.closest('[data-ch-del]'); if(chd){ const id=chd.dataset.chDel; if(S.confirmCh!==id){ S.confirmCh=id; renderChannel(false); setTimeout(()=>{ if(S.confirmCh===id){ S.confirmCh=null; renderChannel(false); } },4000); return; } S.confirmCh=null; dj.channelDelete(id).then(()=>{ closeSheet(); toast('채널을 삭제했어요'); }).catch(writeErr); return; }
+  const chm=e.target.closest('[data-ch-mdel]'); if(chm){ S.db.doc('channels/'+S.chOpen.id+'/msgs/'+chm.dataset.chMdel).delete().catch(writeErr); return; }
   const apb=e.target.closest('[data-apply]'); if(apb){ e.stopPropagation(); return applySheet(apb.dataset.apply); }
   const asb=e.target.closest('[data-apps]'); if(asb){ e.stopPropagation(); return appsSheet(asb.dataset.apps); }
   const acn=e.target.closest('[data-app-cancel]'); if(acn){ if(!acn.dataset.armed){ acn.dataset.armed='1'; acn.textContent='한 번 더 누르면 신청 취소'; return; } dj.togetherAppDelete(acn.dataset.appCancel).then(()=>{ closeSheet(); toast('신청을 취소하고 신청서를 삭제했어요'); }).catch(writeErr); return; }
@@ -2967,7 +3011,8 @@ document.addEventListener('click', e=>{
   else if(a==='logout-top'){ if(!window.dj) return; if(!t.dataset.armed){ t.dataset.armed='1'; t.textContent='한 번 더 누르면 로그아웃'; setTimeout(()=>{ if(t.isConnected){ delete t.dataset.armed; t.textContent='로그아웃'; } },4000); return; } t.disabled=true; t.textContent='로그아웃 중'; closeSignup(); dj.signOut(); }
   else if(a==='logout'){ if(window.dj){ closeSignup(); S.tab='home'; toast('로그아웃했어요'); dj.signOut(); } }
   else if(a==='admin-logout'){ if(!window.dj) return; if(!t.dataset.armed){ t.dataset.armed='1'; t.textContent='한 번 더 누르면 로그아웃'; setTimeout(()=>{ if(t.isConnected){ delete t.dataset.armed; t.textContent='관리자 로그아웃'; } },4000); return; } t.disabled=true; t.textContent='로그아웃 중'; S.tab='home'; dj.signOut(); }
-  else if(a==='dm'){ S.hist=[]; go('dm'); }
+  else if(a==='dm'){ S.hist=[]; go('channels'); }
+  else if(a==='ch-new'){ if(needWrite()) channelForm(); }
   else if(a==='search') goSearch('');
   else if(a==='gate-later'){ $('#gate').hidden=true; }
   else if(a==='withdraw'){ if(needWrite()) withdrawSheet(); }
@@ -2988,7 +3033,7 @@ document.addEventListener('click', e=>{
   else if(a==='crop-apply') cropApply();
   else if(a==='copy-link') copyLink();
   else if(a==='new-story'){ e.stopPropagation(); openStoryForm(t.dataset.orgId); }
-  else if(a==='dm-new'){ if(needWrite()){ S.dmQ=''; openSheet('dm-new',{},dmNewSheet()); } }
+  else if(a==='dm-new'){ S.hist=[]; go('channels'); }
   else if(a==='hide-join'){ S.hideJoin=true; schedule(); }
   else if(a==='edit-post') openEditPost(S.sheet&&S.sheet.pid);
   else if(a==='post-to-story'){ const pid=S.sheet&&S.sheet.pid, p=S.posts.find(x=>x.id===pid); if(p) shareToStory(p.orgId,pid); }
@@ -3001,7 +3046,7 @@ document.addEventListener('submit', e=>{
   if(e.target.classList&&e.target.classList.contains('tg-cform')){ e.preventDefault(); const f=e.target, inp=f.querySelector('input'), t=inp.value.trim(); if(isGuest()) return guestGate(); if(!t||!needWrite()) return; { const w=bannedHit(t); if(w){ bannedToast(w); return; } } inp.value=''; S.db.collection('comments').add({postId:'tg:'+f.dataset.tg,authorId:S.uid,text:t,createdAt:Date.now()}).catch(err=>{ inp.value=t; writeErr(err); }); return; } e.preventDefault();
   const id=e.target.id;
   if(id==='ustatus-form') setUserStatus(e.target.dataset.uid,e.target.dataset.act,e.target); else if(id==='udel-form') deleteUser(e.target); else if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
-  else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); else if(id==='ob-acct-form') obAccount(); else if(id==='praise-form') submitPraise(); else if(id==='together-form') submitTogether(); else if(id==='apply-form') submitApply(e.target); });
+  else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); else if(id==='ob-acct-form') obAccount(); else if(id==='praise-form') submitPraise(); else if(id==='together-form') submitTogether(); else if(id==='apply-form') submitApply(e.target); else if(id==='ch-form') submitChannel(); else if(id==='ch-send') sendChannel(); });
 document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.value; schedule(); }
   if(e.target.id==='crop-zoom'){ cropZoomTo(+e.target.value); return; }
   if(e.target.id==='p-cap'){ const c=$('#p-cnt'); if(c) c.textContent=e.target.value.length+'/2200'; }
@@ -3067,6 +3112,7 @@ svEl.addEventListener('click', e=>{ if(S.svSkip){ S.svSkip=false; e.stopPropagat
   db.collection('mod').onSnapshot(once(s=>{ S.mod=new Map(s.docs.map(d=>[d.id,d.data()])); }),fail);
   db.collection('stories').orderBy('createdAt','desc').limit(300).onSnapshot(s=>{ S.stories=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); if(S.sv){ const cur=(storiesByParty().get(S.sv.pid)||[])[S.sv.idx]; if(!cur) renderStory(); else { const b=$('#sv .eye'); if(b) b.textContent='조회 '+Object.keys(cur.seen||{}).length; } } },()=>{});
   S.apps=[]; if(S.uid) db.collection('apps').onSnapshot(s=>{ S.apps=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
+  S.channels=[]; db.collection('channels').onSnapshot(s=>{ S.channels=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); if(S.chOpen) renderChannel(); },()=>{});
   S.together=[]; db.collection('together').orderBy('createdAt','desc').limit(500).onSnapshot(s=>{ S.together=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
   S.praise=[]; db.collection('praise').orderBy('createdAt','desc').limit(500).onSnapshot(s=>{ S.praise=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
   db.collection('notices').orderBy('createdAt','desc').limit(50).onSnapshot(s=>{ S.notices=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
