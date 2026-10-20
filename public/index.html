@@ -955,7 +955,7 @@ async function paint(){
   if(S.user){ const ids=new Set(S.comments.map(c=>c.authorId).filter(Boolean)); if(S.isAdmin) for(const k of S.reports.keys()) ids.add(k); if(S.tab==='notif') for(const n of notifications()) if(n.uid) ids.add(n.uid);
     if(ids.size) S.profiles = await S.user.profiles([...ids]); }
   if(S.isAdmin){ const n=[...reportGroups().values()].filter(g=>g.open).length+pendingPosts().length+pendingOrgs().length; const b=$('#adm-badge'); b.hidden=!n; b.textContent=n>99?'99+':n; }
-  const cta=$('#top-cta'); if(cta){ if(!S.uid){ cta.dataset.act='login'; cta.textContent='로그인'; } else { const j=isMember()||S.isAdmin; cta.dataset.act=j?'new-post':'signup'; cta.textContent=j?'소식 올리기':'가입 마치기'; } }
+  const cta=$('#top-cta'); if(cta){ if(!S.uid){ cta.dataset.act='login'; cta.textContent='로그인'; cta.classList.add('pri'); cta.classList.remove('ghost'); } else if(!cta.dataset.armed){ cta.dataset.act='logout-top'; cta.textContent='로그아웃'; cta.classList.remove('pri'); cta.classList.add('ghost'); } }
   const db_=$('#dm-badge'); if(db_){ const n=dmUnread(); db_.hidden=!n; db_.textContent=n>99?'99+':n; }
   const nb_=$('#nt-badge'); if(nb_){ const n=S.tab==='notif'?0:notifUnread(); nb_.hidden=!n; nb_.textContent=n>99?'99+':n; }
   const a=document.activeElement, fid=a&&a.id&&$('#view').contains(a)?a.id:null, sel=fid&&a.selectionStart;
@@ -1368,10 +1368,13 @@ async function openSetRq(){ if(!needWrite()) return; let cur=null; try{ cur=awai
 async function submitSetRq(form){ const err=$('#lg-err'), r=rqValue(), m=rqCheck(r); if(m){ err.textContent=m; return; }
   try{ await dj.setRecovery(r.q,r.a); S.hasRq=true; closeSheet(); toast('비밀번호 찾기 질문을 저장했어요'); schedule(); }catch(e){ err.textContent='저장하지 못했어요: '+((e&&e.message)||''); } }
 
+function halfSigned(){ return !!(window.dj&&S.uid&&!S.isAdmin&&!isMember()); }
 function afterSignup(){ if(S.uid&&window.dj&&dj.tempPending) dj.tempPending().then(p=>{ if(p){ openNewPw(true); } }).catch(()=>{});
   let rcv=null; try{ rcv=localStorage.getItem('dj_pw_recovery'); localStorage.removeItem('dj_pw_recovery'); }catch(_){} if(rcv&&S.uid){ openNewPw(); return; }
   if(S.uid&&window.dj&&dj.myRecoveryQuestion) dj.myRecoveryQuestion().then(q=>{ S.hasRq=!!q; schedule(); }).catch(()=>{});
   let f=null; try{ f=localStorage.getItem('dj_after_signup'); localStorage.removeItem('dj_after_signup'); }catch(_){}
+  { let ab=null; try{ ab=localStorage.getItem('dj_abandoned'); localStorage.removeItem('dj_abandoned'); }catch(_){} if(ab&&!S.uid) toast(ab==='left'?'가입을 중단해서 만들던 계정을 지웠어요. 처음부터 다시 가입할 수 있어요':'가입을 끝까지 마치지 않아 계정을 정리했어요. 처음부터 다시 가입해 주세요'); }
+  if(!f&&halfSigned()&&!S.myStatus){ try{ localStorage.setItem('dj_abandoned','auto'); }catch(_){} dj.abandonSignup(); return; }
   if(f&&S.uid&&!isMember()){ let t=null; try{ t=JSON.parse(f); }catch(_){}
     if(t&&t.type==='join'&&S.writable){ toast('계정을 만들었어요. 받은 초대 코드를 입력해 주세요'); joinCodeSheet(); }
     else if(t&&t.type&&S.writable){ toast('계정을 만들었어요. 이어서 가입 정보를 입력해 주세요'); openSignup(0); const o=S.ob; o.type=t.type; o.rel=!!t.rel; if(o.rel) o.data.category='종교단체'; o.step=1; obRender(); }
@@ -2709,6 +2712,8 @@ document.addEventListener('click', e=>{
   if(t.dataset.dmAs!==undefined){ const to=S.dmPendingTo; S.dmPendingTo=null; if(to) openConv(t.dataset.dmAs,to); return; }
   if(t.dataset.convMe!==undefined) return openConv(t.dataset.convMe,t.dataset.convOther);
   if(t.dataset.ob!==undefined){ const k=t.dataset.ob, o=S.ob;
+    if(k==='close'&&halfSigned()){ if(!t.dataset.armed){ t.dataset.armed='1'; toast('지금 나가면 만들던 계정이 삭제되고, 다음에 처음부터 다시 가입해요. 한 번 더 누르면 나가요'); setTimeout(()=>{ if(t.isConnected) delete t.dataset.armed; },5000); return; }
+      try{ localStorage.setItem('dj_abandoned','left'); }catch(_){} closeSignup(); dj.abandonSignup(); return; }
     if(k==='close') return closeSignup();
     if(k==='join-code'&&!S.uid&&window.dj){ o.type='join'; o.rel=false; o.acctStep=true; o.err=''; obRender(); setTimeout(()=>{ const i=$('#lg-name'); if(i) i.focus(); },50); return; }
     if(k==='join-code'){ closeSignup(); return joinCodeSheet(); }
@@ -2749,6 +2754,7 @@ document.addEventListener('click', e=>{
   else if(a==='mail-reset'){ mailReset(); }
   else if(a==='signup'){ if(!S.uid&&window.dj) openLogin('up'); else openSignup(0); }
   else if(a==='login') openLogin('in');
+  else if(a==='logout-top'){ if(!window.dj) return; if(!t.dataset.armed){ t.dataset.armed='1'; t.textContent='한 번 더 누르면 로그아웃'; setTimeout(()=>{ if(t.isConnected){ delete t.dataset.armed; t.textContent='로그아웃'; } },4000); return; } t.disabled=true; t.textContent='로그아웃 중'; closeSignup(); dj.signOut(); }
   else if(a==='logout'){ if(window.dj){ closeSignup(); S.tab='home'; toast('로그아웃했어요'); dj.signOut(); } }
   else if(a==='admin-logout'){ if(!window.dj) return; if(!t.dataset.armed){ t.dataset.armed='1'; t.textContent='한 번 더 누르면 로그아웃'; setTimeout(()=>{ if(t.isConnected){ delete t.dataset.armed; t.textContent='관리자 로그아웃'; } },4000); return; } t.disabled=true; t.textContent='로그아웃 중'; S.tab='home'; dj.signOut(); }
   else if(a==='dm'){ S.hist=[]; go('dm'); }

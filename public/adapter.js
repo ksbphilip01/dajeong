@@ -113,6 +113,7 @@
       const r=await sb.auth.signInWithPassword({email,password:current}); if(r.error) throw new Error('wrong current');
       const {error}=await sb.auth.updateUser({password:pw}); if(error) throw error; try{ await sb.rpc('pw_temp_clear'); }catch(_){} },
     tempPending:async()=>{ const {data}=await sb.rpc('pw_temp_pending'); return !!data; },
+    abandonSignup:async()=>{ let ok=false; try{ const {data}=await sb.rpc('abandon_signup'); ok=!!data; }catch(_){} await window.dj.signOut(); return ok; },
     signOut:async()=>{ try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
       /* 서버 응답과 관계없이 이 기기의 로그인 정보를 확실히 지우고 새로고침 */
       try{ Object.keys(localStorage).filter(k=>k.startsWith('sb-')||k.includes('auth-token')).forEach(k=>localStorage.removeItem(k)); }catch(_){}
