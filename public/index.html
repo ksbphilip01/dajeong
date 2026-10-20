@@ -736,7 +736,7 @@ img,video,canvas{max-width:100%}
   <header class="top"><div class="top-in gut">
     <div class="brand"><h1>다정<i>여수</i></h1><small>여수의 따뜻한 소식</small></div>
     <div class="top-r"><button class="icon-btn" data-act="notif" aria-label="알림"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg><i class="badge" id="nt-badge" hidden></i></button><button class="icon-btn" data-act="search" aria-label="검색"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></button><button class="icon-btn" data-act="dm" aria-label="메시지"><svg viewBox="0 0 24 24"><path d="M21 3 10.5 13.5M21 3l-6.8 18-3.7-7.5L3 9.8z"/></svg><i class="badge" id="dm-badge" hidden></i></button>
-    <button class="btn pri sm" id="top-cta" data-act="signup">가입하기</button></div>
+    <button class="btn pri sm" id="top-cta" data-act="login">로그인</button></div>
   </div></header>
   <div id="notice" hidden></div>
   <main id="view"></main>
@@ -824,7 +824,7 @@ function myProfile(){ return me().profile||null; }
 function isMember(){ return hasOrg()||!!myProfile(); }
 /* 가입 전(비회원·가입 절차 미완료)에는 소식과 댓글 보기만 가능 */
 function isGuest(){ return !S.isAdmin&&!isMember(); }
-function guestGate(){ if(!S.uid&&window.dj){ toast('가입하면 이용할 수 있어요. 지금은 소식과 댓글만 볼 수 있어요'); openLogin('up'); } else { toast('가입을 마치면 이용할 수 있어요'); openSignup(0); } return false; }
+function guestGate(){ if(!S.uid&&window.dj){ toast('로그인하면 이용할 수 있어요. 처음이면 ‘계정 만들기’를 눌러 주세요'); openLogin('in'); } else { toast('가입을 마치면 이용할 수 있어요'); openSignup(0); } return false; }
 function isHidden(type, x){ const m=S.mod.get(type+'_'+x.id); if(m&&m.status==='hidden') return true; if(m&&m.status==='ok') return false;
   return Object.keys(x.reportedBy||{}).length >= AUTO_HIDE; }
 /* 개인 참여자 글: 승인 기록(mod/post_<id>, 관리자만 기록)에 담긴 내용만 공개 */
@@ -1290,7 +1290,7 @@ function rqFields(cur){ const isPre=!cur||RQ_PRESETS.includes(cur);
 function rqValue(){ const sel=$('#rq-q').value; const q=sel==='__own'?$('#rq-own').value.trim():sel; return {q, a:$('#rq-a').value.trim()}; }
 function rqCheck(r){ if(!r.q||r.q.length<4) return '질문을 4자 이상 적어 주세요'; if(r.a.replace(/\s/g,'').length<2) return '답변을 2자 이상 적어 주세요'; return ''; }
 
-function openLogin(mode){ mode=mode||'in'; if(mode==='up'&&!S.uid&&window.dj) return openSignup(0); closeSignup(); S.rec=null;
+function openLogin(mode){ mode=mode||'in'; if(mode==='up'&&!S.uid&&window.dj) mode='in'; closeSignup(); S.rec=null;
   if(mode==='reset') return openRecover();
   openSheet('login',{},`${head(mode==='in'?'로그인':'계정 만들기')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="${mode}">
     <p class="muted" style="margin:0">${mode==='in'?'계정이 있으면 로그인하고, 처음이면 아래에서 계정을 만들어 주세요. 계정을 만든 뒤 단체 또는 개인 참여자로 가입해요.':'이메일과 비밀번호만 있으면 돼요. 표시 이름은 댓글과 메시지에 보여요.'}</p>
@@ -2688,7 +2688,7 @@ document.addEventListener('click', e=>{
   const ry=e.target.closest('[data-rp-year]'); if(ry){ S.rpYear=+ry.dataset.rpYear||0; return schedule(); }
   const cpy=e.target.closest('[data-copy]'); if(cpy){ e.preventDefault(); const v=cpy.dataset.copy; (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('복사했어요')).catch(()=>toast('복사하지 못했어요. 길게 눌러 직접 복사해 주세요')); return; }
   const eye=e.target.closest('[data-eye]'); if(eye){ e.preventDefault(); const inp=document.getElementById(eye.dataset.eye); if(inp){ const show=inp.type==='password'; inp.type=show?'text':'password'; eye.setAttribute('aria-pressed',show); eye.setAttribute('aria-label',show?'숨기기':'보기'); inp.focus(); } return; }
-  const lgm=e.target.closest('[data-login]'); if(lgm){ return openLogin(lgm.dataset.login); }
+  const lgm=e.target.closest('[data-login]'); if(lgm){ if(lgm.dataset.login==='up'&&!S.uid&&window.dj) return openSignup(0); return openLogin(lgm.dataset.login); }
   const rl=e.target.closest('[data-rel]'); if(rl){ toggleBlock(rl.dataset.key, rl.dataset.rel); if(S.sheet&&S.sheet.kind==='rel') closeSheet(); return; }
   const ro=e.target.closest('[data-report-org]'); if(ro){ closeSheet(); return openReport('org', ro.dataset.reportOrg, ''); }
   const nx=e.target.closest('[data-notice-x]'); if(nx){ e.stopPropagation(); S.noticeDismissed.add(nx.dataset.noticeX); try{ localStorage.setItem('dj_nd_'+nx.dataset.noticeX,'1'); }catch(_){} return schedule(); }
