@@ -79,7 +79,7 @@
   const bucket=C.BUCKET||'media';
   const publicUrl=id=>sb.storage.from(bucket).getPublicUrl(id).data.publicUrl;
   const assets={
-    async upload(blob,opts){ if(!session) throw err('not_granted'); const type=(opts&&opts.type)||blob.type||'image/jpeg'; const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'})[type]||'bin';
+    async upload(blob,opts){ if(!session) throw err('not_granted'); const type=(opts&&opts.type)||blob.type||'image/jpeg'; const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','video/mp4':'mp4','video/quicktime':'mov','video/webm':'webm','video/3gpp':'3gp'})[type]||'bin';
       const id=`${session.user.id}/${Date.now().toString(36)}${newId().slice(0,6)}.${ext}`; const {error}=await sb.storage.from(bucket).upload(id,blob,{contentType:type,upsert:false}); if(error) throw err(/exceeded|size/i.test(error.message)?'too_large':'upstream_error',error.message);
       return {id,url:publicUrl(id),sizeBytes:blob.size,contentType:type}; },
     async delete(id){ const {error}=await sb.storage.from(bucket).remove([id]); if(error) throw err('upstream_error',error.message); return {deleted:true}; },

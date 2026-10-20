@@ -296,6 +296,14 @@ input:focus-visible+.rb{outline:2px solid var(--sea);outline-offset:-2px}
 .tk-sep{margin:0 14px;color:var(--muted)}.tk-pin{display:inline-block;font-style:normal;font-size:10.5px;font-weight:700;color:#fff;background:var(--camellia,#B4233C);border-radius:6px;padding:1px 6px;margin-right:6px;vertical-align:1px}.tk-more{flex:none;color:var(--muted);font-size:18px}
 @keyframes tk-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media (prefers-reduced-motion:reduce){.tk-run{animation:none}.tk-win{text-overflow:ellipsis}}
+.nt-meta{display:flex;flex-direction:column;gap:4px;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg);font-size:13.5px}.nt-meta div{display:flex;gap:10px}.nt-meta b{flex:none;color:var(--sea);min-width:28px}
+.nt-imgs{display:grid;gap:4px;margin:8px 0;border-radius:12px;overflow:hidden}.nt-imgs.c1{grid-template-columns:1fr}.nt-imgs.c2{grid-template-columns:1fr 1fr}.nt-imgs.c3{grid-template-columns:1fr 1fr 1fr}
+.nt-img{position:relative;padding:0;border:0;background:var(--bg);aspect-ratio:1;cursor:zoom-in;overflow:hidden}.nt-imgs.c1 .nt-img{aspect-ratio:auto;max-height:420px}.nt-img img{width:100%;height:100%;object-fit:cover;display:block}.nt-img .more{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.5);color:#fff;font-size:20px;font-weight:700}
+.nt-video,.nt-vid video{width:100%;max-height:420px;border-radius:12px;background:#000;margin:6px 0}.nt-vid{display:flex;flex-direction:column;gap:6px}
+#lb{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center}#lb[hidden]{display:none}#lb img{max-width:100%;max-height:100%;object-fit:contain;user-select:none}
+.lb-x{position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:28px;z-index:2}
+.lb-n{position:absolute;top:calc(20px + env(safe-area-inset-top));left:0;right:0;text-align:center;color:#fff;font-size:14px;pointer-events:none}
+.lb-a{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border:0;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;font-size:30px;line-height:1;z-index:2}.lb-a.l{left:10px}.lb-a.r{right:10px}
 .nt-hero{display:flex;gap:12px;align-items:center;border-radius:18px;padding:18px;background:linear-gradient(150deg,var(--sea),#2B7A9E);color:#fff;margin:4px 0 14px}.nt-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:13px;white-space:nowrap;color:var(--muted)}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
@@ -2028,20 +2036,57 @@ function noticeTicker(){ const list=liveNotices(); if(!list.length) return '';
   const len=list.reduce((k,n)=>k+n.title.length,0)+list.length*4, dur=Math.max(10,Math.round(len*0.45));
   return `<button class="ticker" data-tab="notices" aria-label="관리자 공지 ${list.length}개 보기"><span class="tk-ic" aria-hidden="true">📢</span><span class="tk-win"><span class="tk-run" style="animation-duration:${dur}s">${titles}<span class="tk-sep">•</span>${titles}<span class="tk-sep">•</span></span></span><span class="tk-more">›</span></button>`; }
 function noticesView(){ const list=liveNotices(), old=[...S.notices].filter(n=>!list.includes(n)).sort((a,b)=>b.createdAt-a.createdAt);
-  const card=n=>`<article class="nt-card"><div style="display:flex;align-items:center;gap:8px">${n.pinned?'<span class="tk-pin">공지</span>':''}<h3 style="margin:0;font-size:16.5px;flex:1">${esc(n.title)}</h3>${S.isAdmin?`<button class="btn sm ghost" data-notice-edit="${n.id}">수정</button>`:''}</div><p class="pr-text" style="margin:8px 0 6px">${richCaption(n.text)}</p><small class="ago">다정여수 운영자 · ${new Date(n.createdAt).toLocaleDateString('ko-KR')}${n.updatedAt?' (수정됨)':''}</small></article>`;
+  const card=n=>`<article class="nt-card"><div style="display:flex;align-items:center;gap:8px">${n.pinned?'<span class="tk-pin">공지</span>':''}<h3 style="margin:0;font-size:16.5px;flex:1">${esc(n.title)}</h3>${S.isAdmin?`<button class="btn sm ghost" data-notice-edit="${n.id}">수정</button>`:''}</div>${(n.when||n.place)?`<div class="nt-meta">${n.when?`<div><b>일시</b><span>${esc(n.when)}</span></div>`:''}${n.place?`<div><b>장소</b><span>${esc(n.place)}</span></div>`:''}</div>`:''}<p class="pr-text" style="margin:8px 0 6px">${richCaption(n.text)}</p>${(n.images||[]).length?`<div class="nt-imgs c${(n.images||[]).length===4?2:Math.min((n.images||[]).length,3)}">${n.images.map((id,i)=>`<button class="nt-img" data-lb-open="${n.id}" data-i="${i}" aria-label="사진 ${i+1} 크게 보기"><img src="${blobUrl(id)}" alt="" loading="lazy">${i===5&&n.images.length>6?`<span class="more">+${n.images.length-6}</span>`:''}</button>`).slice(0,6).join('')}</div>`:''}${n.video?`<video class="nt-video" src="${blobUrl(n.video)}" controls playsinline preload="metadata"></video>`:''}<small class="ago">다정여수 운영자 · ${new Date(n.createdAt).toLocaleDateString('ko-KR')}${n.updatedAt?' (수정됨)':''}</small></article>`;
   return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="notices-exit" style="padding:0">‹ 나가기</button><span style="flex:1"></span>${S.isAdmin?'<button class="btn sm pri" data-act="notice-new">공지 쓰기</button>':''}</div>
     <div class="nt-hero"><span style="font-size:26px">📢</span><div><h2 style="margin:0">관리자 공지</h2><p style="margin:2px 0 0;font-size:13px;opacity:.9">다정여수 운영 소식과 안내를 전해 드려요.</p></div></div>
     ${list.length?`<div style="display:flex;flex-direction:column;gap:12px">${list.map(card).join('')}</div>`:'<div class="empty"><h2>지금 올라온 공지가 없어요</h2></div>'}
     ${old.length?`<h3 style="font-size:14px;color:var(--muted);margin:22px 0 10px">지난 공지</h3><div style="display:flex;flex-direction:column;gap:10px;opacity:.85">${old.slice(0,30).map(card).join('')}</div>`:''}</div>`; }
 function noticeHtml(){ const list=liveNotices().filter(n=>!S.noticeDismissed.has(n.id)).slice(0,2); if(!list.length) return '';
   return list.map(n=>`<div class="notice${S.noticeOpen===n.id?' open':''}" data-notice="${n.id}"><div class="nt"><b>${n.pinned?'<span class="pin">공지</span>':''}${esc(n.title)}</b><p>${richCaption(n.text)}</p><small class="ago">${rel(n.createdAt)}${n.text.length>80&&S.noticeOpen!==n.id?' · 더 보기':''}</small></div>${n.pinned?'':`<button class="x" data-notice-x="${n.id}" aria-label="닫기">×</button>`}</div>`).join(''); }
-function noticeForm(n){ const v=n||{}; return `${head(n?'공지 수정':'공지 쓰기')}<div class="panel-b"><form class="form gut" id="notice-form" data-id="${n?n.id:''}">
-    <div class="field"><label for="nt-title">제목</label><input id="nt-title" required maxlength="60" value="${esc(v.title||'')}" placeholder="예: 11월 김장 나눔 봉사자 모집 현황"></div>
-    <div class="field"><label for="nt-text">내용</label><textarea id="nt-text" required maxlength="1000" placeholder="참여자 모두에게 보여요">${esc(v.text||'')}</textarea></div>
-    <label class="tgl" style="border:0"><span><b>상단 고정</b><small>끌 때까지 피드 맨 위에 남아요. 고정하지 않으면 2주 뒤 사라지고 닫기도 돼요</small></span><input type="checkbox" id="nt-pin"${v.pinned?' checked':''}></label>
-    <p class="err" id="nt-err"></p><button class="btn pri" type="submit">${n?'저장':'게시'}</button>${n?`<button class="btn ghost" type="button" data-notice-del="${n.id}">삭제</button>`:''}</form></div>`; }
-async function submitNotice(form){ const id=form.dataset.id; const data={title:$('#nt-title').value.trim(),text:$('#nt-text').value.trim(),pinned:$('#nt-pin').checked,by:S.uid};
-  try{ if(id) await S.db.doc('notices/'+id).update({...data,updatedAt:Date.now()}); else await S.db.collection('notices').add({...data,createdAt:Date.now()}); closeSheet(); toast(id?'공지를 수정했어요':'공지를 올렸어요'); }catch(e){ writeErr(e); } }
+/* ---------- 공지 쓰기: 사진 최대 10장 + 영상 1개 + 일시·장소(직접 입력) ---------- */
+const NT_MAX_IMG=10, NT_MAX_VIDEO_MB=50;
+function openNoticeForm(n){ const v=n||{}; S.nf={id:n?n.id:'',title:v.title||'',text:v.text||'',pinned:!!v.pinned,when:v.when||'',place:v.place||'',existing:[...(v.images||[])],files:[],video:v.video||null,videoFile:null,videoUrl:null};
+  openSheet('notice-form',{},noticeForm()); panel().classList.add('tall'); }
+function nfCollect(){ const f=S.nf; if(!f||!$('#nt-title')) return; f.title=$('#nt-title').value; f.text=$('#nt-text').value; f.pinned=$('#nt-pin').checked; f.when=$('#nt-when').value; f.place=$('#nt-place').value; }
+function nfRerender(){ nfCollect(); const sc=($('.panel-b')||{}).scrollTop||0; panel().innerHTML=noticeForm(); const b=$('.panel-b'); if(b) b.scrollTop=sc; }
+function noticeForm(){ const f=S.nf, n=f.id; const imgs=[...f.existing.map((id,i)=>({src:blobUrl(id),key:'e'+i})),...f.files.map((x,i)=>({src:x.url,key:'f'+i}))];
+  const vid=f.videoFile?{src:f.videoUrl,name:f.videoFile.name}:f.video?{src:blobUrl(f.video),name:'올린 영상'}:null;
+  return `${head(n?'공지 수정':'공지 쓰기')}<div class="panel-b"><form class="form gut" id="notice-form" data-id="${n}">
+    <div class="field"><label for="nt-title">제목</label><input id="nt-title" required maxlength="60" value="${esc(f.title)}" placeholder="예: 11월 김장 나눔 봉사자 모집"></div>
+    <div class="field"><label for="nt-text">내용</label><textarea id="nt-text" required maxlength="2000" style="min-height:130px" placeholder="참여자 모두에게 보여요">${esc(f.text)}</textarea></div>
+    <div class="two"><div class="field"><label for="nt-when">일시 (선택)</label><input id="nt-when" maxlength="80" value="${esc(f.when)}" placeholder="예: 11일 11시, 13일 오후 5시"></div>
+      <div class="field"><label for="nt-place">장소 (선택)</label><input id="nt-place" maxlength="80" value="${esc(f.place)}" placeholder="예: 국동 주민센터 2층"></div></div>
+    <span class="hint" style="margin-top:-6px;font-size:12px">일시와 장소는 자유롭게 적어요. 여러 날짜도 쉼표로 이어 적으면 돼요.</span>
+    <div class="field"><span style="font-size:13px;font-weight:600">사진 (최대 ${NT_MAX_IMG}장 · 고른 순서대로)</span>
+      <div class="cmp-strip" style="flex-wrap:wrap">${imgs.map((t,i)=>`<div class="th"><img src="${t.src}" alt=""><span class="n">${i+1}</span><button type="button" class="th-x" data-nt-x="${t.key}" aria-label="사진 빼기">×</button></div>`).join('')}${imgs.length<NT_MAX_IMG?`<label class="th add" for="nt-img">+<span>사진</span></label>`:''}</div>
+      <input id="nt-img" type="file" accept="image/*" multiple hidden></div>
+    <div class="field"><span style="font-size:13px;font-weight:600">영상 (선택 · 1개 · ${NT_MAX_VIDEO_MB}MB 이하)</span>
+      ${vid?`<div class="nt-vid"><video src="${vid.src}" controls playsinline preload="metadata"></video><button type="button" class="btn sm ghost" data-nt-vx="1">영상 빼기</button></div>`:`<label class="btn ghost" for="nt-video" style="align-self:flex-start">영상 고르기</label>`}
+      <input id="nt-video" type="file" accept="video/*" hidden></div>
+    <label class="tgl" style="border:0"><span><b>상단 고정</b><small>끌 때까지 공지 띠에 남아요. 고정하지 않으면 2주 뒤 ‘지난 공지’로 옮겨져요</small></span><input type="checkbox" id="nt-pin"${f.pinned?' checked':''}></label>
+    <p class="err" id="nt-err"></p><button class="btn pri" type="submit" id="nt-submit">${n?'저장':'게시'}</button>${n?`<button class="btn ghost" type="button" data-notice-del="${n}">삭제</button>`:''}</form></div>`; }
+function shrinkImg(file,max){ max=max||1600; return new Promise((res,rej)=>{ const u=URL.createObjectURL(file), im=new Image(); im.onload=()=>{ const r=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)); const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*r); c.height=Math.round(im.naturalHeight*r); c.getContext('2d').drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(u); c.toBlob(b=>b?res(b):rej(new Error('encode')),'image/jpeg',0.86); }; im.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error('decode')); }; im.src=u; }); }
+async function submitNotice(form){ const f=S.nf; nfCollect(); const err=$('#nt-err'), btn=$('#nt-submit'); err.textContent='';
+  if(!f.title.trim()||!f.text.trim()){ err.textContent='제목과 내용을 적어 주세요'; return; }
+  btn.disabled=true;
+  try{ const ids=[...f.existing]; const total=f.files.length+(f.videoFile?1:0); let done=0;
+    for(const x of f.files){ btn.textContent=`올리는 중 (${done}/${total})`; const blob=await shrinkImg(x.file); const r=await S.assets.upload(blob,{type:'image/jpeg'}); ids.push(r.id); done++; }
+    let video=f.video;
+    if(f.videoFile){ btn.textContent=`영상 올리는 중 (${done}/${total})`; const r=await S.assets.upload(f.videoFile,{type:f.videoFile.type||'video/mp4'}); video=r.id; done++; }
+    const data={title:f.title.trim(),text:f.text.trim(),pinned:f.pinned,when:f.when.trim(),place:f.place.trim(),images:ids,video:video||null,by:S.uid};
+    if(f.id) await S.db.doc('notices/'+f.id).update({...data,updatedAt:Date.now()}); else await S.db.collection('notices').add({...data,createdAt:Date.now()});
+    closeSheet(); S.nf=null; toast(f.id?'공지를 수정했어요':'공지를 올렸어요');
+  }catch(e){ btn.disabled=false; btn.textContent=f.id?'저장':'게시'; err.textContent=/too_large|size|exceeded/i.test((e&&(e.code||e.message))||'')?`파일이 너무 커요. 영상은 ${NT_MAX_VIDEO_MB}MB 이하로 올려 주세요`:'올리지 못했어요: '+((e&&e.message)||''); } }
+
+/* ---------- 사진 크게 보기 (좌우 화살표·스와이프·키보드) ---------- */
+function openLightbox(ids,idx){ S.lb={ids,idx}; let el=$('#lb'); if(!el){ el=document.createElement('div'); el.id='lb'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); document.body.appendChild(el); }
+  renderLightbox(); el.hidden=false; document.body.style.overflow='hidden'; }
+function renderLightbox(){ const L=S.lb, el=$('#lb'); if(!L||!el) return; const n=L.ids.length;
+  el.innerHTML=`<button class="lb-x" data-lb="close" aria-label="닫기">×</button><span class="lb-n">${L.idx+1} / ${n}</span><img src="${blobUrl(L.ids[L.idx])}" alt="공지 사진 ${L.idx+1}">${n>1?`<button class="lb-a l" data-lb="-1" aria-label="이전 사진">‹</button><button class="lb-a r" data-lb="1" aria-label="다음 사진">›</button>`:''}`; }
+function closeLightbox(){ S.lb=null; const el=$('#lb'); if(el){ el.hidden=true; el.innerHTML=''; } if($('#sheet').hidden) document.body.style.overflow=''; }
+function lbStep(d){ const L=S.lb; if(!L) return; L.idx=(L.idx+d+L.ids.length)%L.ids.length; renderLightbox(); }
+document.addEventListener('keydown',e=>{ if(!S.lb) return; if(e.key==='ArrowLeft') lbStep(-1); else if(e.key==='ArrowRight') lbStep(1); else if(e.key==='Escape') closeLightbox(); });
+(()=>{ let x0=null; document.addEventListener('touchstart',e=>{ if(S.lb&&e.target.closest('#lb')) x0=e.touches[0].clientX; },{passive:true}); document.addEventListener('touchend',e=>{ if(x0===null||!S.lb) return; const dx=e.changedTouches[0].clientX-x0; x0=null; if(Math.abs(dx)>40) lbStep(dx<0?1:-1); },{passive:true}); })();
 function adminNoticesHtml(){ const list=[...S.notices].sort((a,b)=>b.createdAt-a.createdAt);
   return `<h2 style="font-size:16px;margin:14px 0 8px;display:flex;justify-content:space-between">공지 <button class="btn sm pri" data-act="notice-new">공지 쓰기</button></h2>
     ${list.length?`<div class="list">${list.map(n=>`<div class="row"><button class="org-chip" data-notice-edit="${n.id}" style="flex:1"><span><b>${n.pinned?'📌 ':''}${esc(n.title)}</b><small>${rel(n.createdAt)} · ${esc(n.text.slice(0,50))}</small></span></button></div>`).join('')}</div>`:'<p class="muted">아직 공지가 없어요. 운영 안내, 모집 현황, 점검 소식 등을 올려 보세요.</p>'}`; }
@@ -2559,7 +2604,12 @@ document.addEventListener('click', e=>{
     const g=e.target.closest('[data-tab]:not([data-tab="home"]):not([data-tab="praise"]):not([data-tab="notices"]),[data-org],[data-member],[data-hash],[data-story],[data-responders],[data-like],[data-save],[data-share],[data-act="search"],[data-act="notif"],[data-act="dm"],[data-act="dm-new"],[data-act="new-post"],[data-act="new-story"],[data-act="report"],[data-report]');
     if(g&&!e.target.closest('[data-more],[data-car]')){ e.preventDefault(); e.stopPropagation(); return guestGate(); } }
   const svb=e.target.closest('[data-sv]'); if(svb){ e.stopPropagation(); return svAction(svb.dataset.sv, svb); }
-  const nte=e.target.closest('[data-notice-edit]'); if(nte){ const n=S.notices.find(x=>x.id===nte.dataset.noticeEdit); if(n) openSheet('notice-form',{},noticeForm(n)); return; }
+  const lbb=e.target.closest('[data-lb]'); if(lbb){ const k=lbb.dataset.lb; if(k==='close') closeLightbox(); else lbStep(+k); return; }
+  if(S.lb&&e.target.id==='lb'){ closeLightbox(); return; }
+  const lbo=e.target.closest('[data-lb-open]'); if(lbo){ const n=S.notices.find(x=>x.id===lbo.dataset.lbOpen); if(n) openLightbox(n.images||[],+lbo.dataset.i); return; }
+  const ntx=e.target.closest('[data-nt-x]'); if(ntx&&S.nf){ nfCollect(); const k=ntx.dataset.ntX, n=+k.slice(1); if(k[0]==='e') S.nf.existing.splice(n,1); else { try{ URL.revokeObjectURL(S.nf.files[n].url); }catch(_){} S.nf.files.splice(n,1); } nfRerender(); return; }
+  const ntv=e.target.closest('[data-nt-vx]'); if(ntv&&S.nf){ nfCollect(); if(S.nf.videoUrl) try{ URL.revokeObjectURL(S.nf.videoUrl); }catch(_){} S.nf.videoFile=null; S.nf.videoUrl=null; S.nf.video=null; nfRerender(); return; }
+  const nte=e.target.closest('[data-notice-edit]'); if(nte){ const n=S.notices.find(x=>x.id===nte.dataset.noticeEdit); if(n) openNoticeForm(n); return; }
   const chb=e.target.closest('[data-cheer]'); if(chb){ e.stopPropagation(); return praiseCheer(chb.dataset.cheer); }
   const pdl=e.target.closest('[data-praise-del]'); if(pdl){ e.stopPropagation(); return praiseDelete(pdl.dataset.praiseDel); }
   const pmv=e.target.closest('[data-pfmove]'); if(pmv&&S.pf){ pfCollect(); const d=+pmv.dataset.pfmove, ne=S.pf.existing.length, a=S.pfCur, b=a+d; const tot=ne+S.pf.files.length; if(b<0||b>=tot) return;
@@ -2598,7 +2648,7 @@ document.addEventListener('click', e=>{
   const ro=e.target.closest('[data-report-org]'); if(ro){ closeSheet(); return openReport('org', ro.dataset.reportOrg, ''); }
   const nx=e.target.closest('[data-notice-x]'); if(nx){ e.stopPropagation(); S.noticeDismissed.add(nx.dataset.noticeX); try{ localStorage.setItem('dj_nd_'+nx.dataset.noticeX,'1'); }catch(_){} return schedule(); }
   const nt=e.target.closest('[data-notice]'); if(nt){ S.noticeOpen=S.noticeOpen===nt.dataset.notice?null:nt.dataset.notice; return schedule(); }
-  const ne=e.target.closest('[data-notice-edit]'); if(ne){ const n=S.notices.find(x=>x.id===ne.dataset.noticeEdit); if(n) openSheet('notice-form',{},noticeForm(n)); return; }
+  const ne=e.target.closest('[data-notice-edit]'); if(ne){ const n=S.notices.find(x=>x.id===ne.dataset.noticeEdit); if(n) openNoticeForm(n); return; }
   const nd=e.target.closest('[data-notice-del]'); if(nd){ S.db.doc('notices/'+nd.dataset.noticeDel).delete().then(()=>{ closeSheet(); toast('공지를 삭제했어요'); }).catch(writeErr); return; }
   const pt=e.target.closest('[data-ptab]'); if(pt){ S.ptab=pt.dataset.ptab; return schedule(); }
   const mt2=e.target.closest('[data-mtab2]'); if(mt2){ S.mtab2=mt2.dataset.mtab2; return schedule(); }
@@ -2666,7 +2716,7 @@ document.addEventListener('click', e=>{
   else if(a==='rp-copy'){ const o=S.orgs.get(S.rpOrg); if(o){ const txt=reportText(o,S.rpYear,orgReportData(o,S.rpYear)); navigator.clipboard.writeText(txt).then(()=>toast('리포트 숫자를 복사했어요')).catch(()=>toast('복사하지 못했어요')); } }
   else if(a==='verify-req'){ if(needWrite()) verifyReqSheet(t.dataset.orgId); }
   else if(a==='rel-menu') relMenu(t.dataset.key);
-  else if(a==='notice-new') openSheet('notice-form',{},noticeForm());
+  else if(a==='notice-new') openNoticeForm(null);
   else if(a==='join-code'){ if(!S.uid){ toast('로그인하면 참여할 수 있어요'); } else if(needWrite()) joinCodeSheet(); }
   else if(a==='copy-code'){ const c=$('#inv-code'); if(c){ navigator.clipboard.writeText(c.textContent.trim()).then(()=>toast('초대 코드를 복사했어요')).catch(()=>toast('코드: '+c.textContent.trim())); } }
   else if(a==='crop-reset') cropReset();
@@ -2695,6 +2745,11 @@ document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.
   if(e.target.id==='dm-q'){ S.dmQ=e.target.value; const sel=$('#dm-as'), as=sel&&sel.value; const pos=e.target.selectionStart; panel().innerHTML=dmNewSheet(); if(as&&$('#dm-as')) $('#dm-as').value=as; const q=$('#dm-q'); q.focus(); try{ q.setSelectionRange(pos,pos); }catch(_){} } });
 document.addEventListener('input', e=>{ const t=e.target; if(t&&t.id&&t.closest&&t.closest('#view')) t.dataset.dirty='1'; });
 document.addEventListener('change', e=>{ const i=e.target;
+  if(i.id==='nt-img'&&S.nf){ nfCollect(); const room=NT_MAX_IMG-S.nf.existing.length-S.nf.files.length; const picked=[...i.files].filter(f=>f.type.startsWith('image/'));
+    if(picked.length>room) toast(`공지 사진은 최대 ${NT_MAX_IMG}장까지예요. ${Math.max(0,room)}장만 넣었어요`);
+    picked.slice(0,Math.max(0,room)).forEach(f=>S.nf.files.push({file:f,url:URL.createObjectURL(f)})); i.value=''; nfRerender(); return; }
+  if(i.id==='nt-video'&&S.nf&&i.files[0]){ const v=i.files[0]; if(v.size>NT_MAX_VIDEO_MB*1024*1024){ toast(`영상은 ${NT_MAX_VIDEO_MB}MB 이하만 올릴 수 있어요 (지금 ${Math.round(v.size/1048576)}MB)`); i.value=''; return; }
+    nfCollect(); S.nf.videoFile=v; S.nf.videoUrl=URL.createObjectURL(v); S.nf.video=null; nfRerender(); return; }
   if(i.id==='rq-q'){ const w=document.getElementById('rq-own-wrap'); if(w) w.hidden=i.value!=='__own'; }
   if(i.id==='ob-faith'){ const w=document.getElementById('ob-faith-etc-wrap'); if(w) w.hidden=i.value!=='기타'; }
   if(i.id==='ob-all'){ ['ob-a1','ob-a2','ob-a3'].forEach(k=>{ const c=document.getElementById(k); if(c) c.checked=i.checked; }); return; }
