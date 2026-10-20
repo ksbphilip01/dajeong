@@ -107,7 +107,10 @@
     recoveryQuestion:async email=>{ const {data,error}=await sb.rpc('recovery_question',{p_email:email}); if(error) throw mapErr(error); return data; },
     recoveryReset:async(email,answer,pw)=>{ const {data,error}=await sb.rpc('recovery_reset',{p_email:email,p_answer:answer,p_new_password:pw}); if(error) throw mapErr(error); return data; },
     updatePassword:async pw=>{ const {error}=await sb.auth.updateUser({password:pw}); if(error) throw error; try{ await sb.rpc('pw_temp_clear'); }catch(_){} },
-    tempPassword:async uid=>{ const {data,error}=await sb.rpc('admin_temp_password',{p_user:uid}); if(error) throw mapErr(error); return data; },
+    recoveryTemp:async(email,answer)=>{ const {data,error}=await sb.rpc('recovery_temp',{p_email:email,p_answer:answer}); if(error) throw mapErr(error); return data||{status:'wrong'}; },
+    changePassword:async(current,pw)=>{ const email=session&&session.user&&session.user.email; if(!email) throw new Error('not signed in');
+      const r=await sb.auth.signInWithPassword({email,password:current}); if(r.error) throw new Error('wrong current');
+      const {error}=await sb.auth.updateUser({password:pw}); if(error) throw error; try{ await sb.rpc('pw_temp_clear'); }catch(_){} },
     tempPending:async()=>{ const {data}=await sb.rpc('pw_temp_pending'); return !!data; },
     signOut:async()=>{ await sb.auth.signOut(); },
     resetPassword:async email=>{ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname}); if(error) throw error; },

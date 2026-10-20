@@ -1165,6 +1165,7 @@ function mineView(){
         ${pr?'<div class="row"><span class="dm-main"><b>개인 참여자 프로필</b><small>닉네임, 활동 지역, 소개, 사진</small></span><button class="btn sm ghost" data-act="edit-member">수정</button></div>':''}
         <div class="row"><span class="dm-main"><b>알림</b><small>좋아요·댓글·승인·콜라보 소식</small></span><button class="btn sm ghost" data-act="notif">열기</button></div>
         <div class="row"><span class="dm-main"><b>메시지</b><small>단체와 1:1 대화</small></span><button class="btn sm ghost" data-act="dm">열기</button></div>
+        ${window.dj?`<div class="row"><span class="dm-main"><b>비밀번호 변경</b><small>현재 비밀번호를 확인한 뒤 새 비밀번호로 바꿔요</small></span><button class="btn sm ghost" data-act="change-pw">변경</button></div>`:''}
         ${window.dj?`<div class="row"><span class="dm-main"><b>비밀번호 찾기 질문</b><small>${S.hasRq===false?'아직 정하지 않았어요 · 정해 두면 비밀번호를 잊어도 찾을 수 있어요':'비밀번호를 잊었을 때 쓰는 질문과 답변'}</small></span><button class="btn sm ${S.hasRq===false?'pri':'ghost'}" data-act="set-rq">${S.hasRq===false?'정하기':'변경'}</button></div>`:''}
         <div class="row"><span class="dm-main"><b>로그아웃</b><small>이 기기에서 로그아웃해요</small></span><button class="btn sm ghost" data-act="logout">로그아웃</button></div>
       </div></section>
@@ -1203,6 +1204,7 @@ async function submitLogin(form){ const mode=form.dataset.mode, err=$('#lg-err')
   if(mode==='recover') return submitRecover(form);
   if(mode==='newpw') return submitNewPw(form);
   if(mode==='setrq') return submitSetRq(form);
+  if(mode==='changepw') return submitChangePw(form);
   const email=$('#lg-email').value.trim(), pw=$('#lg-pw').value;
   let rec=null;
   if(mode==='up'){ if(pw!==$('#lg-pw2').value){ err.textContent='비밀번호 확인이 맞지 않아요'; return; } rec=rqValue(); const m=rqCheck(rec); if(m){ err.textContent=m; return; } }
@@ -1214,37 +1216,46 @@ async function submitLogin(form){ const mode=form.dataset.mode, err=$('#lg-err')
 
 /* 비밀번호 찾기: 이메일 → 질문에 답하기 → 새 비밀번호 */
 function openRecover(){ const r=S.rec||(S.rec={step:1,email:'',q:''});
-  openSheet('login',{},`${head('비밀번호 찾기')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="recover">
-    ${r.step===1?`<p class="muted" style="margin:0">가입한 이메일을 적으면, 계정을 만들 때 정한 질문이 나와요.</p>
+  const body = r.step===1?`<p class="muted" style="margin:0">가입한 이메일을 적으면, 계정을 만들 때 정한 질문이 나와요. 맞게 답하면 임시 비밀번호를 발급해 드려요.</p>
       <div class="field"><label for="lg-email">이메일</label><input id="lg-email" type="email" required autocomplete="email" value="${esc(r.email)}" placeholder="you@example.com"></div>`
-    :`<p class="muted" style="margin:0"><b>${esc(r.email)}</b> 계정의 질문에 답하고 새 비밀번호를 정해 주세요.</p>
+    : r.step===2?`<p class="muted" style="margin:0"><b>${esc(r.email)}</b> 계정의 질문에 답해 주세요.</p>
       <div class="pledge" style="margin:0;padding:12px 14px"><p style="margin:0;font-weight:600">Q. ${esc(r.q)}</p></div>
-      <div class="field"><label for="rc-a">답변</label><div class="pw-wrap"><input id="rc-a" type="password" required autocomplete="off" maxlength="60" placeholder="띄어쓰기·대소문자는 구분하지 않아요"><button type="button" class="pw-eye" data-eye="rc-a" aria-label="답변 보기" aria-pressed="false">${EYE}</button></div></div>
-      ${pwField('lg-pw','새 비밀번호','new-password')}${pwField('lg-pw2','새 비밀번호 확인','new-password','한 번 더 입력')}`}
+      <div class="field"><label for="rc-a">답변</label><div class="pw-wrap"><input id="rc-a" type="password" required autocomplete="off" maxlength="60" placeholder="띄어쓰기·대소문자는 구분하지 않아요"><button type="button" class="pw-eye" data-eye="rc-a" aria-label="답변 보기" aria-pressed="false">${EYE}</button></div><span class="hint">5번 틀리면 1시간 동안 잠겨요.</span></div>`
+    : `<p class="muted" style="margin:0">답변이 맞아요. 아래 임시 비밀번호가 발급됐어요. 로그인하면 바로 새 비밀번호를 정하게 돼요.</p>
+      <div class="pledge" style="margin:0;padding:14px"><p style="margin:0 0 6px;font-weight:600">임시 비밀번호</p><div style="display:flex;gap:8px;align-items:center"><code style="flex:1;font-size:20px;letter-spacing:1px">${esc(r.temp)}</code><button type="button" class="btn sm ghost" data-copy="${esc(r.temp)}">복사</button></div>
+      <p class="muted" style="margin:8px 0 0;font-size:12px">이 화면을 닫으면 다시 볼 수 없어요. 기존 비밀번호는 더 이상 쓸 수 없고, 다른 기기의 로그인도 해제됐어요.</p></div>`;
+  openSheet('login',{},`${head('비밀번호 찾기')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="recover">
+    ${body}
     <p class="err" id="lg-err"></p>
-    <button class="btn pri" type="submit" id="lg-submit">${r.step===1?'다음':'새 비밀번호로 바꾸기'}</button>
-    <p class="hint" style="margin:0;font-size:12.5px">질문을 정하지 않았거나 기억나지 않으면 <button type="button" class="more" data-act="mail-reset" style="color:var(--sea);padding:0">이메일로 재설정 링크 받기</button></p>
+    <button class="btn pri" type="submit" id="lg-submit">${r.step===1?'다음':r.step===2?'임시 비밀번호 받기':'이 비밀번호로 로그인'}</button>
+    ${r.step<3?`<p class="hint" style="margin:0;font-size:12.5px">질문을 정하지 않았거나 기억나지 않으면 <button type="button" class="more" data-act="mail-reset" style="color:var(--sea);padding:0">이메일로 재설정 링크 받기</button></p>`:''}
     <div style="font-size:13px"><button type="button" class="more" data-login="in" style="color:var(--sea)">로그인으로 돌아가기</button></div>
-  </form></div>`); setTimeout(()=>{ const i=$(r.step===1?'#lg-email':'#rc-a'); if(i) i.focus(); },50); }
-async function submitRecover(form){ const r=S.rec, err=$('#lg-err'), btn=$('#lg-submit');
-  if(r.step===1){ r.email=$('#lg-email').value.trim(); btn.disabled=true;
-    try{ r.q=await dj.recoveryQuestion(r.email); r.step=2; openRecover(); }catch(e){ btn.disabled=false; err.textContent='처리하지 못했어요. 잠시 후 다시 시도해 주세요'; } return; }
-  const a=$('#rc-a').value, pw=$('#lg-pw').value;
-  if(pw!==$('#lg-pw2').value){ err.textContent='새 비밀번호 확인이 맞지 않아요'; return; }
-  btn.disabled=true;
-  try{ const res=await dj.recoveryReset(r.email,a,pw);
-    if(res==='ok'){ toast('비밀번호를 바꿨어요. 새 비밀번호로 로그인할게요'); S.rec=null; await dj.signIn(r.email,pw); return; }
-    btn.disabled=false; err.textContent=res==='locked'?'여러 번 틀려서 1시간 동안 잠겼어요. 나중에 다시 시도하거나 이메일 재설정을 이용해 주세요':res==='weak'?'비밀번호는 6자 이상이어야 해요':'답변이 맞지 않아요. 질문을 정하지 않은 계정이거나 관리자 계정이면 이메일 재설정을 이용해 주세요';
+  </form></div>`); setTimeout(()=>{ const i=$(r.step===1?'#lg-email':r.step===2?'#rc-a':'#lg-submit'); if(i) i.focus(); },50); }
+async function submitRecover(form){ const r=S.rec, err=$('#lg-err'), btn=$('#lg-submit'); btn.disabled=true;
+  try{
+    if(r.step===1){ r.email=$('#lg-email').value.trim(); r.q=await dj.recoveryQuestion(r.email); r.step=2; return openRecover(); }
+    if(r.step===2){ const res=await dj.recoveryTemp(r.email,$('#rc-a').value);
+      if(res.status==='ok'){ r.temp=res.pw; r.step=3; return openRecover(); }
+      btn.disabled=false; err.textContent=res.status==='locked'?'여러 번 틀려서 1시간 동안 잠겼어요. 나중에 다시 시도하거나 이메일 재설정을 이용해 주세요':'답변이 맞지 않아요. 질문을 정하지 않은 계정이거나 관리자 계정이면 이메일 재설정을 이용해 주세요'; return; }
+    btn.textContent='로그인 중'; await dj.signIn(r.email,r.temp); S.rec=null;
   }catch(e){ btn.disabled=false; err.textContent=authErr(e); } }
 async function mailReset(){ const r=S.rec||{}; const em=(($('#lg-email')||{}).value||r.email||'').trim(); if(!em){ toast('이메일을 먼저 적어 주세요'); return; }
   try{ await dj.resetPassword(em); closeSheet(); toast('재설정 메일을 보냈어요. 메일의 링크를 누르면 새 비밀번호를 정할 수 있어요'); }catch(e){ toast(authErr(e)); } }
 /* 이메일 링크로 들어온 경우: 새 비밀번호 정하기 */
 function openNewPw(temp){ openSheet('login',{},`${head('새 비밀번호 정하기')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="newpw">
-    <p class="muted" style="margin:0">${temp?'임시 비밀번호로 로그인했어요. 계속 쓰려면 새 비밀번호를 정해 주세요.':'재설정 링크로 들어왔어요. 새 비밀번호를 정해 주세요.'}</p>
+    <p class="muted" style="margin:0">${temp?'임시 비밀번호로 로그인했어요. 본인만 아는 새 비밀번호로 바꿔 주세요.':'재설정 링크로 들어왔어요. 새 비밀번호를 정해 주세요.'}</p>
     ${pwField('lg-pw','새 비밀번호','new-password')}${pwField('lg-pw2','새 비밀번호 확인','new-password','한 번 더 입력')}
     <p class="err" id="lg-err"></p><button class="btn pri" type="submit" id="lg-submit">바꾸기</button></form></div>`); }
 async function submitNewPw(form){ const err=$('#lg-err'), pw=$('#lg-pw').value; if(pw!==$('#lg-pw2').value){ err.textContent='새 비밀번호 확인이 맞지 않아요'; return; }
   try{ await dj.updatePassword(pw); closeSheet(); toast('비밀번호를 바꿨어요'); }catch(e){ err.textContent=authErr(e); } }
+/* 내 활동 → 비밀번호 변경 */
+function openChangePw(){ if(!needWrite()) return; openSheet('login',{},`${head('비밀번호 변경')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="changepw">
+    ${pwField('lg-cur','현재 비밀번호','current-password','지금 쓰는 비밀번호 (임시 비밀번호 포함)')}${pwField('lg-pw','새 비밀번호','new-password')}${pwField('lg-pw2','새 비밀번호 확인','new-password','한 번 더 입력')}
+    <p class="err" id="lg-err"></p><button class="btn pri" type="submit" id="lg-submit">변경</button></form></div>`); }
+async function submitChangePw(){ const err=$('#lg-err'), btn=$('#lg-submit'), cur=$('#lg-cur').value, pw=$('#lg-pw').value; err.textContent='';
+  if(pw!==$('#lg-pw2').value){ err.textContent='새 비밀번호 확인이 맞지 않아요'; return; }
+  if(pw===cur){ err.textContent='지금 비밀번호와 다른 비밀번호로 정해 주세요'; return; }
+  btn.disabled=true; try{ await dj.changePassword(cur,pw); closeSheet(); toast('비밀번호를 바꿨어요'); }catch(e){ btn.disabled=false; err.textContent=/wrong current/.test((e&&e.message)||'')?'현재 비밀번호가 맞지 않아요':authErr(e); } }
 /* 내 활동 → 비밀번호 찾기 질문 설정·변경 */
 async function openSetRq(){ if(!needWrite()) return; let cur=null; try{ cur=await dj.myRecoveryQuestion(); }catch(_){}
   openSheet('login',{},`${head('비밀번호 찾기 질문')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="setrq">
@@ -1253,7 +1264,6 @@ async function openSetRq(){ if(!needWrite()) return; let cur=null; try{ cur=awai
 async function submitSetRq(form){ const err=$('#lg-err'), r=rqValue(), m=rqCheck(r); if(m){ err.textContent=m; return; }
   try{ await dj.setRecovery(r.q,r.a); S.hasRq=true; closeSheet(); toast('비밀번호 찾기 질문을 저장했어요'); schedule(); }catch(e){ err.textContent='저장하지 못했어요: '+((e&&e.message)||''); } }
 
-function confirmTwice(btn,msg){ if(btn.dataset.armed){ return true; } btn.dataset.armed='1'; const old=btn.textContent; btn.textContent='정말 발급할까요? 한 번 더 누르기'; toast(msg); setTimeout(()=>{ if(btn.isConnected){ delete btn.dataset.armed; btn.textContent=old; } },5000); return false; }
 function afterSignup(){ if(S.uid&&window.dj&&dj.tempPending) dj.tempPending().then(p=>{ if(p){ openNewPw(true); } }).catch(()=>{});
   let rcv=null; try{ rcv=localStorage.getItem('dj_pw_recovery'); localStorage.removeItem('dj_pw_recovery'); }catch(_){} if(rcv&&S.uid){ openNewPw(); return; }
   if(S.uid&&window.dj&&dj.myRecoveryQuestion) dj.myRecoveryQuestion().then(q=>{ S.hasRq=!!q; schedule(); }).catch(()=>{});
@@ -1292,9 +1302,7 @@ function userSheet(id){
     ${orgs.length?`<div class="list">${orgs.map(o=>`<div class="row"><button class="org-chip" data-org="${o.id}" style="flex:1">${avatar(o,36)}<span><b>${esc(o.name)}</b><small>${ORG_STATE_LABEL[orgState(o)]} · 관리자 ${(o.ownerIds||[]).length}명</small></span></button></div>`).join('')}</div>`:''}
     ${pr?`<button class="btn ghost" data-member="${u.id}">개인 참여자 프로필 보기</button>`:''}
     <div class="pledge" style="margin:0;padding:12px 14px"><p style="margin:0 0 4px;font-weight:600">아이디(로그인 이메일)</p><div style="display:flex;gap:8px;align-items:center"><code style="flex:1;word-break:break-all">${esc(u.email)}</code><button class="btn sm ghost" data-copy="${esc(u.email)}">복사</button></div>
-      <p style="margin:12px 0 4px;font-weight:600">비밀번호</p>
-      <p class="muted" style="margin:0 0 8px;font-size:12.5px">비밀번호는 암호화되어 저장돼 누구도 볼 수 없어요. 대신 임시 비밀번호를 발급해 사용자에게 알려 주면, 사용자가 로그인한 뒤 바로 새 비밀번호를 정해요.</p>
-      ${u.is_admin?'<p class="muted" style="margin:0;font-size:12.5px">관리자 계정은 이메일 재설정만 가능해요.</p>':S.tempPw&&S.tempPw.uid===u.id?`<div style="display:flex;gap:8px;align-items:center"><code style="flex:1;font-size:18px;letter-spacing:1px">${esc(S.tempPw.pw)}</code><button class="btn sm pri" data-copy="${esc(S.tempPw.pw)}">복사</button></div><p class="muted" style="margin:6px 0 0;font-size:12px">이 창을 닫으면 다시 볼 수 없어요. 기존 비밀번호와 로그인 상태는 모두 해제됐어요.</p>`:`<button class="btn sm ghost" data-act="temp-pw" data-uid="${u.id}">임시 비밀번호 발급</button>`}</div>
+      <p class="muted" style="margin:8px 0 0;font-size:12.5px">비밀번호는 암호화되어 저장돼 관리자도 볼 수 없어요. 비밀번호를 잊은 사용자는 로그인 화면의 ‘비밀번호를 잊었어요’에서 본인이 정한 질문에 답해 임시 비밀번호를 받을 수 있어요.</p></div>
     ${u.is_admin?'<p class="muted" style="margin:0">관리자 계정은 정지하거나 반려할 수 없어요.</p>':u.id===S.uid?'':
       act?`<form class="form" id="ustatus-form" data-uid="${u.id}" data-act="${act}" style="padding:0;gap:10px">
         <p style="margin:0;font-weight:600">${act==='suspended'?'계정 정지':'가입 반려'}</p>
@@ -2528,7 +2536,7 @@ document.addEventListener('click', e=>{
   else if(a==='new-org'){ if(needWrite()) openSheet('org-form',{},orgForm()); }
   else if(a==='edit-org'){ const o=S.orgs.get(t.dataset.orgId); if(o) openSheet('org-form',{},orgForm(o)); }
   else if(a==='edit-member'){ if(needWrite()) openSheet('member-form',{},memberForm()); }
-  else if(a==='temp-pw'){ const uid=t.dataset.uid; if(!confirmTwice(t,'한 번 더 누르면 기존 비밀번호가 바로 바뀌어요')) return; t.disabled=true; dj.tempPassword(uid).then(pw=>{ S.tempPw={uid,pw}; userSheet(uid); }).catch(e=>{ t.disabled=false; toast('발급하지 못했어요: '+((e&&e.message)||'')); }); }
+  else if(a==='change-pw'){ openChangePw(); }
   else if(a==='set-rq'){ openSetRq(); }
   else if(a==='mail-reset'){ mailReset(); }
   else if(a==='signup'){ if(!S.uid&&window.dj) openLogin('up'); else openSignup(0); }
