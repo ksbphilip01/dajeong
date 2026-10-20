@@ -1196,7 +1196,7 @@ function rqFields(cur){ const isPre=!cur||RQ_PRESETS.includes(cur);
 function rqValue(){ const sel=$('#rq-q').value; const q=sel==='__own'?$('#rq-own').value.trim():sel; return {q, a:$('#rq-a').value.trim()}; }
 function rqCheck(r){ if(!r.q||r.q.length<4) return '질문을 4자 이상 적어 주세요'; if(r.a.replace(/\s/g,'').length<2) return '답변을 2자 이상 적어 주세요'; return ''; }
 
-function openLogin(mode){ mode=mode||'in'; closeSignup(); S.rec=null;
+function openLogin(mode){ mode=mode||'in'; if(mode==='up'&&!S.uid&&window.dj) return openSignup(0); closeSignup(); S.rec=null;
   if(mode==='reset') return openRecover();
   openSheet('login',{},`${head(mode==='in'?'로그인':'계정 만들기')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="${mode}">
     <p class="muted" style="margin:0">${mode==='in'?'계정이 있으면 로그인하고, 처음이면 아래에서 계정을 만들어 주세요. 계정을 만든 뒤 단체 또는 개인 참여자로 가입해요.':'이메일과 비밀번호만 있으면 돼요. 표시 이름은 댓글과 메시지에 보여요.'}</p>
@@ -1277,7 +1277,9 @@ function afterSignup(){ if(S.uid&&window.dj&&dj.tempPending) dj.tempPending().th
   let rcv=null; try{ rcv=localStorage.getItem('dj_pw_recovery'); localStorage.removeItem('dj_pw_recovery'); }catch(_){} if(rcv&&S.uid){ openNewPw(); return; }
   if(S.uid&&window.dj&&dj.myRecoveryQuestion) dj.myRecoveryQuestion().then(q=>{ S.hasRq=!!q; schedule(); }).catch(()=>{});
   let f=null; try{ f=localStorage.getItem('dj_after_signup'); localStorage.removeItem('dj_after_signup'); }catch(_){}
-  if(f&&S.uid&&!isMember()){ toast('계정을 만들었어요. 이제 단체 또는 개인 참여자로 가입해 주세요'); openSignup(0); } }
+  if(f&&S.uid&&!isMember()){ let t=null; try{ t=JSON.parse(f); }catch(_){}
+    if(t&&t.type&&S.writable){ toast('계정을 만들었어요. 이어서 가입 정보를 입력해 주세요'); openSignup(0); const o=S.ob; o.type=t.type; o.rel=!!t.rel; if(o.rel) o.data.category='종교단체'; o.step=1; obRender(); }
+    else { toast('계정을 만들었어요. 이제 단체 또는 개인 참여자로 가입해 주세요'); openSignup(0); } } }
 
 /* ---------- 관리자: 가입 계정 관리 (목록·정지·반려) ---------- */
 S.users=null; S.uq=''; S.uf='all';
@@ -2173,15 +2175,34 @@ function openMember(uid){
 
 const OB_REL=['기관 정보','종교·교단과 담당자','함께 지킬 약속','가입 신청'], OB_ORG=['단체 정보','소개와 담당자','함께 지킬 약속','가입 완료'], OB_MEM=['참여자 정보','함께 지킬 약속','가입 완료'];
 function openSignup(step){ closeSheet(); $('#gate').hidden=true; S.ob={step:step||0,type:null,data:{category:CATS[1],regions:[ALL_AREA],region:ALL_AREA},err:''}; obRender(); $('#onboard').hidden=false; document.body.style.overflow='hidden'; }
+async function obAccount(){ const o=S.ob, err=$('#lg-err'), btn=$('#lg-submit'); err.textContent='';
+  const name=$('#lg-name').value.trim(), email=$('#lg-email').value.trim(), pw=$('#lg-pw').value; o.data.acctName=name; o.data.acctEmail=email;
+  if(pw!==$('#lg-pw2').value){ err.textContent='비밀번호 확인이 맞지 않아요'; return; }
+  const rec=rqValue(), m=rqCheck(rec); if(m){ err.textContent=m; return; }
+  { const w=bannedHit(name); if(w){ bannedToast(w); return; } }
+  btn.disabled=true; btn.textContent='계정 만드는 중';
+  try{ try{ localStorage.setItem('dj_after_signup',JSON.stringify({type:o.type,rel:!!o.rel})); }catch(_){}
+    const r=await dj.signUp(email,pw,name,rec);
+    if(!(r&&r.session)){ closeSignup(); toast('확인 메일을 보냈어요. 메일의 링크를 누르면 로그인돼요'); }
+  }catch(e){ try{ localStorage.removeItem('dj_after_signup'); }catch(_){} btn.disabled=false; btn.textContent='계정 만들고 다음'; err.textContent=authErr(e); } }
 function closeSignup(){ S.ob=null; $('#onboard').hidden=true; document.body.style.overflow=''; if(S.tab==='landing'&&isMember()){ const pid=S.landing; S.landing=null; S.tab='home'; schedule(); if(pid) openPost(pid); return; } schedule(); }
 function obRender(){
   const o=S.ob, box=$('#onboard .ob'); if(!o) return;
   const steps=o.type==='org'?(o.rel?OB_REL:OB_ORG):o.type==='member'?OB_MEM:[];
-  const top=`<div class="ob-top">${o.step>0&&o.step<steps.length?`<button class="back" style="padding:0" data-ob="back">‹ 이전</button><span class="stepn">${o.step} / ${steps.length-1} · ${steps[o.step-1]}</span>`:'<span></span>'}<button class="x" data-ob="close" aria-label="닫기">×</button></div>
+  const top=o.acctStep?`<div class="ob-top"><button class="back" style="padding:0" data-ob="back">‹ 이전</button><span class="stepn">계정 만들기 · ${o.type==='member'?'개인 참여자':o.rel?'종교 기관':'단체'}</span><button class="x" data-ob="close" aria-label="닫기">×</button></div><div class="ob-prog">${steps.slice(0,-1).map(()=>'<i></i>').join('')}</div>`
+    :`<div class="ob-top">${o.step>0&&o.step<steps.length?`<button class="back" style="padding:0" data-ob="back">‹ 이전</button><span class="stepn">${o.step} / ${steps.length-1} · ${steps[o.step-1]}</span>`:'<span></span>'}<button class="x" data-ob="close" aria-label="닫기">×</button></div>
     ${o.type?`<div class="ob-prog">${steps.slice(0,-1).map((_,i)=>`<i class="${i<o.step?'on':''}"></i>`).join('')}</div>`:''}`;
   let body='', foot='';
   const d=o.data;
-  if(o.step===0){
+  if(o.acctStep){
+    body=`<h2>먼저 계정을 만들어요</h2><p class="lead">로그인에 쓸 이메일과 비밀번호를 정해 주세요. 계정을 만들면 바로 ${o.type==='member'?'개인 참여자':o.rel?'종교 기관':'단체'} 정보를 입력하는 단계로 이어져요.</p><form class="form" id="ob-acct-form">
+      <div class="field"><label for="lg-name">표시 이름</label><input id="lg-name" required maxlength="20" value="${esc(d.acctName||'')}" placeholder="예: 김성빈"><span class="hint">댓글과 메시지에 보여요.</span></div>
+      <div class="field"><label for="lg-email">이메일</label><input id="lg-email" type="email" required autocomplete="email" value="${esc(d.acctEmail||'')}" placeholder="you@example.com"></div>
+      ${pwField('lg-pw','비밀번호','new-password')}${pwField('lg-pw2','비밀번호 확인','new-password','한 번 더 입력')}
+      ${rqFields('')}
+      <p class="err" id="lg-err">${esc(o.err)}</p><div class="ob-f" style="flex-direction:column"><button class="btn pri" type="submit" id="lg-submit">계정 만들고 다음</button><button class="btn" type="button" style="color:var(--sea)" data-login="in">이미 계정이 있어요 · 로그인</button></div></form>`;
+  }
+  else if(o.step===0){
     body=`<div class="ob-hero"><div class="ob-mark">다정<i>여수</i></div><p class="ob-tag">여수의 좋은 소식이 모이는 곳</p>
       <div class="ob-kinds">${Object.entries(KINDS).map(([k,l])=>`<span class="kind k-${k}">${l}</span>`).join('')}</div></div>
       <ul class="ob-props">
@@ -2191,7 +2212,8 @@ function obRender(){
         <li><div class="n">이</div><div><b>모두 서로 이웃</b><span>가입한 단체는 자동으로 맞팔로우돼요. 지금 ${approvedOrgs().length}개 단체가 함께해요.</span></div></li>
       </ul>
       <p class="muted" style="margin:14px 0 0;font-size:13px">가입하지 않아도 소식과 댓글은 볼 수 있어요. 좋아요·댓글 쓰기·단체 둘러보기·스토리·검색은 가입 후 이용할 수 있어요.</p>`;
-    foot = S.writable ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
+    foot = (!S.uid&&window.dj) ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn" style="color:var(--sea)" data-login="in">이미 계정이 있어요 · 로그인</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
+      : S.writable ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
       : `<div class="ob-f" style="flex-direction:column"><p class="muted" style="text-align:center;margin:0">${S.uid?'보기 전용으로 열려 있어 가입할 수 없어요. 관리자에게 참여 권한을 요청해 주세요.':'가입하려면 로그인한 상태로 열어 주세요.'}</p><button class="btn ghost" data-ob="close">둘러보기</button></div>`;
   }
   else if(o.type==='org'&&o.step===1){
@@ -2521,7 +2543,9 @@ document.addEventListener('click', e=>{
   if(t.dataset.ob!==undefined){ const k=t.dataset.ob, o=S.ob;
     if(k==='close') return closeSignup();
     if(k==='join-code'){ closeSignup(); return joinCodeSheet(); }
+    if((k==='type-org'||k==='type-member'||k==='type-rel')&&!S.uid&&window.dj){ o.type=k==='type-member'?'member':'org'; o.rel=k==='type-rel'; o.acctStep=true; o.err=''; obRender(); setTimeout(()=>{ const i=$('#lg-name'); if(i) i.focus(); },50); return; }
     if(k==='type-org'||k==='type-member'||k==='type-rel'){ if(!needWrite()) return; o.type=k==='type-member'?'member':'org'; o.rel=k==='type-rel'; if(o.rel) o.data.category='종교단체'; else if(o.data.category==='종교단체') o.data.category=CATS[1]; o.step=1; return obRender(); }
+    if(k==='back'&&o.acctStep){ o.acctStep=false; o.type=null; o.rel=false; return obRender(); }
     if(k==='back'){ obCollect(); o.step--; if(o.step===0) o.type=null; return obRender(); }
     if(k==='finish-post'){ const id=o.createdId; closeSignup(); return openNewPost(id); }
     if(k==='finish-profile'){ const id=o.createdId; closeSignup(); return go('org',id); }
@@ -2584,7 +2608,7 @@ document.addEventListener('dblclick', e=>{ const m=e.target.closest('[data-dbl]'
 document.addEventListener('submit', e=>{ e.preventDefault();
   const id=e.target.id;
   if(id==='ustatus-form') setUserStatus(e.target.dataset.uid,e.target.dataset.act,e.target); else if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
-  else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); });
+  else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); else if(id==='ob-acct-form') obAccount(); });
 document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.value; schedule(); }
   if(e.target.id==='crop-zoom'){ cropZoomTo(+e.target.value); return; }
   if(e.target.id==='p-cap'){ const c=$('#p-cnt'); if(c) c.textContent=e.target.value.length+'/2200'; }
