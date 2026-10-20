@@ -1278,7 +1278,8 @@ function afterSignup(){ if(S.uid&&window.dj&&dj.tempPending) dj.tempPending().th
   if(S.uid&&window.dj&&dj.myRecoveryQuestion) dj.myRecoveryQuestion().then(q=>{ S.hasRq=!!q; schedule(); }).catch(()=>{});
   let f=null; try{ f=localStorage.getItem('dj_after_signup'); localStorage.removeItem('dj_after_signup'); }catch(_){}
   if(f&&S.uid&&!isMember()){ let t=null; try{ t=JSON.parse(f); }catch(_){}
-    if(t&&t.type&&S.writable){ toast('계정을 만들었어요. 이어서 가입 정보를 입력해 주세요'); openSignup(0); const o=S.ob; o.type=t.type; o.rel=!!t.rel; if(o.rel) o.data.category='종교단체'; o.step=1; obRender(); }
+    if(t&&t.type==='join'&&S.writable){ toast('계정을 만들었어요. 받은 초대 코드를 입력해 주세요'); joinCodeSheet(); }
+    else if(t&&t.type&&S.writable){ toast('계정을 만들었어요. 이어서 가입 정보를 입력해 주세요'); openSignup(0); const o=S.ob; o.type=t.type; o.rel=!!t.rel; if(o.rel) o.data.category='종교단체'; o.step=1; obRender(); }
     else { toast('계정을 만들었어요. 이제 단체 또는 개인 참여자로 가입해 주세요'); openSignup(0); } } }
 
 /* ---------- 관리자: 가입 계정 관리 (목록·정지·반려) ---------- */
@@ -2189,13 +2190,13 @@ function closeSignup(){ S.ob=null; $('#onboard').hidden=true; document.body.styl
 function obRender(){
   const o=S.ob, box=$('#onboard .ob'); if(!o) return;
   const steps=o.type==='org'?(o.rel?OB_REL:OB_ORG):o.type==='member'?OB_MEM:[];
-  const top=o.acctStep?`<div class="ob-top"><button class="back" style="padding:0" data-ob="back">‹ 이전</button><span class="stepn">계정 만들기 · ${o.type==='member'?'개인 참여자':o.rel?'종교 기관':'단체'}</span><button class="x" data-ob="close" aria-label="닫기">×</button></div><div class="ob-prog">${steps.slice(0,-1).map(()=>'<i></i>').join('')}</div>`
+  const top=o.acctStep?`<div class="ob-top"><button class="back" style="padding:0" data-ob="back">‹ 이전</button><span class="stepn">계정 만들기 · ${o.type==='join'?'초대 코드로 참여':o.type==='member'?'개인 참여자':o.rel?'종교 기관':'단체'}</span><button class="x" data-ob="close" aria-label="닫기">×</button></div><div class="ob-prog">${steps.slice(0,-1).map(()=>'<i></i>').join('')}</div>`
     :`<div class="ob-top">${o.step>0&&o.step<steps.length?`<button class="back" style="padding:0" data-ob="back">‹ 이전</button><span class="stepn">${o.step} / ${steps.length-1} · ${steps[o.step-1]}</span>`:'<span></span>'}<button class="x" data-ob="close" aria-label="닫기">×</button></div>
     ${o.type?`<div class="ob-prog">${steps.slice(0,-1).map((_,i)=>`<i class="${i<o.step?'on':''}"></i>`).join('')}</div>`:''}`;
   let body='', foot='';
   const d=o.data;
   if(o.acctStep){
-    body=`<h2>먼저 계정을 만들어요</h2><p class="lead">로그인에 쓸 이메일과 비밀번호를 정해 주세요. 계정을 만들면 바로 ${o.type==='member'?'개인 참여자':o.rel?'종교 기관':'단체'} 정보를 입력하는 단계로 이어져요.</p><form class="form" id="ob-acct-form">
+    body=`<h2>먼저 계정을 만들어요</h2><p class="lead">로그인에 쓸 이메일과 비밀번호를 정해 주세요. ${o.type==='join'?'계정을 만들면 바로 단체에서 받은 초대 코드를 입력하는 창이 열려요.':`계정을 만들면 바로 ${o.type==='member'?'개인 참여자':o.rel?'종교 기관':'단체'} 정보를 입력하는 단계로 이어져요.`}</p><form class="form" id="ob-acct-form">
       <div class="field"><label for="lg-name">표시 이름</label><input id="lg-name" required maxlength="20" value="${esc(d.acctName||'')}" placeholder="예: 김성빈"><span class="hint">댓글과 메시지에 보여요.</span></div>
       <div class="field"><label for="lg-email">이메일</label><input id="lg-email" type="email" required autocomplete="email" value="${esc(d.acctEmail||'')}" placeholder="you@example.com"></div>
       ${pwField('lg-pw','비밀번호','new-password')}${pwField('lg-pw2','비밀번호 확인','new-password','한 번 더 입력')}
@@ -2212,7 +2213,7 @@ function obRender(){
         <li><div class="n">이</div><div><b>모두 서로 이웃</b><span>가입한 단체는 자동으로 맞팔로우돼요. 지금 ${approvedOrgs().length}개 단체가 함께해요.</span></div></li>
       </ul>
       <p class="muted" style="margin:14px 0 0;font-size:13px">가입하지 않아도 소식과 댓글은 볼 수 있어요. 좋아요·댓글 쓰기·단체 둘러보기·스토리·검색은 가입 후 이용할 수 있어요.</p>`;
-    foot = (!S.uid&&window.dj) ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn" style="color:var(--sea)" data-login="in">이미 계정이 있어요 · 로그인</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
+    foot = (!S.uid&&window.dj) ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--sea)" data-login="in">이미 계정이 있어요 · 로그인</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
       : S.writable ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
       : `<div class="ob-f" style="flex-direction:column"><p class="muted" style="text-align:center;margin:0">${S.uid?'보기 전용으로 열려 있어 가입할 수 없어요. 관리자에게 참여 권한을 요청해 주세요.':'가입하려면 로그인한 상태로 열어 주세요.'}</p><button class="btn ghost" data-ob="close">둘러보기</button></div>`;
   }
@@ -2542,6 +2543,7 @@ document.addEventListener('click', e=>{
   if(t.dataset.convMe!==undefined) return openConv(t.dataset.convMe,t.dataset.convOther);
   if(t.dataset.ob!==undefined){ const k=t.dataset.ob, o=S.ob;
     if(k==='close') return closeSignup();
+    if(k==='join-code'&&!S.uid&&window.dj){ o.type='join'; o.rel=false; o.acctStep=true; o.err=''; obRender(); setTimeout(()=>{ const i=$('#lg-name'); if(i) i.focus(); },50); return; }
     if(k==='join-code'){ closeSignup(); return joinCodeSheet(); }
     if((k==='type-org'||k==='type-member'||k==='type-rel')&&!S.uid&&window.dj){ o.type=k==='type-member'?'member':'org'; o.rel=k==='type-rel'; o.acctStep=true; o.err=''; obRender(); setTimeout(()=>{ const i=$('#lg-name'); if(i) i.focus(); },50); return; }
     if(k==='type-org'||k==='type-member'||k==='type-rel'){ if(!needWrite()) return; o.type=k==='type-member'?'member':'org'; o.rel=k==='type-rel'; if(o.rel) o.data.category='종교단체'; else if(o.data.category==='종교단체') o.data.category=CATS[1]; o.step=1; return obRender(); }
