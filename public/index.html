@@ -721,6 +721,9 @@ img,video,canvas{max-width:100%}
 .board .ic{font-size:24px;flex:none}.board .tx{display:flex;flex-direction:column;min-width:0}.board small{font-size:11px;opacity:.88;font-weight:600}.board b{font-size:14.5px;line-height:1.3;letter-spacing:-.01em}
 .b-praise{background:linear-gradient(150deg,#B4233C,#D9536A)}.b-together{background:linear-gradient(150deg,#1F7A5A,#3AA37B)}
 @media (max-width:360px){.board{padding:10px 8px;gap:6px}.board .ic{font-size:20px}.board b{font-size:13px}}
+.rc-badge{align-self:flex-start;font-size:11.5px;font-weight:700;color:#1F7A5A;background:#E3F3EC;border-radius:999px;padding:3px 10px}
+.consent{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);font-size:12.5px;line-height:1.65}.consent p{margin:0 0 10px;color:var(--muted)}.consent label{display:flex;gap:8px;align-items:flex-start}.consent input{margin-top:3px;flex:none;width:18px;height:18px}
+.tg-rule{margin-top:10px!important;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.16);font-size:12.5px!important}
 .tg-hero{background:linear-gradient(150deg,#1F7A5A,#3AA37B)}.pr-cheer.tg.on{background:#1F7A5A}.tg-card.closed{opacity:.7}
 .adm-cat{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);flex:none}.adm-cat select{font-size:12.5px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:120px}
 .av.official{display:inline-grid;place-items:center;border-radius:50%;background:linear-gradient(150deg,var(--sea),#2B7A9E);color:#fff;font-weight:800;letter-spacing:-.03em;flex:none}.off-badge{font-style:normal;font-size:10.5px;font-weight:700;color:#fff;background:var(--sea);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
@@ -1047,40 +1050,75 @@ function togetherList(){ return (S.together||[]).filter(x=>S.isAdmin||x.authorId
 function togetherView(){
   const list=togetherList().sort((a,b)=>(a.closed?1:0)-(b.closed?1:0)||b.createdAt-a.createdAt);
   const card=x=>{ const joins=Object.keys(x.joins||{}), on=S.uid&&joins.includes(S.uid), mine=x.authorId===S.uid, hid=isHidden('together',x), full=x.slots&&joins.length>=x.slots;
-    return `<article class="pr-card tg-card${x.closed?' closed':''}">${hid?'<span class="st hid" style="align-self:flex-start">숨김 · 관리자와 글쓴이만 보여요</span>':''}
-      <div style="display:flex;gap:8px;align-items:flex-start"><h3 style="margin:0;font-size:17px;flex:1">${esc(x.title)}</h3>${x.closed?'<span class="st gone">모집 마감</span>':full?'<span class="st open">정원 다 찼어요</span>':'<span class="st live">모집 중</span>'}</div>
-      ${(x.when||x.place||x.slots)?`<div class="nt-meta" style="margin-top:0">${x.when?`<div><b>일시</b><span>${esc(x.when)}</span></div>`:''}${x.place?`<div><b>장소</b><span>${esc(x.place)}</span></div>`:''}${x.slots?`<div><b>인원</b><span>${joins.length} / ${x.slots}명</span></div>`:''}</div>`:''}
+    const rec=!!x.recruit, ro=rec&&S.orgs.get(x.byOrg), iOwn=rec&&ro&&(ro.ownerIds||[]).includes(S.uid), myApp=rec&&(S.apps||[]).find(a=>a.tid===x.id&&a.uid===S.uid), nApp=x.appCount||0, rFull=rec&&x.slots&&nApp>=x.slots;
+    const actBtn=!rec?`<button class="pr-cheer tg${on?' on':''}" data-join="${x.id}"${x.closed&&!on?' disabled':''}>🙌 ${on?'함께해요 ✓':'저도 함께할게요'}${joins.length?' '+joins.length:''}</button>`
+      :iOwn?`<button class="pr-cheer tg on" data-apps="${x.id}">📋 신청자 보기 ${nApp}</button>`
+      :myApp?`<button class="pr-cheer tg on" data-apply="${x.id}">✓ 신청 완료</button>`
+      :`<button class="pr-cheer tg" data-apply="${x.id}"${x.closed||rFull?' disabled':''}>✍️ ${x.closed?'모집 마감':rFull?'정원 마감':'신청서 쓰기'}</button>`;
+    return `<article class="pr-card tg-card${x.closed?' closed':''}">${rec?`<span class="rc-badge">${ro?esc(ro.name):'단체'} · 봉사 모집</span>`:''}${hid?'<span class="st hid" style="align-self:flex-start">숨김 · 관리자와 글쓴이만 보여요</span>':''}
+      <div style="display:flex;gap:8px;align-items:flex-start"><h3 style="margin:0;font-size:17px;flex:1">${esc(x.title)}</h3>${x.closed?'<span class="st gone">모집 마감</span>':(full||rFull)?'<span class="st open">정원 다 찼어요</span>':'<span class="st live">모집 중</span>'}</div>
+      ${(x.when||x.place||x.slots)?`<div class="nt-meta" style="margin-top:0">${x.when?`<div><b>일시</b><span>${esc(x.when)}</span></div>`:''}${x.place?`<div><b>장소</b><span>${esc(x.place)}</span></div>`:''}${x.slots?`<div><b>인원</b><span>${rec?nApp:joins.length} / ${x.slots}명</span></div>`:(rec?`<div><b>신청</b><span>${nApp}명</span></div>`:'')}${x.deadline?`<div><b>마감</b><span>${esc(x.deadline)}</span></div>`:''}</div>`:''}
       <p class="pr-text">${esc(x.text)}</p>
       <div class="pr-foot"><span>From. <b>${esc(praiseFrom(x))}</b> · ${rel(x.createdAt)}</span><span class="sp"></span>
-        <button class="pr-cheer tg${on?' on':''}" data-join="${x.id}"${x.closed&&!on?' disabled':''}>🙌 ${on?'함께해요 ✓':'저도 함께할게요'}${joins.length?' '+joins.length:''}</button></div>
+        ${actBtn}</div>
       <div class="pr-foot" style="justify-content:flex-end">${mine?`<button class="more" data-tg-close="${x.id}">${x.closed?'모집 다시 열기':'모집 마감'}</button>`:''}${mine&&!x.byOrg?'':(x.byOrg&&!mine?`<button class="more" data-dm-to="org:${x.byOrg}">메시지</button>`:'')}${mine||S.isAdmin?`<button class="more" data-tg-del="${x.id}">${S.confirmTg===x.id?'한 번 더 누르면 삭제':'삭제'}</button>`:''}${!mine&&S.uid?`<button class="more" data-report="together" data-tid="${x.id}">신고</button>`:''}</div></article>`; };
-  return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="board-exit" style="padding:0">‹ 나가기</button><span style="flex:1"></span>${!isGuest()?`<button class="btn sm pri" data-act="together-new">함께할 일 올리기</button>`:`<button class="btn sm ghost" data-act="signup">가입하고 함께하기</button>`}</div>
-    <div class="pr-hero tg-hero"><small style="opacity:.85;font-weight:600">함께해요</small><h2>같이 하면 더 다정해</h2><p>봉사, 나눔, 동네 일손이 필요할 때 이웃을 모아 보세요. 마음 맞는 사람이 ‘저도 함께할게요’로 손을 들어요.</p>${isGuest()?'<p style="margin-top:8px;font-size:12.5px;opacity:.85">글은 누구나 볼 수 있어요. 글을 올리거나 함께하려면 가입해 주세요.</p>':''}</div>
+  return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="board-exit" style="padding:0">‹ 나가기</button><span style="flex:1"></span>${myVerifiedOrgs().length?`<button class="btn sm pri" data-act="together-new">모집 글 올리기</button>`:isGuest()?`<button class="btn sm ghost" data-act="signup">가입하고 함께하기</button>`:''}</div>
+    <div class="pr-hero tg-hero"><small style="opacity:.85;font-weight:600">함께해요</small><h2>같이 하면 더 다정해</h2><p>인증된 단체가 봉사·나눔에 함께할 이웃을 모아요. 마음이 맞으면 신청서를 내거나 ‘저도 함께할게요’로 손을 들어 주세요.</p><p class="tg-rule">✓ 모집 글은 <b>다정여수가 인증한 단체</b>만 올릴 수 있어요. 개인과 다른 단체는 신청·참여할 수 있어요.</p>${isGuest()?'<p style="margin-top:8px;font-size:12.5px;opacity:.85">글은 누구나 볼 수 있어요. 글을 올리거나 함께하려면 가입해 주세요.</p>':''}</div>
     ${list.length?`<div style="display:flex;flex-direction:column;gap:12px">${list.map(card).join('')}</div>`
-      :`<div class="empty"><h2>첫 모임을 열어 보세요</h2><p>“토요일 오전 해변 쓰레기 줍기 같이 하실 분?” 같은 한 줄이면 충분해요.</p>${!isGuest()?'<button class="btn pri" data-act="together-new">함께할 일 올리기</button>':'<button class="btn pri" data-act="signup">가입하고 함께하기</button>'}</div>`}
+      :`<div class="empty"><h2>아직 모집 중인 활동이 없어요</h2><p>인증된 단체가 봉사 모집을 올리면 여기에 보여요.</p>${myVerifiedOrgs().length?'<button class="btn pri" data-act="together-new">모집 글 올리기</button>':isGuest()?'<button class="btn pri" data-act="signup">가입하고 함께하기</button>':(myApprovedOrgs().length?'<p class="muted" style="font-size:12.5px;margin:0">우리 단체 프로필에서 ‘인증 요청’을 하면 모집 글을 올릴 수 있어요.</p>':'')}</div>`}
     <p class="muted" style="font-size:12px;margin:18px 0 6px;line-height:1.6">연락처·주소 같은 개인정보는 글에 적지 말고 메시지로 주고받아 주세요. 정치·선거 활동, 포교, 광고성 모집은 올릴 수 없어요.</p></div>`;
 }
-function togetherForm(){ const orgs=myApprovedOrgs();
+function myVerifiedOrgs(){ return myApprovedOrgs().filter(isVerified); }
+function togetherForm(){ const orgs=myVerifiedOrgs(); if(!orgs.length){ toast('함께해요 모집은 인증된 단체만 올릴 수 있어요'); return; }
   openSheet('together-form',{},`${head('함께할 일 올리기')}<div class="panel-b"><form class="form gut" id="together-form">
     <div class="field"><label for="tg-title">무엇을 함께할까요? *</label><input id="tg-title" required maxlength="50" placeholder="예: 토요일 오전 웅천 해변 쓰레기 줍기"></div>
     <div class="two"><div class="field"><label for="tg-when">일시 (선택)</label><input id="tg-when" maxlength="80" placeholder="예: 11일 10시, 매주 토 오전"></div>
       <div class="field"><label for="tg-place">장소 (선택)</label><input id="tg-place" maxlength="80" placeholder="예: 웅천 친수공원 입구"></div></div>
     <div class="field"><label for="tg-slots">모집 인원 (선택)</label><input id="tg-slots" type="number" inputmode="numeric" min="1" max="999" placeholder="비워 두면 제한 없음"></div>
     <div class="field"><label for="tg-text">내용 *</label><textarea id="tg-text" required minlength="10" maxlength="800" style="min-height:130px" placeholder="준비물, 대상, 진행 방식 등을 적어 주세요"></textarea></div>
-    ${orgs.length?`<div class="field"><label for="tg-by">올리는 이름</label><select id="tg-by"><option value="">${esc(displayName(S.uid)||'나')} (개인)</option>${orgs.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')}</select></div>`:''}
+    ${orgs.length?`<div class="field"><label for="tg-by">모집하는 단체 (인증된 단체)</label><select id="tg-by">${orgs.map(o=>`<option value="${o.id}">${esc(o.name)} ✓</option>`).join('')}</select></div>
+    <label class="tgl" style="border:1px solid var(--line);border-radius:12px;padding:10px 12px"><span><b>단체 봉사 모집 (신청서 받기)</b><small>신청자가 이름·소속·전화번호를 적은 신청서를 내요. 신청서는 우리 단체 관리자만 볼 수 있어요.</small></span><input type="checkbox" id="tg-recruit"></label>
+    <div class="field" id="tg-dl-wrap" hidden><label for="tg-deadline">신청 마감 (선택)</label><input id="tg-deadline" maxlength="40" placeholder="예: 11월 10일까지, 선착순 마감"></div>`:''}
     <p class="err" id="tg-err"></p><button class="btn pri" type="submit" id="tg-submit">올리기</button></form></div>`); setTimeout(()=>{ const i=$('#tg-title'); if(i) i.focus(); },50); }
 async function submitTogether(){ const err=$('#tg-err'), btn=$('#tg-submit'); err.textContent='';
-  const title=$('#tg-title').value.trim(), text=$('#tg-text').value.trim(), when=$('#tg-when').value.trim(), place=$('#tg-place').value.trim(), slots=parseInt($('#tg-slots').value,10)||null, by=($('#tg-by')||{}).value||null;
+  const title=$('#tg-title').value.trim(), text=$('#tg-text').value.trim(), when=$('#tg-when').value.trim(), place=$('#tg-place').value.trim(), slots=parseInt($('#tg-slots').value,10)||null, by=($('#tg-by')||{}).value||null, recruit=!!($('#tg-recruit')||{}).checked, deadline=(($('#tg-deadline')||{}).value||'').trim();
+  if(!by||!isVerified(S.orgs.get(by))){ err.textContent='함께해요 모집은 인증된 단체만 올릴 수 있어요'; return; }
   if(title.length<2){ err.textContent='무엇을 함께할지 적어 주세요'; return; } if(text.length<10){ err.textContent='내용을 10자 이상 적어 주세요'; return; }
   { const w=bannedHit([title,text,when,place].join(' ')); if(w){ bannedToast(w); return; } }
   btn.disabled=true;
-  try{ await S.db.collection('together').add({authorId:S.uid,byOrg:by,title,text,when,place,slots,joins:{},closed:false,createdAt:Date.now()}); closeSheet(); toast('올렸어요. 함께할 이웃을 기다려 볼게요'); window.scrollTo(0,0); schedule(); }
+  try{ await S.db.collection('together').add({authorId:S.uid,byOrg:by,title,text,when,place,slots,joins:{},closed:false,recruit,deadline:recruit?deadline:'',appCount:0,createdAt:Date.now()}); closeSheet(); toast('올렸어요. 함께할 이웃을 기다려 볼게요'); window.scrollTo(0,0); schedule(); }
   catch(e){ btn.disabled=false; writeErr(e); } }
+/* ---------- 봉사 모집 신청서 ---------- */
+const APP_CONSENT=org=>`입력한 이름·소속·전화번호는 모집한 단체 「${esc(org)}」에게만 전달돼요. 전달된 개인정보의 보관·이용·파기 등 개인정보 보호에 대한 책임은 모집한 단체에 있어요. 다정여수는 신청서를 전달만 할 뿐 수집·열람·이용하지 않으며(운영자도 볼 수 없어요), 이에 대한 책임을 지지 않아요. 신청을 취소하면 신청서는 바로 삭제돼요.`;
+function applySheet(tid){ if(isGuest()) return guestGate(); if(!needWrite()) return; const x=(S.together||[]).find(p=>p.id===tid); if(!x) return; const o=S.orgs.get(x.byOrg)||{name:'모집 단체'};
+  const mine=(S.apps||[]).find(a=>a.tid===tid&&a.uid===S.uid); const myOrg=myApprovedOrgs()[0];
+  openSheet('apply',{tid},`${head(mine?'내 신청서':'봉사 신청서')}<div class="panel-b"><form class="form gut" id="apply-form" data-tid="${tid}">
+    <div class="pledge" style="margin:0;padding:12px 14px"><p style="margin:0;font-weight:700">${esc(x.title)}</p><p class="muted" style="margin:4px 0 0;font-size:12.5px">모집: ${esc(o.name)}${x.when?' · '+esc(x.when):''}${x.place?' · '+esc(x.place):''}</p></div>
+    <div class="field"><label for="ap-name">이름 *</label><input id="ap-name" required maxlength="30" lang="ko" value="${esc(mine?mine.name:(displayName(S.uid)||''))}" placeholder="홍길동"></div>
+    <div class="field"><label for="ap-aff">소속 *</label><input id="ap-aff" required maxlength="40" lang="ko" value="${esc(mine?mine.aff:(myOrg?myOrg.name:'개인'))}" placeholder="단체명 또는 ‘개인’"><span class="hint">단체로 신청하면 단체명을, 혼자 신청하면 ‘개인’이라고 적어 주세요.</span></div>
+    <div class="field"><label for="ap-phone">전화번호 *</label><input id="ap-phone" required type="tel" inputmode="tel" maxlength="20" value="${esc(mine?mine.phone:'')}" placeholder="010-0000-0000"></div>
+    <div class="consent"><p>${APP_CONSENT(o.name)}</p><label><input type="checkbox" id="ap-ok"${mine?' checked':''}> <b>위 내용을 확인했고, 모집 단체에 개인정보를 제공하는 데 동의해요 (필수)</b></label></div>
+    <p class="err" id="ap-err"></p><button class="btn pri" type="submit" id="ap-submit">${mine?'신청서 수정':'신청서 내기'}</button>
+    ${mine?`<button class="btn ghost" type="button" data-app-cancel="${mine.id}" style="color:var(--camellia)">신청 취소 (신청서 삭제)</button>`:''}</form></div>`); }
+async function submitApply(form){ const tid=form.dataset.tid, err=$('#ap-err'), btn=$('#ap-submit'); err.textContent='';
+  const name=$('#ap-name').value.trim(), aff=$('#ap-aff').value.trim(), phone=$('#ap-phone').value.trim();
+  if(!name){ err.textContent='이름을 적어 주세요'; return; } if(!aff){ err.textContent='소속(단체명 또는 개인)을 적어 주세요'; return; } if(!isPhone(phone)){ err.textContent='전화번호를 정확히 적어 주세요'; return; }
+  if(!$('#ap-ok').checked){ err.textContent='개인정보 제공 동의에 체크해 주세요'; return; }
+  btn.disabled=true; try{ await dj.togetherApply(tid,name,aff,phone,true); closeSheet(); toast('신청서를 냈어요. 모집 단체가 연락드릴 거예요'); }
+  catch(e){ btn.disabled=false; const m=(e&&e.message)||''; err.textContent=/full/.test(m)?'정원이 다 찼어요':/closed/.test(m)?'모집이 마감됐어요':/not allowed/.test(m)?'가입을 마친 회원만 신청할 수 있어요':'신청하지 못했어요: '+m; } }
+function appsSheet(tid){ const x=(S.together||[]).find(p=>p.id===tid); if(!x) return; const o=S.orgs.get(x.byOrg)||{name:''};
+  const list=(S.apps||[]).filter(a=>a.tid===tid).sort((a,b)=>a.createdAt-b.createdAt);
+  openSheet('apps',{tid},`${head(`신청자 ${list.length}명`)}<div class="panel-b"><div class="gut" style="padding-block:12px;display:flex;flex-direction:column;gap:12px">
+    <div class="pledge" style="margin:0;padding:12px 14px"><p style="margin:0;font-weight:700">${esc(x.title)}</p><p class="muted" style="margin:4px 0 0;font-size:12.5px">${x.slots?`정원 ${x.slots}명 · `:''}${esc(o.name)} 관리자만 볼 수 있어요</p></div>
+    <p class="hint" style="margin:0;font-size:12px;line-height:1.6">신청자 개인정보 보호 책임은 우리 단체에 있어요. 연락 외의 용도로 쓰지 말고, 모집이 끝나면 ‘신청서 모두 삭제’로 지워 주세요.</p>
+    ${list.length?`<div class="list">${list.map((a,i)=>`<div class="row" style="align-items:flex-start"><span class="rk">${i+1}</span><span class="dm-main"><b>${esc(a.name)} <small style="font-weight:400;color:var(--muted)">· ${esc(a.aff)}</small></b><small><a href="tel:${esc(a.phone.replace(/[^0-9+]/g,''))}" style="color:var(--sea)">${esc(a.phone)}</a> · ${rel(a.createdAt)}</small></span><button class="btn sm ghost" data-app-del="${a.id}">${S.confirmApp===a.id?'한 번 더':'삭제'}</button></div>`).join('')}</div>
+      <div class="rep-acts"><button class="btn ghost" data-apps-copy="${tid}">명단 복사</button><button class="btn ghost" data-apps-clear="${tid}" style="color:var(--camellia)">${S.confirmApps===tid?'한 번 더 누르면 모두 삭제':'신청서 모두 삭제'}</button></div>`
+      :'<div class="empty" style="border:0"><h2>아직 신청자가 없어요</h2></div>'}</div></div>`); }
 async function togetherJoin(id){ if(isGuest()) return guestGate(); if(!needWrite()) return; const x=(S.together||[]).find(p=>p.id===id); if(!x) return;
   const j={...(x.joins||{})}; if(j[S.uid]) delete j[S.uid]; else { if(x.closed){ toast('모집이 마감됐어요'); return; } j[S.uid]=Date.now(); } x.joins=j; schedule();
   try{ await dj.togetherJoin(id); if(j[S.uid]) toast('함께하기로 했어요. 자세한 건 글쓴이에게 메시지로 물어보세요'); }catch(e){ toast('처리하지 못했어요'); } }
 async function togetherDelete(id){ if(S.confirmTg!==id){ S.confirmTg=id; schedule(); setTimeout(()=>{ if(S.confirmTg===id){ S.confirmTg=null; schedule(); } },4000); return; }
-  S.confirmTg=null; try{ await S.db.doc('together/'+id).delete(); toast('삭제했어요'); }catch(e){ writeErr(e); } }
+  S.confirmTg=null; try{ const x=(S.together||[]).find(p=>p.id===id); if(x&&x.recruit){ try{ await dj.togetherAppsClear(id); }catch(_){} } await S.db.doc('together/'+id).delete(); toast('삭제했어요'); }catch(e){ writeErr(e); } }
 
 function homeView(){
   let orgs=approvedOrgs().sort((a,b)=>{ const pa=S.posts.find(p=>p.orgId===a.id), pb=S.posts.find(p=>p.orgId===b.id); return (pb?.createdAt||b.createdAt||0)-(pa?.createdAt||a.createdAt||0); });
@@ -2726,6 +2764,12 @@ document.addEventListener('click', e=>{
   const ntx=e.target.closest('[data-nt-x]'); if(ntx&&S.nf){ nfCollect(); const k=ntx.dataset.ntX, n=+k.slice(1); if(k[0]==='e') S.nf.existing.splice(n,1); else { try{ URL.revokeObjectURL(S.nf.files[n].url); }catch(_){} S.nf.files.splice(n,1); } nfRerender(); return; }
   const ntv=e.target.closest('[data-nt-vx]'); if(ntv&&S.nf){ nfCollect(); if(S.nf.videoUrl) try{ URL.revokeObjectURL(S.nf.videoUrl); }catch(_){} S.nf.videoFile=null; S.nf.videoUrl=null; S.nf.video=null; nfRerender(); return; }
   const nte=e.target.closest('[data-notice-edit]'); if(nte){ const n=S.notices.find(x=>x.id===nte.dataset.noticeEdit); if(n) openNoticeForm(n); return; }
+  const apb=e.target.closest('[data-apply]'); if(apb){ e.stopPropagation(); return applySheet(apb.dataset.apply); }
+  const asb=e.target.closest('[data-apps]'); if(asb){ e.stopPropagation(); return appsSheet(asb.dataset.apps); }
+  const acn=e.target.closest('[data-app-cancel]'); if(acn){ if(!acn.dataset.armed){ acn.dataset.armed='1'; acn.textContent='한 번 더 누르면 신청 취소'; return; } dj.togetherAppDelete(acn.dataset.appCancel).then(()=>{ closeSheet(); toast('신청을 취소하고 신청서를 삭제했어요'); }).catch(writeErr); return; }
+  const adl=e.target.closest('[data-app-del]'); if(adl){ const id=adl.dataset.appDel; if(S.confirmApp!==id){ S.confirmApp=id; return appsSheet(S.sheet.tid); } S.confirmApp=null; dj.togetherAppDelete(id).then(()=>{ S.apps=(S.apps||[]).filter(a=>a.id!==id); appsSheet(S.sheet.tid); toast('신청서를 삭제했어요'); }).catch(writeErr); return; }
+  const acl=e.target.closest('[data-apps-clear]'); if(acl){ const tid=acl.dataset.appsClear; if(S.confirmApps!==tid){ S.confirmApps=tid; return appsSheet(tid); } S.confirmApps=null; dj.togetherAppsClear(tid).then(()=>{ S.apps=(S.apps||[]).filter(a=>a.tid!==tid); appsSheet(tid); toast('신청서를 모두 삭제했어요'); }).catch(writeErr); return; }
+  const acp=e.target.closest('[data-apps-copy]'); if(acp){ const l=(S.apps||[]).filter(a=>a.tid===acp.dataset.appsCopy).sort((a,b)=>a.createdAt-b.createdAt).map((a,i)=>`${i+1}. ${a.name} / ${a.aff} / ${a.phone}`).join('\n'); (navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>toast('신청자 명단을 복사했어요')).catch(()=>toast('복사하지 못했어요')); return; }
   const jb=e.target.closest('[data-join]'); if(jb){ e.stopPropagation(); return togetherJoin(jb.dataset.join); }
   const tdl=e.target.closest('[data-tg-del]'); if(tdl){ e.stopPropagation(); return togetherDelete(tdl.dataset.tgDel); }
   const tcl=e.target.closest('[data-tg-close]'); if(tcl){ const x=(S.together||[]).find(p=>p.id===tcl.dataset.tgClose); if(x) S.db.doc('together/'+x.id).update({closed:!x.closed}).then(()=>toast(x.closed?'모집을 다시 열었어요':'모집을 마감했어요')).catch(writeErr); return; }
@@ -2862,7 +2906,7 @@ document.addEventListener('dblclick', e=>{ const m=e.target.closest('[data-dbl]'
 document.addEventListener('submit', e=>{ e.preventDefault();
   const id=e.target.id;
   if(id==='ustatus-form') setUserStatus(e.target.dataset.uid,e.target.dataset.act,e.target); else if(id==='udel-form') deleteUser(e.target); else if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
-  else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); else if(id==='ob-acct-form') obAccount(); else if(id==='praise-form') submitPraise(); else if(id==='together-form') submitTogether(); });
+  else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); else if(id==='ob-acct-form') obAccount(); else if(id==='praise-form') submitPraise(); else if(id==='together-form') submitTogether(); else if(id==='apply-form') submitApply(e.target); });
 document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.value; schedule(); }
   if(e.target.id==='crop-zoom'){ cropZoomTo(+e.target.value); return; }
   if(e.target.id==='p-cap'){ const c=$('#p-cnt'); if(c) c.textContent=e.target.value.length+'/2200'; }
@@ -2879,6 +2923,7 @@ document.addEventListener('change', e=>{ const i=e.target;
     nfCollect(); S.nf.videoFile=v; S.nf.videoUrl=URL.createObjectURL(v); S.nf.video=null; nfRerender(); return; }
   if(i.dataset&&i.dataset.admcat&&S.isAdmin){ const id=i.dataset.admcat, o=S.orgs.get(id), v=i.value; if(!o||o.category===v) return; i.disabled=true;
     S.db.doc('orgs/'+id).update({category:v}).then(()=>{ toast(`‘${o.name}’ 분류를 ${v}(으)로 바꿨어요`); }).catch(e=>writeErr(e)).finally(()=>{ i.disabled=false; }); return; }
+  if(i.id==='tg-recruit'){ const w=document.getElementById('tg-dl-wrap'); if(w) w.hidden=!i.checked; const by=document.getElementById('tg-by'); if(i.checked&&by&&!by.value&&by.options.length>1) by.selectedIndex=1; return; }
   if(i.id==='rq-q'){ const w=document.getElementById('rq-own-wrap'); if(w) w.hidden=i.value!=='__own'; }
   if(i.id==='ob-faith'){ const w=document.getElementById('ob-faith-etc-wrap'); if(w) w.hidden=i.value!=='기타'; }
   if(i.id==='ob-all'){ ['ob-a1','ob-a2','ob-a3'].forEach(k=>{ const c=document.getElementById(k); if(c) c.checked=i.checked; }); return; }
@@ -2926,6 +2971,7 @@ svEl.addEventListener('click', e=>{ if(S.svSkip){ S.svSkip=false; e.stopPropagat
     if(mine&&!S.people.has(S.uid)) S.people.set(S.uid,mine); }),fail);
   db.collection('mod').onSnapshot(once(s=>{ S.mod=new Map(s.docs.map(d=>[d.id,d.data()])); }),fail);
   db.collection('stories').orderBy('createdAt','desc').limit(300).onSnapshot(s=>{ S.stories=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); if(S.sv){ const cur=(storiesByParty().get(S.sv.pid)||[])[S.sv.idx]; if(!cur) renderStory(); else { const b=$('#sv .eye'); if(b) b.textContent='조회 '+Object.keys(cur.seen||{}).length; } } },()=>{});
+  S.apps=[]; if(S.uid) db.collection('apps').onSnapshot(s=>{ S.apps=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
   S.together=[]; db.collection('together').orderBy('createdAt','desc').limit(500).onSnapshot(s=>{ S.together=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
   S.praise=[]; db.collection('praise').orderBy('createdAt','desc').limit(500).onSnapshot(s=>{ S.praise=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
   db.collection('notices').orderBy('createdAt','desc').limit(50).onSnapshot(s=>{ S.notices=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
