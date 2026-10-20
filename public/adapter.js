@@ -113,7 +113,10 @@
       const r=await sb.auth.signInWithPassword({email,password:current}); if(r.error) throw new Error('wrong current');
       const {error}=await sb.auth.updateUser({password:pw}); if(error) throw error; try{ await sb.rpc('pw_temp_clear'); }catch(_){} },
     tempPending:async()=>{ const {data}=await sb.rpc('pw_temp_pending'); return !!data; },
-    signOut:async()=>{ await sb.auth.signOut(); },
+    signOut:async()=>{ try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
+      /* 서버 응답과 관계없이 이 기기의 로그인 정보를 확실히 지우고 새로고침 */
+      try{ Object.keys(localStorage).filter(k=>k.startsWith('sb-')||k.includes('auth-token')).forEach(k=>localStorage.removeItem(k)); }catch(_){}
+      session=null; setTimeout(()=>location.replace(location.pathname),80); },
     resetPassword:async email=>{ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname}); if(error) throw error; },
     myStatus:async()=>{ if(!session) return null; const {data}=await sb.from('account_status').select('status,reason,until').eq('user_id',session.user.id).maybeSingle(); if(!data) return null; if(data.until&&new Date(data.until)<new Date()) return null; return data; },
     listUsers:async()=>{ const {data,error}=await sb.rpc('admin_list_users'); if(error) throw mapErr(error); return data||[]; },
