@@ -1650,7 +1650,7 @@ function adminView(){
       || `<div class="empty"><h2>승인을 기다리는 항목이 없어요</h2><p>단체가 가입을 신청하거나 개인 참여자가 소식을 올리면 여기에 들어와요.</p></div>`;
   }
   else body = list.length?`<div class="reps">${list.map(repCard).join('')}</div>`:`<div class="empty"><h2>${S.admFilter==='open'?'처리할 신고가 없어요':'처리한 신고가 아직 없어요'}</h2><p>새 신고가 들어오면 아래 탭에 숫자로 알려 드려요.</p></div>`;
-  return `<div class="gut"><section class="sec"><h2>관리 <small>관리자에게만 보여요</small></h2>${adminNoticesHtml()}${bannedAdminHtml()}
+  return `<div class="gut"><section class="sec"><div style="display:flex;align-items:center;gap:10px"><h2 style="flex:1;margin:0">관리 <small>관리자에게만 보여요</small></h2>${window.dj?`<button class="btn sm ghost" data-act="admin-logout">관리자 로그아웃</button>`:''}</div>${window.dj&&dj.session()?`<p class="muted" style="margin:6px 0 10px;font-size:12.5px">${esc((dj.session().user||{}).email||'')} 로 로그인 중</p>`:''}${adminNoticesHtml()}${bannedAdminHtml()}
     <div class="stat-row"><div><b>${pend.length+porgs.length}</b><span>승인 대기</span></div><div><b>${open.length}</b><span>신고 대기</span></div><div><b>${hiddenN}</b><span>숨김 중</span></div></div>
     <p class="muted" style="margin:0">단체 가입과 개인 참여자의 글은 승인해야 공개돼요. 서로 다른 ${AUTO_HIDE}명이 신고한 소식·댓글은 확인 전까지 자동으로 숨겨져요.</p>
     <div class="chips"><button class="chip" data-adm="pending" aria-pressed="${S.admFilter==='pending'}">승인 대기 ${pend.length+porgs.length}</button>${window.dj?`<button class="chip" data-adm="accounts" aria-pressed="${S.admFilter==='accounts'}">계정 ${S.users?S.users.length:''}</button>`:''}<button class="chip" data-adm="open" aria-pressed="${S.admFilter==='open'}">신고 ${open.length}</button><button class="chip" data-adm="done" aria-pressed="${S.admFilter==='done'}">처리 완료</button></div>
@@ -2577,6 +2577,7 @@ document.addEventListener('click', e=>{
   else if(a==='signup'){ if(!S.uid&&window.dj) openLogin('up'); else openSignup(0); }
   else if(a==='login') openLogin('in');
   else if(a==='logout'){ if(window.dj) dj.signOut(); }
+  else if(a==='admin-logout'){ if(!window.dj) return; if(!t.dataset.armed){ t.dataset.armed='1'; t.textContent='한 번 더 누르면 로그아웃'; setTimeout(()=>{ if(t.isConnected){ delete t.dataset.armed; t.textContent='관리자 로그아웃'; } },4000); return; } t.disabled=true; t.textContent='로그아웃 중'; S.tab='home'; dj.signOut(); }
   else if(a==='dm'){ S.hist=[]; go('dm'); }
   else if(a==='search') goSearch('');
   else if(a==='gate-later'){ $('#gate').hidden=true; }
