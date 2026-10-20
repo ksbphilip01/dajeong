@@ -22,27 +22,27 @@ body{margin:0;font:14px system-ui,-apple-system,sans-serif} img{max-width:100%} 
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
 <style>
 /* Layout: one phone-width column (feed app), sticky top bar, fixed bottom tabs, bottom sheets for detail and forms. Sea blue + camellia red (여수 동백). */
 :root{
-  --bg:#F3F6F8; --surface:#FFFFFF; --ink:#12222C; --muted:#5B6C77; --line:#DFE6EA;
-  --sea:#1B5876; --sea-soft:#E1EDF3; --camellia:#C42339; --camellia-soft:#FBE6E9;
+  --bg:#EEF2F1; --surface:#FFFFFF; --ink:#10202B; --muted:#5E6E78; --line:#E2E8E8; --night:#0E2538; --night-ink:#F3F6F4; --sand:#F6EEDD;
+  --sea:#1F5B78; --sea-soft:#E3EDF1; --camellia:#CF2B43; --camellia-soft:#FBE7EA; --leaf:#1E6B52; --leaf-soft:#E2F1EA;
   --k-talent:#5E47A8; --k-volunteer:#2A7553; --k-donation:#A9502A; --k-share:#8F6A0E; --k-recruit:#1B5876; --k-need:#0E7C86;
   --k-talent-bg:#ECE8F7; --k-volunteer-bg:#E3F1EA; --k-donation-bg:#F7E9E2; --k-share-bg:#F5EDD8; --k-recruit-bg:#E1EDF3; --k-need-bg:#DFF3F4;
   --scrim:rgba(10,20,26,.45); --shadow:0 10px 40px rgba(12,30,40,.16);
-  --f-display:"Gowun Batang", "Nanum Myeongjo", serif;
+  --f-display:"Hahmlet", "Gowun Batang", "Nanum Myeongjo", serif;
   --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#0C151B; --surface:#131F27; --ink:#E4ECF0; --muted:#90A2AD; --line:#22323C;
-  --sea:#72B6D6; --sea-soft:#163040; --camellia:#F2596E; --camellia-soft:#3B1A21;
+  --bg:#0B151C; --surface:#121E26; --ink:#E6EDF0; --muted:#93A4AE; --line:#223139; --night:#081822; --night-ink:#F3F6F4; --sand:#2A2418;
+  --sea:#72B6D6; --sea-soft:#163040; --camellia:#F2596E; --camellia-soft:#3B1A21; --leaf:#5FC79A; --leaf-soft:#123528;
   --k-talent:#B6A6F0; --k-volunteer:#7FD0A8; --k-donation:#F0A17C; --k-share:#E6C266; --k-recruit:#72B6D6; --k-need:#6FD0D8;
   --k-talent-bg:#251F3D; --k-volunteer-bg:#14302A; --k-donation-bg:#3A2219; --k-share-bg:#352B12; --k-recruit-bg:#163040; --k-need-bg:#10343A;
   --scrim:rgba(0,0,0,.6); --shadow:0 10px 40px rgba(0,0,0,.5); color-scheme:dark }}
 :root[data-theme="dark"]{
-  --bg:#0C151B; --surface:#131F27; --ink:#E4ECF0; --muted:#90A2AD; --line:#22323C;
-  --sea:#72B6D6; --sea-soft:#163040; --camellia:#F2596E; --camellia-soft:#3B1A21;
+  --bg:#0B151C; --surface:#121E26; --ink:#E6EDF0; --muted:#93A4AE; --line:#223139; --night:#081822; --night-ink:#F3F6F4; --sand:#2A2418;
+  --sea:#72B6D6; --sea-soft:#163040; --camellia:#F2596E; --camellia-soft:#3B1A21; --leaf:#5FC79A; --leaf-soft:#123528;
   --k-talent:#B6A6F0; --k-volunteer:#7FD0A8; --k-donation:#F0A17C; --k-share:#E6C266; --k-recruit:#72B6D6; --k-need:#6FD0D8;
   --k-talent-bg:#251F3D; --k-volunteer-bg:#14302A; --k-donation-bg:#3A2219; --k-share-bg:#352B12; --k-recruit-bg:#163040; --k-need-bg:#10343A;
   --scrim:rgba(0,0,0,.6); --shadow:0 10px 40px rgba(0,0,0,.5); color-scheme:dark }
@@ -740,11 +740,81 @@ img,video,canvas{max-width:100%}
 }
 
 
+
+/* ===== 다정여수 비주얼 시스템: 밤바다(남색) + 동백(빨강) + 바다안개(배경), Hahmlet 명조 ===== */
+.top{border-bottom:0;box-shadow:inset 0 -1px 0 var(--line)}
+.brand h1{font-family:var(--f-display);font-weight:800;font-size:25px;letter-spacing:-.02em;gap:8px}
+.brand h1::before{width:13px;height:13px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:inset -2px -2px 0 rgba(0,0,0,.18)}
+.btn{border-radius:999px;padding:10px 16px}
+.btn.sm{padding:7px 12px}
+.btn.pri{background:var(--night);color:var(--night-ink)}
+.btn.ghost{background:transparent}
+#top-cta.pri{background:var(--camellia);color:#fff}
+/* hero */
+.hero{position:relative;overflow:hidden;background:var(--night);color:var(--night-ink);padding:30px max(20px,env(safe-area-inset-left,0px)) 22px;isolation:isolate}
+.hero .petal{position:absolute;right:-44px;top:-40px;width:150px;height:150px;color:var(--camellia);opacity:.95;z-index:-1;transform:rotate(12deg)}
+.hero-kicker{margin:0 0 10px;font-size:13px;color:rgba(243,246,244,.72)}
+.hero-h{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(26px,7.6vw,34px);line-height:1.24;letter-spacing:-.025em;text-wrap:balance;max-width:11em;padding-right:28px}
+.hero-sub{margin:14px 0 0;font-size:14px;line-height:1.65;color:rgba(243,246,244,.82);max-width:30ch;word-break:keep-all}
+.hero-acts{display:flex;align-items:center;gap:14px;margin-top:20px;flex-wrap:wrap}
+.hero-cta{background:#fff;color:var(--night);font-weight:700;padding:12px 20px;border-radius:999px}
+.hero-cta:active{transform:translateY(1px)}
+.hero-link{font-size:13.5px;color:rgba(243,246,244,.85);text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(243,246,244,.4)}
+.hero-stats{display:flex;gap:0;margin:26px 0 0;padding:14px 0 0;border-top:1px solid rgba(243,246,244,.18)}
+.hero-stats div{flex:1;min-width:0;padding-right:10px}
+.hero-stats div+div{border-left:1px solid rgba(243,246,244,.18);padding-left:14px}
+.hero-stats dt{font-size:11.5px;color:rgba(243,246,244,.66);margin:0 0 2px;white-space:nowrap}
+.hero-stats dd{margin:0;font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
+/* member stats line (quiet) */
+.pulse-line{display:flex;align-items:center;gap:10px;padding-block:12px 0;font-size:12.5px;color:var(--muted);overflow:hidden;white-space:nowrap}
+.pulse-line b{font-family:var(--f-display);font-weight:700;color:var(--ink);font-size:14px;margin-left:2px}
+.pulse-line i{width:1px;height:12px;background:var(--line);flex:none}
+/* boards: flat blocks, typography-led */
+.boards{gap:10px;margin-top:14px}
+.board{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;border-radius:18px;padding:14px 14px 12px;min-height:92px;box-shadow:none;color:#fff;text-align:left}
+.board .tx{display:flex;flex-direction:column;gap:6px;min-width:0}
+.board small{font-size:11.5px;font-weight:500;opacity:.85}
+.board small em{font-style:normal;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.22);font-size:10.5px;font-weight:700}
+.board b{font-family:var(--f-display);font-weight:700;font-size:clamp(16px,4.6vw,19px);line-height:1.25;letter-spacing:-.02em}
+.board .go{font-size:22px;line-height:1;opacity:.7;flex:none;padding-bottom:2px}
+.b-praise{background:var(--camellia)}.b-together{background:var(--leaf)}
+/* ticker */
+.ticker{border-radius:14px;background:var(--sand);border-color:transparent}
+.tk-pin{background:var(--night)}
+/* chips */
+.chip{font-weight:500}
+.chip[aria-pressed="true"]{background:var(--night);border-color:var(--night);color:var(--night-ink)}
+/* posts: quiet paper cards */
+.post{border:1px solid var(--line);border-radius:18px;box-shadow:none}
+.post-h{padding:12px 14px}
+.feed{gap:16px}
+/* sections / boards pages */
+.sec h2{font-weight:700;letter-spacing:-.02em}
+.pr-hero,.nt-hero,.tg-hero{background:var(--night)!important;border-radius:20px}
+.pr-hero h2,.nt-hero h2{font-family:var(--f-display);font-weight:800;letter-spacing:-.02em}
+.pr-hero small{color:var(--camellia-soft)}.tg-hero small{color:#CFEBDD}
+.pr-card,.nt-card,.tg-card{border-radius:18px}
+.pr-cheer.on{background:var(--camellia)}.pr-cheer.tg.on{background:var(--leaf)}
+.rc-badge{color:var(--leaf);background:var(--leaf-soft)}
+.empty{border-radius:18px}
+.empty h2{font-weight:700;letter-spacing:-.02em}
+/* bottom tabs */
+.tabs{border-top:0;box-shadow:inset 0 1px 0 var(--line)}
+.tab[aria-current="page"]{color:var(--night)}
+.tab[aria-current="page"]::after{background:var(--camellia)}
+/* join banner on feed for guests is replaced by hero; keep member banner quiet */
+.join{background:var(--sand);border:0;border-radius:16px}
+.join .btn{background:var(--night);color:var(--night-ink)}
+/* login/gate marks */
+.ob-mark{font-family:var(--f-display);font-weight:800;letter-spacing:-.02em}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .hero-cta{background:var(--night-ink);color:var(--night)} }
+@media (min-width:600px){ .hero{border-radius:0 0 24px 24px} }
+
 </style>
 
 <div class="app">
   <header class="top"><div class="top-in gut">
-    <div class="brand"><h1>다정<i>여수</i></h1><small>여수의 따뜻한 소식</small></div>
+    <div class="brand"><h1>다정<i>여수</i></h1></div>
     <div class="top-r"><button class="icon-btn" data-act="notif" aria-label="알림"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg><i class="badge" id="nt-badge" hidden></i></button><button class="icon-btn" data-act="search" aria-label="검색"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></button><button class="icon-btn" data-act="dm" aria-label="메시지"><svg viewBox="0 0 24 24"><path d="M21 3 10.5 13.5M21 3l-6.8 18-3.7-7.5L3 9.8z"/></svg><i class="badge" id="dm-badge" hidden></i></button>
     <button class="btn pri sm" id="top-cta" data-act="login">로그인</button></div>
   </div></header>
@@ -1039,12 +1109,23 @@ async function praiseCheer(id){ if(isGuest()) return guestGate(); if(!needWrite(
 async function praiseDelete(id){ if(S.confirmPraise!==id){ S.confirmPraise=id; schedule(); setTimeout(()=>{ if(S.confirmPraise===id){ S.confirmPraise=null; schedule(); } },4000); return; }
   S.confirmPraise=null; try{ await S.db.doc('praise/'+id).delete(); toast('삭제했어요'); }catch(e){ writeErr(e); } }
 
-function homePulse(orgs){ const week=livePosts().filter(p=>Date.now()-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0);
+const PETAL=`<svg class="petal" viewBox="0 0 120 120" aria-hidden="true"><g fill="currentColor"><circle cx="60" cy="30" r="24"/><circle cx="88" cy="50" r="24"/><circle cx="78" cy="84" r="24"/><circle cx="42" cy="84" r="24"/><circle cx="32" cy="50" r="24"/></g><circle cx="60" cy="60" r="13" fill="#F3D27A"/></svg>`;
+function homeStats(orgs){ const week=livePosts().filter(p=>Date.now()-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0); const n=v=>Number(v||0).toLocaleString('ko-KR');
+  return [[n(week),'이번 주 좋은 소식'],[n(orgs.length),'함께하는 단체'],[n(hearts),'응원 하트']]; }
+function homeHero(orgs){ const st=homeStats(orgs), empty=!livePosts().length, member=isMember()||S.isAdmin;
+  const h=empty?`여수의 첫 번째<br>좋은 소식을 기다려요`:`오늘 여수에서<br>가장 다정한 소식`;
+  const sub=empty?'재능기부, 봉사, 기부, 나눔. 작은 일이라도 좋아요. 첫 소식의 주인공이 되어 주세요.':'복지관, 봉사단, 가게, 학교, 그리고 이웃들이 올리는 재능기부·봉사·기부·나눔 이야기예요.';
+  const cta=member?`<button class="btn hero-cta" data-act="new-post">소식 올리기</button>`:`<button class="btn hero-cta" data-act="signup">가입하고 소식 올리기</button><button class="hero-link" data-tab="praise">가입 없이 둘러보기</button>`;
+  return `<section class="hero">${PETAL}<p class="hero-kicker">여수의 좋은 소식이 모이는 곳</p><h2 class="hero-h">${h}</h2><p class="hero-sub">${sub}</p><div class="hero-acts">${cta}</div>
+    <dl class="hero-stats">${st.map(([v,l])=>`<div><dt>${l}</dt><dd>${v}</dd></div>`).join('')}</dl></section>`; }
+function homePulse(orgs){ const st=homeStats(orgs);
+  return `<div class="pulse-line gut">${st.map(([v,l],i)=>`${i?'<i></i>':''}<span>${l} <b>${v}</b></span>`).join('')}</div>`; }
+function homePulseOld(orgs){ const week=livePosts().filter(p=>Date.now()-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0);
   const n=v=>Number(v||0).toLocaleString('ko-KR');
   return `<div class="pulse">${isGuest()?`<div><b>${n(week)}</b><span>이번 주 좋은 소식</span></div>`:`<button data-tab="monthly" style="text-align:center"><b>${n(week)}</b><span>이번 주 좋은 소식 ›</span></button>`}<div><b>${n(orgs.length)}</b><span>함께하는 단체</span></div><div><b>${n(hearts)}</b><span>누적 응원 하트</span></div></div>`; }
-const BOARDS={praise:{label:'칭찬합니다',title:'칭찬은 이웃도 춤추게',ic:'👏'},together:{label:'함께해요',title:'같이 하면 더 다정해',ic:'🙌'}};
+const BOARDS={praise:{label:'칭찬합니다',title:'칭찬은<br>이웃도 춤추게',ic:''},together:{label:'함께해요',title:'같이 하면<br>더 다정해',ic:''}};
 function boardRow(){ const nP=praiseList().filter(x=>Date.now()-x.createdAt<3*DAY).length, nT=togetherList().filter(x=>!x.closed&&Date.now()-x.createdAt<7*DAY).length;
-  const b=(k,n)=>`<button class="board b-${k}" data-tab="${k}"><span class="ic" aria-hidden="true">${BOARDS[k].ic}</span><span class="tx"><small>${BOARDS[k].label}${n?` · 새 글 ${n}`:''}</small><b>${BOARDS[k].title}</b></span></button>`;
+  const b=(k,n)=>`<button class="board b-${k}" data-tab="${k}"><span class="tx"><small>${BOARDS[k].label}${n?` <em>새 글 ${n}</em>`:''}</small><b>${BOARDS[k].title}</b></span><span class="go" aria-hidden="true">›</span></button>`;
   return `<div class="boards">${b('praise',nP)}${b('together',nT)}</div>`; }
 /* ---------- 함께해요 ---------- */
 function togetherList(){ return (S.together||[]).filter(x=>S.isAdmin||x.authorId===S.uid||(!isHidden('together',x)&&!(acctHidden(x.authorId)&&!S.isAdmin))); }
@@ -1148,13 +1229,7 @@ function homeView(){
   else if(S.filter!=='all') posts=posts.filter(p=>p.kind===S.filter);
   let body;
   if(!livePosts().length){
-    const cta = `<div class="gut"><div class="empty" style="margin-top:12px">
-      <h2>여수의 첫 따뜻한 소식을 기다려요</h2>
-      <p>재능기부, 봉사, 기부, 나눔 소식을 올리고 서로 좋아요와 댓글로 응원하는 곳이에요.</p>
-      <button class="btn pri" data-act="${isMember()?'new-post':'signup'}">${isMember()?'첫 소식 올리기':'가입하고 소식 올리기'}</button>
-      ${isMember()?'':'<p class="muted" style="font-size:12.5px;margin:0">가입하지 않아도 올라오는 소식과 댓글은 볼 수 있어요.</p>'}
-    </div></div>`;
-    return homePulse(orgs) + noticeTicker() + boardRow() + cta;
+    return homeHero(orgs) + noticeTicker() + boardRow() + `<p class="muted gut" style="font-size:12.5px;margin:18px 0 0;text-align:center">가입하지 않아도 올라오는 소식과 댓글은 볼 수 있어요.</p>`;
   }
   const pulse=homePulse(orgs);
   posts=feedOrder(posts);
@@ -1165,7 +1240,7 @@ function homeView(){
     body = `<div class="feed">${top.length?`<div class="cf-band">★ 친한 친구의 새 소식 ${top.length}</div>${top.map(postCard).join('')}<div class="cf-band" style="color:var(--muted)">모든 이웃의 소식</div>`:''}${rest.map(postCard).join('')}</div>`;
   }
   else body = `<div class="feed">${posts.map(postCard).join('')}</div>`;
-  if(isGuest()) return pulse + noticeTicker() + boardRow() + banner + chips + body;
+  if(isGuest()) return homeHero(orgs) + noticeTicker() + boardRow() + chips + body;
   return (orgs.length?stories:'') + pulse + noticeTicker() + boardRow() + banner + chips + body;
 }
 function metaHtml(p){
