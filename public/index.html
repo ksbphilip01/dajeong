@@ -287,6 +287,9 @@ input:focus-visible+.rb{outline:2px solid var(--sea);outline-offset:-2px}
 /* filter chips */
 .chips{display:flex;gap:8px;overflow-x:auto;padding-block:12px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
+.praise-chip{background:var(--camellia,#B4233C)!important;color:#fff!important;box-shadow:none!important;font-weight:700;border-color:transparent!important}.praise-chip b{background:#fff;color:var(--camellia,#B4233C);border-radius:999px;padding:0 6px;font-size:11px;margin-left:2px}
+.pr-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}.pr-to{font-size:12px;color:var(--muted);letter-spacing:.02em}.pr-to b{display:block;font-size:17px;color:var(--ink,inherit);margin-top:2px}.pr-text{margin:0;white-space:pre-wrap;line-height:1.65;font-size:14.5px}.pr-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}.pr-foot .sp{flex:1}.pr-cheer{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--ink,inherit)}.pr-cheer.on{background:var(--camellia,#B4233C);color:#fff;border-color:transparent}
+.pr-hero{border-radius:18px;padding:20px 18px;background:linear-gradient(150deg,#B4233C,#D9536A);color:#fff;margin:4px 0 14px}.pr-hero h2{margin:0 0 6px;font-size:22px}.pr-hero p{margin:0;opacity:.92;font-size:13.5px;line-height:1.6}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:13px;white-space:nowrap;color:var(--muted)}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 
@@ -932,10 +935,50 @@ function viewHtml(){
   if(S.tab==='calendar') return calendarView();
   if(S.tab==='report') return reportView();
   if(S.tab==='monthly') return monthlyView();
+  if(S.tab==='praise') return praiseView();
   return homeView();
 }
 
 /* ---------- views ---------- */
+/* ---------- 칭찬합니다 ---------- */
+function praiseList(){ return (S.praise||[]).filter(x=>S.isAdmin||x.authorId===S.uid||(!isHidden('praise',x)&&!(acctHidden(x.authorId)&&!S.isAdmin))); }
+function praiseFrom(x){ if(x.byOrg){ const o=S.orgs.get(x.byOrg); if(o) return o.name; } return displayName(x.authorId)||'이웃'; }
+function praiseView(){
+  const list=praiseList();
+  const card=x=>{ const cheers=Object.keys(x.cheers||{}), on=S.uid&&cheers.includes(S.uid), mine=x.authorId===S.uid, hid=isHidden('praise',x);
+    const tOrg=x.targetOrgId&&S.orgs.get(x.targetOrgId);
+    return `<article class="pr-card">${hid?'<span class="st hid" style="align-self:flex-start">숨김 · 관리자와 글쓴이만 보여요</span>':''}
+      <div class="pr-to">To.${tOrg?`<button class="more" data-org="${tOrg.id}" style="display:block;padding:0;font-size:17px;font-weight:700;color:inherit;text-align:left">${esc(x.target)} ›</button>`:`<b>${esc(x.target)}</b>`}</div>
+      <p class="pr-text">${esc(x.text)}</p>
+      <div class="pr-foot"><span>From. <b>${esc(praiseFrom(x))}</b> · ${rel(x.createdAt)}</span><span class="sp"></span>
+        <button class="pr-cheer${on?' on':''}" data-cheer="${x.id}">👏 저도 칭찬해요${cheers.length?' '+cheers.length:''}</button></div>
+      <div class="pr-foot" style="justify-content:flex-end">${mine||S.isAdmin?`<button class="more" data-praise-del="${x.id}">${S.confirmPraise===x.id?'한 번 더 누르면 삭제':'삭제'}</button>`:''}${!mine&&S.uid?`<button class="more" data-report="praise" data-tid="${x.id}">신고</button>`:''}</div></article>`; };
+  return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="praise-exit" style="padding:0">‹ 나가기</button><span class="sp" style="flex:1"></span>${S.uid?`<button class="btn sm pri" data-act="praise-new">칭찬 글 쓰기</button>`:''}</div>
+    <div class="pr-hero"><h2>칭찬합니다</h2><p>우리 동네에서 만난 고마운 사람, 단체, 가게를 칭찬해 주세요. 작은 친절도 좋아요. 따뜻한 한마디가 또 다른 선행으로 이어져요.</p></div>
+    ${list.length?`<div style="display:flex;flex-direction:column;gap:12px">${list.map(card).join('')}</div>`
+      :`<div class="empty"><h2>첫 칭찬을 남겨 주세요</h2><p>봉사하는 이웃, 친절한 가게, 묵묵히 애쓰는 단체… 고마웠던 순간을 나눠요.</p>${S.uid?'<button class="btn pri" data-act="praise-new">칭찬 글 쓰기</button>':'<button class="btn pri" data-act="signup">가입하고 칭찬하기</button>'}</div>`}
+    <p class="muted" style="font-size:12px;margin:18px 0 6px;line-height:1.6">칭찬받는 분의 연락처·주소 같은 개인정보는 적지 말아 주세요. 정치인 언급과 광고성 글은 올릴 수 없고, 신고가 쌓이면 자동으로 숨겨져요.</p></div>`;
+}
+function praiseForm(){ const orgs=myApprovedOrgs();
+  openSheet('praise-form',{},`${head('칭찬 글 쓰기')}<div class="panel-b"><form class="form gut" id="praise-form">
+    <div class="field"><label for="pr-target">누구를 칭찬할까요? *</label><input id="pr-target" required maxlength="40" list="pr-orgs" placeholder="예: 국동 ○○슈퍼 사장님, 여서동 환경미화원분들"><datalist id="pr-orgs">${approvedOrgs().map(o=>`<option value="${esc(o.name)}">`).join('')}</datalist><span class="hint">다정에 있는 단체 이름을 고르면 그 단체 프로필과 연결돼요.</span></div>
+    <div class="field"><label for="pr-text">칭찬 내용 *</label><textarea id="pr-text" required minlength="10" maxlength="600" style="min-height:140px" placeholder="언제, 어떤 일이 고마웠는지 적어 주세요"></textarea></div>
+    ${orgs.length?`<div class="field"><label for="pr-by">보내는 이름</label><select id="pr-by"><option value="">${esc(displayName(S.uid)||'나')} (개인)</option>${orgs.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')}</select></div>`:''}
+    <p class="err" id="pr-err"></p><button class="btn pri" type="submit" id="pr-submit">칭찬 올리기</button></form></div>`); setTimeout(()=>{ const i=$('#pr-target'); if(i) i.focus(); },50); }
+async function submitPraise(){ const err=$('#pr-err'), btn=$('#pr-submit'); err.textContent='';
+  const target=$('#pr-target').value.trim(), text=$('#pr-text').value.trim(), by=($('#pr-by')||{}).value||null;
+  if(target.length<2){ err.textContent='칭찬할 대상을 적어 주세요'; return; } if(text.length<10){ err.textContent='칭찬 내용을 10자 이상 적어 주세요'; return; }
+  { const w=bannedHit(target+' '+text); if(w){ bannedToast(w); return; } }
+  const tOrg=approvedOrgs().find(o=>o.name===target);
+  btn.disabled=true;
+  try{ await S.db.collection('praise').add({authorId:S.uid,byOrg:by,target,targetOrgId:tOrg?tOrg.id:null,text,cheers:{},createdAt:Date.now()}); closeSheet(); toast('칭찬을 올렸어요. 고마운 마음이 전해질 거예요'); window.scrollTo(0,0); schedule(); }
+  catch(e){ btn.disabled=false; writeErr(e); } }
+async function praiseCheer(id){ if(isGuest()) return guestGate(); if(!needWrite()) return; const x=(S.praise||[]).find(p=>p.id===id); if(!x) return;
+  const c={...(x.cheers||{})}; if(c[S.uid]) delete c[S.uid]; else c[S.uid]=Date.now(); x.cheers=c; schedule();
+  try{ await dj.praiseCheer(id); }catch(e){ toast('처리하지 못했어요'); } }
+async function praiseDelete(id){ if(S.confirmPraise!==id){ S.confirmPraise=id; schedule(); setTimeout(()=>{ if(S.confirmPraise===id){ S.confirmPraise=null; schedule(); } },4000); return; }
+  S.confirmPraise=null; try{ await S.db.doc('praise/'+id).delete(); toast('삭제했어요'); }catch(e){ writeErr(e); } }
+
 function homeView(){
   let orgs=approvedOrgs().sort((a,b)=>{ const pa=S.posts.find(p=>p.orgId===a.id), pb=S.posts.find(p=>p.orgId===b.id); return (pb?.createdAt||b.createdAt||0)-(pa?.createdAt||a.createdAt||0); });
   const byParty=storiesByParty(), canPost=myApprovedOrgs().length>0, cs=closeSet();
@@ -951,7 +994,7 @@ function homeView(){
     ${unseenFirst.map(chip).join('')}${without.map(chip).join('')}
   </div>`;
   const opts = [['all','전체'], ...(closeSet().size?[['close','★ 친한 친구']]:[]), ...Object.entries(KINDS)];
-  const chips = `<div class="chips gut" role="group" aria-label="소식 종류">${opts.map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${S.filter===k}">${l}</button>`).join('')}</div>`;
+  const chips = `<div class="chips gut" role="group" aria-label="소식 종류"><button class="chip praise-chip" data-tab="praise">칭찬합니다${(()=>{ const n=praiseList().filter(x=>Date.now()-x.createdAt<3*DAY).length; return n?` <b>${n}</b>`:''; })()}</button>${opts.map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${S.filter===k}">${l}</button>`).join('')}</div>`;
   const banner = (!isMember() && !S.hideJoin && S.posts.length) ? `<div class="join"><div style="flex:1;min-width:0"><b>함께 소식을 나눠요</b><span>가입하지 않아도 소식과 댓글은 볼 수 있어요. 가입하면 단체·스토리·검색·응원·댓글 쓰기 등 모든 기능을 쓸 수 있어요.</span></div><button class="btn sm" data-act="signup">가입하기</button><button class="x" data-act="hide-join" aria-label="닫기">×</button></div>` : '';
   let posts = livePosts().filter(p=>!hiddenForMe(p));
   if(S.filter==='close') posts=posts.filter(isClose);
@@ -964,7 +1007,7 @@ function homeView(){
       <button class="btn pri" data-act="${isMember()?'new-post':'signup'}">${isMember()?'첫 소식 올리기':'가입하고 소식 올리기'}</button>
       ${isMember()?'':'<p class="muted" style="font-size:12.5px;margin:0">가입하지 않아도 올라오는 소식과 댓글은 볼 수 있어요.</p>'}
     </div></div>`;
-    return cta + sampleFeed();
+    return noticeHtml() + `<div class="chips gut" style="padding-top:10px"><button class="chip praise-chip" data-tab="praise">칭찬합니다${(S.praise||[]).length?` <b>${praiseList().length}</b>`:''}</button></div>` + cta + sampleFeed();
   }
   const week=livePosts().filter(p=>NOW-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0);
   const upcoming=eventsOf().filter(e=>e.date>=new Date(Date.now()+9*3600e3).toISOString().slice(0,10)).length;
@@ -1537,7 +1580,7 @@ function openEditPost(pid){ const p=S.posts.find(x=>x.id===pid); if(!p||!canMana
 /* ---------- reports ---------- */
 function openReport(type, tid, pid){
   if(!needWrite()) return;
-  const word={post:'소식',comment:'댓글',org:'단체'}[type]||'소식';
+  const word={post:'소식',comment:'댓글',org:'단체',praise:'칭찬 글'}[type]||'소식';
   if(Object.values(S.myReports.items||{}).some(r=>r.targetId===tid)){ toast(`이미 신고한 ${word}이에요. 관리자가 확인하고 있어요`); return; }
   openSheet('report',{type,tid,pid,back:S.sheet&&S.sheet.kind==='post'},`${head(word+' 신고하기')}<div class="panel-b"><form class="form gut" id="report-form">
     <p class="muted" style="margin:0">신고 내용은 관리자에게만 전달돼요. 글쓴이에게는 누가 신고했는지 알려지지 않아요.</p>
@@ -1554,7 +1597,7 @@ async function submitReport(){
   try{
     await S.db.doc('reports/'+S.uid).set({items}); S.myReports={items};
     /* 익명 카운트: 누가 신고했는지 남기지 않도록 무작위 키로 기록 */
-    if(type!=='org'){ try{ if(window.dj) await dj.reportTarget(type==='post'?'posts':'comments',tid,rid); else await S.db.doc((type==='post'?'posts/':'comments/')+tid).update({reportedBy:{[rid]:Date.now()}}); }catch(_){} }
+    if(type!=='org'){ try{ if(window.dj) await dj.reportTarget(type==='post'?'posts':type==='praise'?'praise':'comments',tid,rid); else await S.db.doc((type==='post'?'posts/':type==='praise'?'praise/':'comments/')+tid).update({reportedBy:{[rid]:Date.now()}}); }catch(_){} }
     if(back&&S.posts.some(p=>p.id===pid)&&type==='comment') openPost(pid); else closeSheet();
     toast('신고가 접수됐어요. 관리자가 확인할게요'); schedule();
   }catch(e){ btn.disabled=false; btn.textContent='관리자에게 신고'; $('#r-err').textContent='신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요'; }
@@ -1570,7 +1613,7 @@ function reportGroups(){
   return g;
 }
 function repCard(g){
-  const isPost=g.type==='post', isOrg=g.type==='org', t=isPost?S.posts.find(p=>p.id===g.targetId):isOrg?S.orgs.get(g.targetId):S.comments.find(c=>c.id===g.targetId), m=S.mod.get(g.key);
+  const isPost=g.type==='post', isOrg=g.type==='org', isPraise=g.type==='praise', t=isPost?S.posts.find(p=>p.id===g.targetId):isOrg?S.orgs.get(g.targetId):isPraise?(S.praise||[]).find(x=>x.id===g.targetId):S.comments.find(c=>c.id===g.targetId), m=S.mod.get(g.key);
   const hid=t&&(isOrg?orgState(t)!=='approved':isHidden(g.type,t));
   const st=!t?'<span class="st gone">삭제됨</span>':hid?`<span class="st hid">${m&&m.status==='hidden'?'숨김':'자동 숨김'}</span>`:'<span class="st live">공개 중</span>';
   const counts={}; g.items.forEach(i=>counts[i.reason]=(counts[i.reason]||0)+1);
@@ -1578,6 +1621,7 @@ function repCard(g){
   if(!t) prev='<p class="muted">이미 삭제된 콘텐츠예요.</p>';
   else if(isOrg) prev=`${avatar(t,56)}<div style="min-width:0"><p><b>${esc(t.name)}</b> @${esc(t.handle||'')} · ${esc(t.category||'')}</p><p class="muted" style="font-size:12.5px">${esc(t.bio||'')}</p></div>`;
   else if(isPost){ const a=authorOf(t), v=shown(t); prev=`${v.imageId?`<img src="${blobUrl(v.imageId)}" alt="">`:''}<div style="min-width:0"><p><b>${esc(a?a.name:'삭제된 단체')}</b> ${esc(v.caption)}</p></div>`; }
+  else if(isPraise) prev=`<div style="min-width:0"><p><b>칭찬합니다 · To. ${esc(t.target)}</b> ${esc(t.text)}</p><span class="ago">From. ${esc(praiseFrom(t))}</span></div>`;
   else { const p=S.posts.find(x=>x.id===t.postId); prev=`<div style="min-width:0"><p><b>${esc(cname(t))}</b> ${esc(t.text)}</p><span class="ago">소식: ${esc((p&&p.caption||'').slice(0,40))}</span></div>`; }
   const conf=S.confirmMod===g.key, canOpen=g.postId&&S.posts.some(p=>p.id===g.postId);
   const acts=isOrg&&t?`<button class="btn sm ghost" data-org="${t.id}">프로필 보기</button>${hid?`<button class="btn sm ghost" data-mod="org-on" data-key="${g.key}">다시 공개</button>`:`<button class="btn sm pri" data-mod="org-off" data-key="${g.key}">공개 중단</button>`}${g.open?`<button class="btn sm ghost" data-mod="ok" data-key="${g.key}">문제 없음</button>`:''}`
@@ -1667,7 +1711,7 @@ async function modAction(act, key){
     if(act==='delete'){
       if(S.confirmMod!==key){ S.confirmMod=key; schedule(); return; }
       S.confirmMod=null;
-      if(g.type==='post') await removePost(g.targetId); else await S.db.doc('comments/'+g.targetId).delete();
+      if(g.type==='post') await removePost(g.targetId); else if(g.type==='praise') await S.db.doc('praise/'+g.targetId).delete(); else await S.db.doc('comments/'+g.targetId).delete();
     }
     if(act==='org-off'){ const o=S.orgs.get(g.targetId); const n={...cur,rejected:{rev:(o&&o.rev)||0,reason:'관리자 조치로 공개가 중단됐어요. 문의는 메시지로 남겨 주세요',at:Date.now(),by:S.uid}}; delete n.approved; await mref.set(n); }
     if(act==='org-on'){ const n={...cur,approved:{at:Date.now(),by:S.uid}}; delete n.rejected; await mref.set(n); }
@@ -2485,7 +2529,7 @@ async function deletePost(pid){
 
 /* ---------- navigation + events ---------- */
 S.hist=[];
-function go(tab, orgId){ if(isGuest()&&!['home','landing'].includes(tab)) return guestGate(); if(S.tab!=='org'||tab!=='org') S.hist.push(S.tab); S.tab=tab; S.orgId=orgId||null; S.ptab='posts'; closeSheet(); schedule(); window.scrollTo(0,0);
+function go(tab, orgId){ if(isGuest()&&!['home','landing','praise'].includes(tab)) return guestGate(); if(S.tab!=='org'||tab!=='org') S.hist.push(S.tab); S.tab=tab; S.orgId=orgId||null; S.ptab='posts'; closeSheet(); schedule(); window.scrollTo(0,0);
   if(tab==='org'&&orgId){ try{ const k='org:'+orgId; const rec=JSON.parse(localStorage.getItem('dj_recent')||'[]').filter(x=>x!==k); rec.unshift(k); localStorage.setItem('dj_recent',JSON.stringify(rec.slice(0,12))); }catch(_){} } }
 function burst(el){ const b=el.querySelector('.burst'); if(!b) return; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); }
 
@@ -2493,9 +2537,11 @@ document.addEventListener('click', e=>{
   if(e.target.closest('[data-sample]')&&!e.target.closest('[data-act],[data-more]')){ toast('예시 화면이에요. 가입하면 실제 소식을 올리고 응원할 수 있어요'); return; }
   if(S.tab==='landing'&&!isMember()&&e.target.closest('[data-org],[data-member],[data-hash],[data-tab],[data-filter-go],[data-like],[data-save],[data-dbl]')&&!e.target.closest('[data-act],[data-more],[data-car]')){ $('#gate').hidden=false; return; }
   if(isGuest()&&S.tab!=='landing'&&!e.target.closest('#onboard,#login,.login,[data-ob]')){
-    const g=e.target.closest('[data-tab]:not([data-tab="home"]),[data-org],[data-member],[data-hash],[data-story],[data-responders],[data-like],[data-save],[data-share],[data-act="search"],[data-act="notif"],[data-act="dm"],[data-act="dm-new"],[data-act="new-post"],[data-act="new-story"],[data-act="report"],[data-report]');
+    const g=e.target.closest('[data-tab]:not([data-tab="home"]):not([data-tab="praise"]),[data-org],[data-member],[data-hash],[data-story],[data-responders],[data-like],[data-save],[data-share],[data-act="search"],[data-act="notif"],[data-act="dm"],[data-act="dm-new"],[data-act="new-post"],[data-act="new-story"],[data-act="report"],[data-report]');
     if(g&&!e.target.closest('[data-more],[data-car]')){ e.preventDefault(); e.stopPropagation(); return guestGate(); } }
   const svb=e.target.closest('[data-sv]'); if(svb){ e.stopPropagation(); return svAction(svb.dataset.sv, svb); }
+  const chb=e.target.closest('[data-cheer]'); if(chb){ e.stopPropagation(); return praiseCheer(chb.dataset.cheer); }
+  const pdl=e.target.closest('[data-praise-del]'); if(pdl){ e.stopPropagation(); return praiseDelete(pdl.dataset.praiseDel); }
   const pmv=e.target.closest('[data-pfmove]'); if(pmv&&S.pf){ pfCollect(); const d=+pmv.dataset.pfmove, ne=S.pf.existing.length, a=S.pfCur, b=a+d; const tot=ne+S.pf.files.length; if(b<0||b>=tot) return;
     if((a<ne)!==(b<ne)){ toast('이미 올린 사진과 새로 고른 사진은 서로 자리를 바꿀 수 없어요'); return; }
     const arr=a<ne?S.pf.existing:S.pf.files, off=a<ne?0:ne; [arr[a-off],arr[b-off]]=[arr[b-off],arr[a-off]]; S.pfCur=b; rerenderPostForm(); return; }
@@ -2578,6 +2624,8 @@ document.addEventListener('click', e=>{
   else if(a==='edit-org'){ const o=S.orgs.get(t.dataset.orgId); if(o) openSheet('org-form',{},orgForm(o)); }
   else if(a==='edit-member'){ if(needWrite()) openSheet('member-form',{},memberForm()); }
   else if(a==='change-pw'){ openChangePw(); }
+  else if(a==='praise-exit'){ S.hist=[]; go('home'); }
+  else if(a==='praise-new'){ if(isGuest()) return guestGate(); if(needWrite()) praiseForm(); }
   else if(a==='set-rq'){ openSetRq(); }
   else if(a==='mail-reset'){ mailReset(); }
   else if(a==='signup'){ if(!S.uid&&window.dj) openLogin('up'); else openSignup(0); }
@@ -2617,7 +2665,7 @@ document.addEventListener('dblclick', e=>{ const m=e.target.closest('[data-dbl]'
 document.addEventListener('submit', e=>{ e.preventDefault();
   const id=e.target.id;
   if(id==='ustatus-form') setUserStatus(e.target.dataset.uid,e.target.dataset.act,e.target); else if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
-  else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); else if(id==='ob-acct-form') obAccount(); });
+  else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); else if(id==='ob-acct-form') obAccount(); else if(id==='praise-form') submitPraise(); });
 document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.value; schedule(); }
   if(e.target.id==='crop-zoom'){ cropZoomTo(+e.target.value); return; }
   if(e.target.id==='p-cap'){ const c=$('#p-cnt'); if(c) c.textContent=e.target.value.length+'/2200'; }
@@ -2674,6 +2722,7 @@ svEl.addEventListener('click', e=>{ if(S.svSkip){ S.svSkip=false; e.stopPropagat
     if(mine&&!S.people.has(S.uid)) S.people.set(S.uid,mine); }),fail);
   db.collection('mod').onSnapshot(once(s=>{ S.mod=new Map(s.docs.map(d=>[d.id,d.data()])); }),fail);
   db.collection('stories').orderBy('createdAt','desc').limit(300).onSnapshot(s=>{ S.stories=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); if(S.sv){ const cur=(storiesByParty().get(S.sv.pid)||[])[S.sv.idx]; if(!cur) renderStory(); else { const b=$('#sv .eye'); if(b) b.textContent='조회 '+Object.keys(cur.seen||{}).length; } } },()=>{});
+  S.praise=[]; db.collection('praise').orderBy('createdAt','desc').limit(500).onSnapshot(s=>{ S.praise=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
   db.collection('notices').orderBy('createdAt','desc').limit(50).onSnapshot(s=>{ S.notices=s.docs.map(d=>({id:d.id,...d.data()})); schedule(); },()=>{});
   try{ S.mtab=localStorage.getItem('dj_mtab')||null; }catch(_){}
   try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith('dj_seen_')) S.seenLocal.add(k.slice(8)); if(k&&k.startsWith('dj_nd_')) S.noticeDismissed.add(k.slice(6)); } }catch(_){}
