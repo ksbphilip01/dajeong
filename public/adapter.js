@@ -98,7 +98,15 @@
     storySeen:async id=>{ await sb.rpc('story_seen',{p_id:id}); },
     deleteMe:async()=>{ const {error}=await sb.rpc('delete_me'); if(error) throw mapErr(error); await sb.auth.signOut(); },
     signIn:async(email,password)=>{ const {error}=await sb.auth.signInWithPassword({email,password}); if(error) throw error; },
-    signUp:async(email,password,displayName)=>{ const {data,error}=await sb.auth.signUp({email,password,options:{data:{display_name:displayName}}}); if(error) throw error; return data; },
+    signUp:async(email,password,displayName,rec)=>{ let release; holdReload=new Promise(r=>release=r);
+      try{ const {data,error}=await sb.auth.signUp({email,password,options:{data:{display_name:displayName}}}); if(error) throw error;
+        if(data&&data.session&&rec&&rec.q&&rec.a){ try{ await sb.rpc('set_recovery',{p_question:rec.q,p_answer:rec.a}); }catch(_){} }
+        return data; } finally { release(); } },
+    setRecovery:async(q,a)=>{ const {error}=await sb.rpc('set_recovery',{p_question:q,p_answer:a}); if(error) throw mapErr(error); },
+    myRecoveryQuestion:async()=>{ const {data}=await sb.rpc('my_recovery_question'); return data||null; },
+    recoveryQuestion:async email=>{ const {data,error}=await sb.rpc('recovery_question',{p_email:email}); if(error) throw mapErr(error); return data; },
+    recoveryReset:async(email,answer,pw)=>{ const {data,error}=await sb.rpc('recovery_reset',{p_email:email,p_answer:answer,p_new_password:pw}); if(error) throw mapErr(error); return data; },
+    updatePassword:async pw=>{ const {error}=await sb.auth.updateUser({password:pw}); if(error) throw error; },
     signOut:async()=>{ await sb.auth.signOut(); },
     resetPassword:async email=>{ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname}); if(error) throw error; },
     myStatus:async()=>{ if(!session) return null; const {data}=await sb.from('account_status').select('status,reason,until').eq('user_id',session.user.id).maybeSingle(); if(!data) return null; if(data.until&&new Date(data.until)<new Date()) return null; return data; },
@@ -106,10 +114,12 @@
     setStatus:async(uid,status,reason,days,hide)=>{ const {error}=await sb.rpc('admin_set_status',{p_user:uid,p_status:status,p_reason:reason||'',p_days:days||0,p_hide:!!hide}); if(error) throw mapErr(error); },
     session:()=>session, isAdmin:()=>admin
   };
+  let holdReload=Promise.resolve();
   const ready=loadSession();
   /* 로그인 상태가 '실제로 바뀔 때만' 새로고침 (세션 복원·토큰 갱신 때 반복 새로고침되던 문제 수정) */
   sb.auth.onAuthStateChange((ev,sess)=>{ if(ev==='INITIAL_SESSION'||ev==='TOKEN_REFRESHED') return;
-    ready.then(()=>{ const now=sess&&sess.user?sess.user.id:null, before=session&&session.user?session.user.id:null;
+    if(ev==='PASSWORD_RECOVERY'){ try{ localStorage.setItem('dj_pw_recovery','1'); }catch(_){} }
+    Promise.all([ready,holdReload]).then(()=>{ const now=sess&&sess.user?sess.user.id:null, before=session&&session.user?session.user.id:null;
       if(now!==before){ session=sess; setTimeout(()=>location.reload(),60); } }); });
 
   window.claude={ use:async name=>{ await ready; return ({db,user,assets,downloads})[name]||null; } };
