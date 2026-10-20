@@ -716,6 +716,7 @@ img,video,canvas{max-width:100%}
 .pr-hero p,.nt-hero p{font-size:clamp(12.5px,3.6vw,14px);line-height:1.6}
 .pr-card,.nt-card{padding:clamp(13px,4vw,16px)}
 .praise-chip{flex:none}
+.av.official{display:inline-grid;place-items:center;border-radius:50%;background:linear-gradient(150deg,var(--sea),#2B7A9E);color:#fff;font-weight:800;letter-spacing:-.03em;flex:none}.off-badge{font-style:normal;font-size:10.5px;font-weight:700;color:#fff;background:var(--sea);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
 .chips{scroll-padding-inline:16px}
 @media (max-width:380px){
   .brand h1{font-size:21px;gap:6px}
@@ -825,7 +826,7 @@ function guestGate(){ if(!S.uid&&window.dj){ toast('가입하면 이용할 수 �
 function isHidden(type, x){ const m=S.mod.get(type+'_'+x.id); if(m&&m.status==='hidden') return true; if(m&&m.status==='ok') return false;
   return Object.keys(x.reportedBy||{}).length >= AUTO_HIDE; }
 /* 개인 참여자 글: 승인 기록(mod/post_<id>, 관리자만 기록)에 담긴 내용만 공개 */
-function isMemberPost(p){ return !p.orgId; }
+function isMemberPost(p){ return !p.orgId&&!p.official; }
 function modOf(p){ return S.mod.get('post_'+p.id)||null; }
 function approvalState(p){ const m=modOf(p)||{}, rev=p.rev||0;
   if(m.rejected&&m.rejected.rev===rev) return 'rejected';
@@ -834,7 +835,7 @@ function approvalState(p){ const m=modOf(p)||{}, rev=p.rev||0;
 const APPROVAL_LABEL={pending:'승인 대기',"edit-pending":'수정 승인 대기',approved:'게시 중',rejected:'반려됨'};
 function shown(p){ if(!isMemberPost(p)) return p; const m=modOf(p); if(!(m&&m.approved)) return p; const v={...p,...m.approved.live}; if(p.ask&&v.ask) v.ask={...v.ask,closed:!!p.ask.closed}; return v; }
 function acctHidden(uid){ if(!uid) return false; const m=S.mod.get('acct_'+uid); if(!m||!m.hide) return false; return !m.until||m.until>Date.now(); }
-function visible(p){ return (p.orgId ? orgApproved(S.orgs.get(p.orgId)) : approvalState(p)==='approved') && !isHidden('post',p) && !(acctHidden(p.authorId)&&!S.isAdmin&&p.authorId!==S.uid); }
+function visible(p){ return (p.official ? true : p.orgId ? orgApproved(S.orgs.get(p.orgId)) : approvalState(p)==='approved') && !isHidden('post',p) && !(acctHidden(p.authorId)&&!S.isAdmin&&p.authorId!==S.uid); }
 function livePosts(){ return S.posts.filter(visible); }
 /* 홈 피드 순서: 최신순을 기본으로 하되, 가까운 시간대(약 하루 반) 안의 소식끼리는 무작위로 섞음.
    방문(새로고침)마다, 그리고 홈 탭을 다시 누를 때마다 섞는 순서가 바뀜. 방금 올린 내 소식은 맨 위. */
@@ -849,12 +850,13 @@ function orgPosts(id){ return livePosts().filter(p => p.orgId === id || collabOf
 function memberPosts(uid){ return livePosts().filter(p => isMemberPost(p) && p.authorId===uid); }
 function displayName(uid){ const pr=(S.people.get(uid)||{}).profile; if(pr&&pr.nickname) return pr.nickname; const p=S.profiles[uid]; return (p&&p.name)||''; }
 function authorOf(p){
+  if(p.official) return {id:'official',kind:'official',name:(window.DJ_CONFIG?DJ_CONFIG.BRAND+DJ_CONFIG.CITY:'다정')+' 운영자',handle:'운영자',region:'공식',av:s=>`<span class="av official" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.42)}px">다정</span>`};
   if(p.orgId){ const o=S.orgs.get(p.orgId); return o?{id:o.id,kind:'org',name:o.name,handle:o.handle||o.name,region:regionLabel(o),av:s=>avatar(o,s)}:null; }
   const pr=(S.people.get(p.authorId)||{}).profile||{}; const name=pr.nickname||displayName(p.authorId)||'참여자'; const fake={name,avatarId:pr.avatarId||null};
   return {id:p.authorId,kind:'member',name,handle:name,region:regionLabel(pr),av:s=>avatar(fake,s)};
 }
-function authorChip(a, size, extra){ const attr=a.kind==='org'?`data-org="${a.id}"`:`data-member="${a.id}"`;
-  return `<button class="org-chip" ${attr}>${a.av(size)}<span><b>${esc(a.name)}</b><small>${a.kind==='member'?'참여자 · ':''}${esc(a.region)}${extra?' · '+extra:''}</small></span></button>`; }
+function authorChip(a, size, extra){ const attr=a.kind==='official'?'data-tab="notices"':a.kind==='org'?`data-org="${a.id}"`:`data-member="${a.id}"`;
+  return `<button class="org-chip" ${attr}>${a.av(size)}<span><b>${esc(a.name)}${a.kind==='official'?' <i class="off-badge">공식</i>':''}</b><small>${a.kind==='member'?'참여자 · ':''}${esc(a.region)}${extra?' · '+extra:''}</small></span></button>`; }
 /* 친한 친구: 나만 보는 설정. 해당 계정의 최근 소식이 홈 피드 맨 위, 스토리 맨 앞에 옴 */
 const CLOSE_WINDOW=7*DAY_MS();
 function DAY_MS(){ return 86400e3; }
@@ -951,7 +953,7 @@ async function paint(){
   if(S.user){ const ids=new Set(S.comments.map(c=>c.authorId).filter(Boolean)); if(S.isAdmin) for(const k of S.reports.keys()) ids.add(k); if(S.tab==='notif') for(const n of notifications()) if(n.uid) ids.add(n.uid);
     if(ids.size) S.profiles = await S.user.profiles([...ids]); }
   if(S.isAdmin){ const n=[...reportGroups().values()].filter(g=>g.open).length+pendingPosts().length+pendingOrgs().length; const b=$('#adm-badge'); b.hidden=!n; b.textContent=n>99?'99+':n; }
-  const cta=$('#top-cta'); if(cta){ if(!S.uid){ cta.dataset.act='login'; cta.textContent='로그인'; } else { const j=isMember(); cta.dataset.act=j?'new-post':'signup'; cta.textContent=j?'소식 올리기':'가입하기'; } }
+  const cta=$('#top-cta'); if(cta){ if(!S.uid){ cta.dataset.act='login'; cta.textContent='로그인'; } else { const j=isMember()||S.isAdmin; cta.dataset.act=j?'new-post':'signup'; cta.textContent=j?'소식 올리기':'가입하기'; } }
   const db_=$('#dm-badge'); if(db_){ const n=dmUnread(); db_.hidden=!n; db_.textContent=n>99?'99+':n; }
   const nb_=$('#nt-badge'); if(nb_){ const n=S.tab==='notif'?0:notifUnread(); nb_.hidden=!n; nb_.textContent=n>99?'99+':n; }
   const a=document.activeElement, fid=a&&a.id&&$('#view').contains(a)?a.id:null, sel=fid&&a.selectionStart;
@@ -1040,7 +1042,7 @@ function homeView(){
   </div>`;
   const opts = [['all','전체'], ...(closeSet().size?[['close','★ 친한 친구']]:[]), ...Object.entries(KINDS)];
   const chips = `<div class="chips gut" role="group" aria-label="소식 종류"><button class="chip praise-chip" data-tab="praise">칭찬합니다${(()=>{ const n=praiseList().filter(x=>Date.now()-x.createdAt<3*DAY).length; return n?` <b>${n}</b>`:''; })()}</button>${opts.map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${S.filter===k}">${l}</button>`).join('')}</div>`;
-  const banner = (!isMember() && !S.hideJoin && S.posts.length) ? `<div class="join"><div style="flex:1;min-width:0"><b>함께 소식을 나눠요</b><span>가입하지 않아도 소식과 댓글은 볼 수 있어요. 가입하면 단체·스토리·검색·응원·댓글 쓰기 등 모든 기능을 쓸 수 있어요.</span></div><button class="btn sm" data-act="signup">가입하기</button><button class="x" data-act="hide-join" aria-label="닫기">×</button></div>` : '';
+  const banner = (!isMember() && !S.isAdmin && !S.hideJoin && S.posts.length) ? `<div class="join"><div style="flex:1;min-width:0"><b>함께 소식을 나눠요</b><span>가입하지 않아도 소식과 댓글은 볼 수 있어요. 가입하면 단체·스토리·검색·응원·댓글 쓰기 등 모든 기능을 쓸 수 있어요.</span></div><button class="btn sm" data-act="signup">가입하기</button><button class="x" data-act="hide-join" aria-label="닫기">×</button></div>` : '';
   let posts = livePosts().filter(p=>!hiddenForMe(p));
   if(S.filter==='close') posts=posts.filter(isClose);
   else if(S.filter!=='all') posts=posts.filter(p=>p.kind===S.filter);
@@ -1579,11 +1581,12 @@ function pfCollect(){ const pf=S.pf; if(!pf) return; const g=id=>$('#'+id);
   if(g('p-hidelikes')) pf.hideLikes=g('p-hidelikes').checked; if(g('p-nocomm')) pf.commentsOff=g('p-nocomm').checked; }
 function postForm(orgId, post){
   const mo=myApprovedOrgs(), pr=myProfile(), pf=S.pf;
-  const asMember = post ? isMemberPost(post) : !mo.length || !pf.sel;
+  const isOff=pf.sel==='__official';
+  const asMember = post ? isMemberPost(post) : !isOff && (!mo.length || !pf.sel);
   const thumbs=[...pf.existing.map((id,i)=>({src:blobUrl(id),key:'e'+i})),...pf.files.map((f,i)=>({src:f.url,key:'f'+i}))];
   const cur=Math.min(S.pfCur||0, Math.max(0,thumbs.length-1)); const R=RATIOS[pf.ratio];
   const tagOrgs=approvedOrgs().filter(o=>o.id!==pf.sel).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-  const who = post ? '' : `<select id="p-org" class="btn ghost sm" style="max-width:48%;appearance:none;-webkit-appearance:none;padding-right:22px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 12px) 55%,calc(100% - 7px) 55%;background-size:5px 5px;background-repeat:no-repeat">${mo.map(o=>`<option value="${o.id}"${o.id===pf.sel?' selected':''}>${esc(o.name)}</option>`).join('')}${pr?`<option value=""${!pf.sel?' selected':''}>${esc(pr.nickname)} (개인)</option>`:''}</select>`;
+  const who = post ? '' : `<select id="p-org" class="btn ghost sm" style="max-width:48%;appearance:none;-webkit-appearance:none;padding-right:22px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 12px) 55%,calc(100% - 7px) 55%;background-size:5px 5px;background-repeat:no-repeat">${S.isAdmin?`<option value="__official"${isOff?' selected':''}>다정여수 운영자 (공식)</option>`:''}${mo.map(o=>`<option value="${o.id}"${o.id===pf.sel?' selected':''}>${esc(o.name)}</option>`).join('')}${pr?`<option value=""${!pf.sel?' selected':''}>${esc(pr.nickname)} (개인)</option>`:''}</select>`;
   const tagNames=pf.tags.map(id=>(S.orgs.get(id)||{}).name).filter(Boolean), colNames=pf.collabs.map(id=>(S.orgs.get(id)||{}).name).filter(Boolean);
   const adv=[pf.hideLikes?'좋아요 수 숨김':'',pf.commentsOff?'댓글 해제':''].filter(Boolean).join(' · ');
   const askCfg=ASK[pf.kind];
@@ -1598,13 +1601,13 @@ function postForm(orgId, post){
       :`<div class="gut"><p class="muted" style="margin:12px 0 0;padding:10px 12px;background:var(--bg);border-radius:10px;font-size:13px">이 화면에서는 사진을 올릴 수 없어서 글귀 카드로 보여요.</p></div>`}
     <div class="gut">
       ${asMember?'<p class="muted" style="margin:6px 0 0;font-size:12.5px">개인 참여자의 소식은 관리자가 확인한 뒤 공개돼요.</p>':''}
-      <div class="cmp-cap">${pf.sel?avatar(S.orgs.get(pf.sel)||{name:'?'},32):pr?avatar({name:pr.nickname,avatarId:pr.avatarId},32):''}<textarea id="p-cap" required maxlength="2200" placeholder="${askCfg?(pf.kind==='recruit'?'누가, 언제, 어디서, 무엇을 함께할지 적어 주세요':'어떤 물품·재능·손길이 왜 필요한지 적어 주세요'):'문구 입력... #해시태그로 검색에 걸려요'}">${esc(pf.cap)}</textarea><span class="cnt" id="p-cnt">${pf.cap.length}/2200</span></div>
+      <div class="cmp-cap">${isOff?'<span class="av official" style="width:32px;height:32px;font-size:13px">다정</span>':pf.sel?avatar(S.orgs.get(pf.sel)||{name:'?'},32):pr?avatar({name:pr.nickname,avatarId:pr.avatarId},32):''}<textarea id="p-cap" required maxlength="2200" placeholder="${askCfg?(pf.kind==='recruit'?'누가, 언제, 어디서, 무엇을 함께할지 적어 주세요':'어떤 물품·재능·손길이 왜 필요한지 적어 주세요'):'문구 입력... #해시태그로 검색에 걸려요'}">${esc(pf.cap)}</textarea><span class="cnt" id="p-cnt">${pf.cap.length}/2200</span></div>
       ${who?`<div style="display:flex;gap:8px;align-items:center;padding:4px 0 10px"><span class="hint">올리는 이름</span>${who}</div>`:''}
       <div class="opt" style="border-top:1px solid var(--line);padding:12px 0"><span class="lbl" style="margin-bottom:8px">소식 종류</span><div class="kinds">${Object.entries(KINDS).map(([k,l])=>`<label class="k-${k}" title="${KIND_HINT[k]}"><input type="radio" name="p-kind" id="pk-${k}" value="${k}"${pf.kind===k?' checked':''}><span>${l}</span></label>`).join('')}</div>${askCfg?`<span class="hint" style="margin-top:8px;display:block">${KIND_HINT[pf.kind]}</span>`:''}</div>
       ${askCfg?`<details class="opt" open><summary>${pf.kind==='recruit'?'모집 설정':'필요한 것 설정'}<span class="val">${[pf.askSlots?pf.askSlots+(pf.kind==='recruit'?'명':''):'',pf.askDate?fmtDay(pf.askDate):''].filter(Boolean).join(' · ')||'선택'}</span></summary><div class="body"><div class="two"><div class="field"><label for="p-slots">${askCfg.slotsLabel}</label><input id="p-slots" type="number" min="1" max="999" inputmode="numeric" value="${esc(pf.askSlots)}" placeholder="예: 20"></div><div class="field"><label for="p-date">${askCfg.dateLabel}</label><input id="p-date" type="date" value="${esc(pf.askDate)}"></div></div><span class="hint">날짜를 적으면 활동 캘린더에 올라가요. 명단은 작성자만 봐요.</span></div></details>`:''}
       <details class="opt"${pf.loc?' open':''}><summary>위치 추가<span class="val">${esc(pf.loc)||'선택'}</span></summary><div class="body"><input id="p-loc" maxlength="60" value="${esc(pf.loc)}" placeholder="예: 여서동 주민센터 앞, 방죽포 해변"><span class="hint">직접 적거나 비워 두세요. 소식은 위치와 관계없이 여수 전체에 보여요.</span></div></details>
       ${tagOrgs.length?`<details class="opt"${pf.tags.length?' open':''}><summary>단체 태그<span class="val">${tagNames.length?esc(tagNames.join(', ')):'선택'}</span></summary><div class="body"><div class="kinds rp" style="max-height:120px">${tagOrgs.map(o=>`<label><input type="checkbox" name="p-tag" value="${o.id}"${pf.tags.includes(o.id)?' checked':''}><span>${esc(o.name)}</span></label>`).join('')}</div><span class="hint">함께한 단체 이름이 게시물 아래에 보여요.</span></div></details>
-      ${pf.sel?`<details class="opt"${pf.collabs.length?' open':''}><summary>콜라보 초대<span class="val">${colNames.length?esc(colNames.join(', ')):'최대 3곳'}</span></summary><div class="body"><div class="kinds rp" style="max-height:120px;--k:var(--camellia);--kb:var(--camellia-soft)">${tagOrgs.map(o=>`<label><input type="checkbox" name="p-collab" value="${o.id}"${pf.collabs.includes(o.id)?' checked':''}><span>${esc(o.name)}</span></label>`).join('')}</div><span class="hint">상대가 수락하면 두 단체 이름으로 올라가고 양쪽 프로필에 보여요.</span></div></details>`:''}`:''}
+      ${pf.sel&&!isOff?`<details class="opt"${pf.collabs.length?' open':''}><summary>콜라보 초대<span class="val">${colNames.length?esc(colNames.join(', ')):'최대 3곳'}</span></summary><div class="body"><div class="kinds rp" style="max-height:120px;--k:var(--camellia);--kb:var(--camellia-soft)">${tagOrgs.map(o=>`<label><input type="checkbox" name="p-collab" value="${o.id}"${pf.collabs.includes(o.id)?' checked':''}><span>${esc(o.name)}</span></label>`).join('')}</div><span class="hint">상대가 수락하면 두 단체 이름으로 올라가고 양쪽 프로필에 보여요.</span></div></details>`:''}`:''}
       <details class="opt"${adv?' open':''}><summary>고급 설정<span class="val">${adv||'기본'}</span></summary><div class="body" style="gap:0">
         <label class="tgl"><span><b>좋아요 수 숨기기</b><small>다른 사람에게는 수가 보이지 않아요</small></span><input type="checkbox" id="p-hidelikes"${pf.hideLikes?' checked':''}></label>
         <label class="tgl"><span><b>댓글 기능 해제</b><small>이 게시물에는 댓글을 달 수 없어요</small></span><input type="checkbox" id="p-nocomm"${pf.commentsOff?' checked':''}></label></div></details>
@@ -1616,9 +1619,9 @@ function rerenderPostForm(){ pfCollect(); const a=document.activeElement, id=a&&
 function openComposer(edit){ openSheet('post-form',edit?{edit}:{},postForm(null,edit||null)); panel().classList.add('tall'); }
 function openNewPost(orgId){
   if(!needWrite()) return;
-  if(!isMember()){ openSignup(0); return; }
-  if(!myApprovedOrgs().length&&!myProfile()){ toast('단체 가입이 승인되면 소식을 올릴 수 있어요'); S.hist=[]; go('mine'); return; }
-  S.pf=newPf(null,orgId); S.pf.editPost=null; S.pfCur=0; openComposer(null);
+  if(!isMember()&&!S.isAdmin){ openSignup(0); return; }
+  if(!S.isAdmin&&!myApprovedOrgs().length&&!myProfile()){ toast('단체 가입이 승인되면 소식을 올릴 수 있어요'); S.hist=[]; go('mine'); return; }
+  S.pf=newPf(null,orgId); if(S.isAdmin&&!orgId&&!S.pf.sel) S.pf.sel='__official'; S.pf.editPost=null; S.pfCur=0; openComposer(null);
 }
 function openEditPost(pid){ const p=S.posts.find(x=>x.id===pid); if(!p||!canManage(p)) return; S.pf=newPf(p); S.pf.editPost=p; S.pfCur=0; openComposer(p); }
 
@@ -2585,7 +2588,7 @@ async function submitPost(){
     catch(e){ err.textContent=(UPLOAD_MSG[e&&e.code]||'사진을 올리지 못했어요')+` (${i+1}번째)`; btn.disabled=false; btn.textContent=label; return; } }
   const images=[...pf.existing,...newIds];
   const ask=ASK[pf.kind]?{slots:+pf.askSlots||null,date:pf.askDate||null,closed:!!(edit&&edit.ask&&edit.ask.closed)}:null;
-  const base={kind:pf.kind,ratio:pf.ratio,caption:cap,ask,location:pf.loc.trim()||null,tags:pf.tags,collabs:pf.sel?pf.collabs:[],hashtags:hashtagsOf(cap),hideLikes:pf.hideLikes,commentsOff:pf.commentsOff,images,imageId:images[0]||null};
+  const base={kind:pf.kind,ratio:pf.ratio,caption:cap,ask,location:pf.loc.trim()||null,tags:pf.tags,collabs:pf.sel&&pf.sel!=='__official'?pf.collabs:[],hashtags:hashtagsOf(cap),hideLikes:pf.hideLikes,commentsOff:pf.commentsOff,images,imageId:images[0]||null};
   try{
     if(edit){
       const data={...base,updatedAt:Date.now()}; if(isMemberPost(edit)) data.rev=(edit.rev||0)+1;
@@ -2593,6 +2596,9 @@ async function submitPost(){
       closeSheet(); schedule(); toast(isMemberPost(edit)?'수정한 내용을 관리자에게 보냈어요. 승인되면 반영돼요':'게시물을 수정했어요');
       return;
     }
+    if(pf.sel==='__official'){ if(!S.isAdmin) return;
+      await S.db.collection('posts').add({orgId:null,authorId:S.uid,authorKind:'official',official:true,...base,rev:0,createdAt:Date.now()});
+      closeSheet(); S.filter='all'; S.tab='home'; toast('운영자 공식 소식을 올렸어요'); schedule(); window.scrollTo(0,0); return; }
     const orgId=pf.sel||'';
     if(orgId&&!orgApproved(S.orgs.get(orgId))){ err.textContent='이 단체는 아직 가입 승인 전이에요'; btn.disabled=false; btn.textContent=label; return; }
     if(!orgId&&!myProfile()){ err.textContent='개인 참여자로 가입하거나 단체를 등록해야 올릴 수 있어요'; btn.disabled=false; btn.textContent=label; return; }
