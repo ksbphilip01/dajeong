@@ -955,7 +955,7 @@ async function paint(){
   if(S.user){ const ids=new Set(S.comments.map(c=>c.authorId).filter(Boolean)); if(S.isAdmin) for(const k of S.reports.keys()) ids.add(k); if(S.tab==='notif') for(const n of notifications()) if(n.uid) ids.add(n.uid);
     if(ids.size) S.profiles = await S.user.profiles([...ids]); }
   if(S.isAdmin){ const n=[...reportGroups().values()].filter(g=>g.open).length+pendingPosts().length+pendingOrgs().length; const b=$('#adm-badge'); b.hidden=!n; b.textContent=n>99?'99+':n; }
-  const cta=$('#top-cta'); if(cta){ if(!S.uid){ cta.dataset.act='login'; cta.textContent='로그인'; } else { const j=isMember()||S.isAdmin; cta.dataset.act=j?'new-post':'signup'; cta.textContent=j?'소식 올리기':'가입하기'; } }
+  const cta=$('#top-cta'); if(cta){ if(!S.uid){ cta.dataset.act='login'; cta.textContent='로그인'; } else { const j=isMember()||S.isAdmin; cta.dataset.act=j?'new-post':'signup'; cta.textContent=j?'소식 올리기':'가입 마치기'; } }
   const db_=$('#dm-badge'); if(db_){ const n=dmUnread(); db_.hidden=!n; db_.textContent=n>99?'99+':n; }
   const nb_=$('#nt-badge'); if(nb_){ const n=S.tab==='notif'?0:notifUnread(); nb_.hidden=!n; nb_.textContent=n>99?'99+':n; }
   const a=document.activeElement, fid=a&&a.id&&$('#view').contains(a)?a.id:null, sel=fid&&a.selectionStart;
@@ -2365,7 +2365,7 @@ function obRender(){
       </ul>
       <p class="muted" style="margin:14px 0 0;font-size:13px">가입하지 않아도 소식과 댓글은 볼 수 있어요. 좋아요·댓글 쓰기·단체 둘러보기·스토리·검색은 가입 후 이용할 수 있어요.</p>`;
     foot = (!S.uid&&window.dj) ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--sea)" data-login="in">이미 계정이 있어요 · 로그인</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
-      : S.writable ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
+      : S.writable ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button>${S.uid&&window.dj&&dj.session()?`<p class="muted" style="text-align:center;margin:6px 0 0;font-size:12.5px">${esc(dj.session().user.email||'')} 계정으로 로그인돼 있어요 · <button class="more" data-act="logout" style="color:var(--sea);padding:0;font-size:12.5px">로그아웃</button></p>`:''}</div>`
       : `<div class="ob-f" style="flex-direction:column"><p class="muted" style="text-align:center;margin:0">${S.uid?'보기 전용으로 열려 있어 가입할 수 없어요. 관리자에게 참여 권한을 요청해 주세요.':'가입하려면 로그인한 상태로 열어 주세요.'}</p><button class="btn ghost" data-ob="close">둘러보기</button></div>`;
   }
   else if(o.type==='org'&&o.step===1){
@@ -2749,7 +2749,7 @@ document.addEventListener('click', e=>{
   else if(a==='mail-reset'){ mailReset(); }
   else if(a==='signup'){ if(!S.uid&&window.dj) openLogin('up'); else openSignup(0); }
   else if(a==='login') openLogin('in');
-  else if(a==='logout'){ if(window.dj) dj.signOut(); }
+  else if(a==='logout'){ if(window.dj){ closeSignup(); S.tab='home'; toast('로그아웃했어요'); dj.signOut(); } }
   else if(a==='admin-logout'){ if(!window.dj) return; if(!t.dataset.armed){ t.dataset.armed='1'; t.textContent='한 번 더 누르면 로그아웃'; setTimeout(()=>{ if(t.isConnected){ delete t.dataset.armed; t.textContent='관리자 로그아웃'; } },4000); return; } t.disabled=true; t.textContent='로그아웃 중'; S.tab='home'; dj.signOut(); }
   else if(a==='dm'){ S.hist=[]; go('dm'); }
   else if(a==='search') goSearch('');
