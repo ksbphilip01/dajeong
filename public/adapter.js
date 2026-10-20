@@ -103,8 +103,11 @@
     resetPassword:async email=>{ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname}); if(error) throw error; },
     session:()=>session, isAdmin:()=>admin
   };
-  sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_IN'||ev==='SIGNED_OUT'||ev==='USER_DELETED'){ setTimeout(()=>location.reload(),50); } });
-
   const ready=loadSession();
+  /* 로그인 상태가 '실제로 바뀔 때만' 새로고침 (세션 복원·토큰 갱신 때 반복 새로고침되던 문제 수정) */
+  sb.auth.onAuthStateChange((ev,sess)=>{ if(ev==='INITIAL_SESSION'||ev==='TOKEN_REFRESHED') return;
+    ready.then(()=>{ const now=sess&&sess.user?sess.user.id:null, before=session&&session.user?session.user.id:null;
+      if(now!==before){ session=sess; setTimeout(()=>location.reload(),60); } }); });
+
   window.claude={ use:async name=>{ await ready; return ({db,user,assets,downloads})[name]||null; } };
 })();

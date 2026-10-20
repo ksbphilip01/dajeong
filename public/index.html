@@ -1159,10 +1159,12 @@ async function submitLogin(form){ const mode=form.dataset.mode, err=$('#lg-err')
   const email=$('#lg-email').value.trim(), pw=$('#lg-pw')?$('#lg-pw').value:'';
   try{
     if(mode==='in'){ await dj.signIn(email,pw); btn.textContent='로그인 중'; }
-    else if(mode==='up'){ const r=await dj.signUp(email,pw,$('#lg-name').value.trim()); if(r&&r.session){ btn.textContent='계정을 만들었어요'; } else { closeSheet(); toast('확인 메일을 보냈어요. 메일의 링크를 누르면 로그인돼요'); } }
+    else if(mode==='up'){ try{ localStorage.setItem('dj_after_signup','1'); }catch(_){} const r=await dj.signUp(email,pw,$('#lg-name').value.trim()); if(r&&r.session){ btn.textContent='계정을 만들었어요'; } else { closeSheet(); toast('확인 메일을 보냈어요. 메일의 링크를 누르면 로그인돼요'); } }
     else { await dj.resetPassword(email); closeSheet(); toast('재설정 메일을 보냈어요'); }
   }catch(e){ btn.disabled=false; const m=(e&&e.message)||''; err.textContent=/Invalid login/i.test(m)?'이메일 또는 비밀번호가 맞지 않아요':/already registered/i.test(m)?'이미 가입된 이메일이에요. 로그인해 주세요':/Password should/i.test(m)?'비밀번호는 6자 이상이어야 해요':/rate limit/i.test(m)?'잠시 후 다시 시도해 주세요':'처리하지 못했어요: '+m; } }
 
+function afterSignup(){ let f=null; try{ f=localStorage.getItem('dj_after_signup'); localStorage.removeItem('dj_after_signup'); }catch(_){}
+  if(f&&S.uid&&!isMember()){ toast('계정을 만들었어요. 이제 단체 또는 개인 참여자로 가입해 주세요'); openSignup(0); } }
 /* ---------- 회원 탈퇴 ---------- */
 function withdrawPlan(){
   const mo=myOrgs(), sole=mo.filter(o=>(o.ownerIds||[]).length<=1), shared=mo.filter(o=>(o.ownerIds||[]).length>1);
@@ -2373,7 +2375,7 @@ svEl.addEventListener('click', e=>{ if(S.svSkip){ S.svSkip=false; e.stopPropagat
   if(user){ S.uid=await user.id(); const cw=await user.can('data.write'); S.writable=!!S.uid&&cw!==false; S.isAdmin=await user.canEdit(); }
   if(!db){ S.dbState='off'; S.writable=false; showNotice(); schedule(); return; }
   showNotice();
-  let pending=5; const ready=()=>{ if(--pending===0){ S.dbState='ok'; setTimeout(openFromHash,300); } schedule(); };
+  let pending=5; const ready=()=>{ if(--pending===0){ S.dbState='ok'; setTimeout(openFromHash,300); setTimeout(afterSignup,400); } schedule(); };
   const fail=e=>{ if(e&&e.code==='revoked'){ S.dbState='off'; S.writable=false; showNotice(); schedule(); } };
   const once=f=>{ let first=true; return s=>{ f(s); if(first){ first=false; ready(); } else schedule(); }; };
   db.collection('orgs').onSnapshot(once(s=>{ S.orgs=new Map(s.docs.map(d=>[d.id,{id:d.id,...d.data()}])); }),fail);
