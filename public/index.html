@@ -969,10 +969,10 @@ function praiseView(){
       <div class="pr-foot"><span>From. <b>${esc(praiseFrom(x))}</b> · ${rel(x.createdAt)}</span><span class="sp"></span>
         <button class="pr-cheer${on?' on':''}" data-cheer="${x.id}">👏 저도 칭찬해요${cheers.length?' '+cheers.length:''}</button></div>
       <div class="pr-foot" style="justify-content:flex-end">${mine||S.isAdmin?`<button class="more" data-praise-del="${x.id}">${S.confirmPraise===x.id?'한 번 더 누르면 삭제':'삭제'}</button>`:''}${!mine&&S.uid?`<button class="more" data-report="praise" data-tid="${x.id}">신고</button>`:''}</div></article>`; };
-  return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="praise-exit" style="padding:0">‹ 나가기</button><span class="sp" style="flex:1"></span>${S.uid?`<button class="btn sm pri" data-act="praise-new">칭찬 글 쓰기</button>`:''}</div>
-    <div class="pr-hero"><h2>칭찬합니다</h2><p>우리 동네에서 만난 고마운 사람, 단체, 가게를 칭찬해 주세요. 작은 친절도 좋아요. 따뜻한 한마디가 또 다른 선행으로 이어져요.</p></div>
+  return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="praise-exit" style="padding:0">‹ 나가기</button><span class="sp" style="flex:1"></span>${!isGuest()?`<button class="btn sm pri" data-act="praise-new">칭찬 글 쓰기</button>`:`<button class="btn sm ghost" data-act="signup">가입하고 칭찬하기</button>`}</div>
+    <div class="pr-hero"><h2>칭찬합니다</h2><p>우리 동네에서 만난 고마운 사람, 단체, 가게를 칭찬해 주세요. 작은 친절도 좋아요. 따뜻한 한마디가 또 다른 선행으로 이어져요.</p>${isGuest()?'<p style="margin-top:8px;font-size:12.5px;opacity:.85">칭찬 글은 누구나 볼 수 있어요. 글을 올리거나 ‘저도 칭찬해요’를 누르려면 가입해 주세요.</p>':''}</div>
     ${list.length?`<div style="display:flex;flex-direction:column;gap:12px">${list.map(card).join('')}</div>`
-      :`<div class="empty"><h2>첫 칭찬을 남겨 주세요</h2><p>봉사하는 이웃, 친절한 가게, 묵묵히 애쓰는 단체… 고마웠던 순간을 나눠요.</p>${S.uid?'<button class="btn pri" data-act="praise-new">칭찬 글 쓰기</button>':'<button class="btn pri" data-act="signup">가입하고 칭찬하기</button>'}</div>`}
+      :`<div class="empty"><h2>첫 칭찬을 남겨 주세요</h2><p>봉사하는 이웃, 친절한 가게, 묵묵히 애쓰는 단체… 고마웠던 순간을 나눠요.</p>${!isGuest()?'<button class="btn pri" data-act="praise-new">칭찬 글 쓰기</button>':'<button class="btn pri" data-act="signup">가입하고 칭찬하기</button>'}</div>`}
     <p class="muted" style="font-size:12px;margin:18px 0 6px;line-height:1.6">칭찬받는 분의 연락처·주소 같은 개인정보는 적지 말아 주세요. 정치인 언급과 광고성 글은 올릴 수 없고, 신고가 쌓이면 자동으로 숨겨져요.</p></div>`;
 }
 function praiseForm(){ const orgs=myApprovedOrgs();
