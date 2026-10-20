@@ -9,7 +9,7 @@
   window.sb=sb;
   const err=(code,message)=>Object.assign(new Error(message||code),{code});
   const newId=()=>{ const A='abcdefghijklmnopqrstuvwxyz0123456789'; let s=''; const r=new Uint32Array(14); crypto.getRandomValues(r); for(const n of r) s+=A[n%A.length]; return s; };
-  const mapErr=e=>{ const m=(e&&e.message)||''; if(/invalid_argument|not allowed|row-level security|does not exist/i.test(m)) return err('invalid_argument',m); return err('unavailable',m); };
+  const mapErr=e=>{ const m=(e&&e.message)||''; const bw=m.match(/banned_word:([^\s"]+)/); if(bw) return err('banned',bw[1]); if(/invalid_argument|not allowed|row-level security|does not exist/i.test(m)) return err('invalid_argument',m); return err('unavailable',m); };
 
   /* ---------- 실시간 변경 → 리스너에게 알림 (컬렉션 단위) ---------- */
   const listeners=new Map(); // collection -> Set(fn)

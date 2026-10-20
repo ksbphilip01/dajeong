@@ -563,6 +563,16 @@ input:focus-visible+.rb{outline:2px solid var(--sea);outline-offset:-2px}
 .ob-props b{display:block;font-size:14px}
 .ob-props span{font-size:13px;color:var(--muted);word-break:keep-all}
 .agree{display:flex;flex-direction:column;gap:8px}
+.pledge{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 16px;margin-bottom:12px}
+.pledge section{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.pledge section:first-child{border-top:0}
+.pledge .pn{font-family:var(--f-display);font-size:15px;color:var(--camellia);flex:none;width:22px;padding-top:1px}
+.pledge h3{margin:0 0 6px;font-size:15px}
+.pledge p{margin:0 0 6px;font-size:13.5px;line-height:1.65;color:var(--ink);word-break:keep-all}
+.pledge ul{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:5px}
+.pledge li{font-size:13.5px;line-height:1.6;word-break:keep-all}
+.pledge b{font-weight:600}
+.pledge-end{margin:0;padding:12px 0 10px;border-top:1px solid var(--line);font-family:var(--f-display);font-size:14.5px;text-align:center;color:var(--sea)}
 .agree label{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer}
 .agree label:has(input:checked){border-color:var(--sea)}
 .agree input{accent-color:var(--sea);margin-top:3px;flex:none}
@@ -850,6 +860,7 @@ function needWrite(){ if(S.myStatus){ toast(S.myStatus.status==='rejected'?'가�
   toast(S.uid ? '보기 전용으로 열려 있어 참여할 수 없어요' : '로그인하면 좋아요와 글쓰기를 할 수 있어요'); return false; }
 function writeErr(e){
   const c = e && e.code;
+  if(c==='banned'){ bannedToast(e.message); return; }
   if(c==='invalid_argument'){ S.writable=false; showNotice(); toast('이 페이지에서 쓰기 권한이 없어요'); }
   else if(c==='quota_exceeded') toast('저장 공간이 가득 찼어요. 오래된 소식을 정리해 주세요');
   else toast('저장하지 못했어요. 잠시 후 다시 시도해 주세요');
@@ -1222,6 +1233,23 @@ async function setUserStatus(uid,status,form){
   }catch(e){ toast(/admin/.test(e.message||'')?'관리자 계정은 바꿀 수 없어요':'처리하지 못했어요: '+(e.message||'')); }
 }
 
+
+/* ---------- 금지어 (서버에서도 동일하게 차단) ---------- */
+const BANNED_BASE=['시의원','도의원','구의원','군의원','국회의원','대통령','국무총리','도지사','구청장','군수','시장님','시장후보','여수시장','여수시시장','지역위원장','당협위원장','공천','선거운동'];
+function bannedHit(...parts){ const t=parts.filter(Boolean).join(' ').replace(/\s+/g,''); if(!t) return null;
+  for(const w of BANNED_BASE) if(t.includes(w)) return w;
+  if(/(^|[^가-힣])시장(님|후보|선거|당선|출마|께서|실)/.test(t)) return '시장';
+  for(const w0 of ((S.mod.get('banned')||{}).words||[])){ const w=String(w0).replace(/\s+/g,''); if(w.length>=2&&t.includes(w)) return w; }
+  return null; }
+function bannedToast(w){ toast(`‘${w}’은(는) 다정여수의 금지어예요. 정치 관련 표현은 쓸 수 없어요`); }
+function bannedAdminHtml(){ const words=(S.mod.get('banned')||{}).words||[];
+  return `<h2 style="font-size:16px;margin:14px 0 8px">금지어 <small>${BANNED_BASE.length}개 기본 + ${words.length}개 추가</small></h2>
+    <p class="muted" style="margin:0 0 8px;font-size:12.5px">기본: 정치 직함(시의원·국회의원·시장님·도지사·대통령 등). 지역 전·현직 정치인 이름을 아래에 한 줄에 하나씩 추가하세요. 게시물·댓글·메시지·단체 소개 모두에 적용돼요.</p>
+    <textarea id="ban-words" style="width:100%;min-height:90px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)" placeholder="홍길동&#10;김아무개">${esc(words.join('\n'))}</textarea>
+    <div class="rep-acts" style="margin-top:6px"><button class="btn sm pri" data-act="ban-save">금지어 저장</button></div>`; }
+async function saveBanned(){ const words=[...new Set($('#ban-words').value.split(/\n|,/).map(x=>x.trim()).filter(x=>x.length>=2))];
+  try{ await S.db.doc('mod/banned').set({words,at:Date.now(),by:S.uid}); toast(`금지어 ${words.length}개를 저장했어요`); }catch(e){ writeErr(e); } }
+
 /* ---------- 회원 탈퇴 ---------- */
 function withdrawPlan(){
   const mo=myOrgs(), sole=mo.filter(o=>(o.ownerIds||[]).length<=1), shared=mo.filter(o=>(o.ownerIds||[]).length>1);
@@ -1517,7 +1545,7 @@ function adminView(){
       || `<div class="empty"><h2>승인을 기다리는 항목이 없어요</h2><p>단체가 가입을 신청하거나 개인 참여자가 소식을 올리면 여기에 들어와요.</p></div>`;
   }
   else body = list.length?`<div class="reps">${list.map(repCard).join('')}</div>`:`<div class="empty"><h2>${S.admFilter==='open'?'처리할 신고가 없어요':'처리한 신고가 아직 없어요'}</h2><p>새 신고가 들어오면 아래 탭에 숫자로 알려 드려요.</p></div>`;
-  return `<div class="gut"><section class="sec"><h2>관리 <small>관리자에게만 보여요</small></h2>${adminNoticesHtml()}
+  return `<div class="gut"><section class="sec"><h2>관리 <small>관리자에게만 보여요</small></h2>${adminNoticesHtml()}${bannedAdminHtml()}
     <div class="stat-row"><div><b>${pend.length+porgs.length}</b><span>승인 대기</span></div><div><b>${open.length}</b><span>신고 대기</span></div><div><b>${hiddenN}</b><span>숨김 중</span></div></div>
     <p class="muted" style="margin:0">단체 가입과 개인 참여자의 글은 승인해야 공개돼요. 서로 다른 ${AUTO_HIDE}명이 신고한 소식·댓글은 확인 전까지 자동으로 숨겨져요.</p>
     <div class="chips"><button class="chip" data-adm="pending" aria-pressed="${S.admFilter==='pending'}">승인 대기 ${pend.length+porgs.length}</button>${window.dj?`<button class="chip" data-adm="accounts" aria-pressed="${S.admFilter==='accounts'}">계정 ${S.users?S.users.length:''}</button>`:''}<button class="chip" data-adm="open" aria-pressed="${S.admFilter==='open'}">신고 ${open.length}</button><button class="chip" data-adm="done" aria-pressed="${S.admFilter==='done'}">처리 완료</button></div>
@@ -1993,7 +2021,8 @@ function renderConv(){
   body.scrollTop=body.scrollHeight;
 }
 async function sendDm(){
-  const inp=$('#dm-text'), t=inp.value.trim(); if(!t||!needWrite()) return; const o=S.dmOpen; if(!o) return; inp.value=''; const now=Date.now();
+  const inp=$('#dm-text'), t=inp.value.trim(); if(!t||!needWrite()) return;
+  { const w=bannedHit(t); if(w){ bannedToast(w); return; } } const o=S.dmOpen; if(!o) return; inp.value=''; const now=Date.now();
   try{
     await S.db.collection('dms/'+o.cid+'/msgs').add({from:o.me,by:S.uid,text:t,at:now});
     const cur=S.dms.find(c=>c.id===o.cid)||{}; const read={...(cur.read||{}),[o.me]:now};
@@ -2084,12 +2113,36 @@ function obRender(){
       <p class="err">${esc(o.err)}</p><div class="ob-f"><button class="btn pri" type="submit">다음</button></div></form>`;
   }
   else if((o.type==='org'&&o.step===3)||(o.type==='member'&&o.step===2)){
-    body=`<h2>함께 지킬 약속이에요</h2><p class="lead">다정여수는 여수의 좋은 소식만 모으는 곳이에요. 세 가지에 동의해 주세요.</p><form class="form" id="ob-form"><div class="agree">
-      <label><input type="checkbox" id="ob-a1" required><div><b>커뮤니티 약속</b><small>재능기부·봉사·기부·나눔 등 선한 소식만 올려요. 정치·종교 홍보, 상업 광고, 비방, 개인정보 노출은 올리지 않아요.</small>
-        <details><summary>자세히</summary><ul><li>다른 단체의 소식을 허락 없이 가져오지 않아요</li><li>사진 속 사람에게는 게시 동의를 받아요</li><li>신고가 누적되면 관리자가 확인할 때까지 숨겨질 수 있어요</li>${o.type==='member'?'<li>개인 참여자의 소식과 수정 내용은 관리자 승인 후 공개돼요</li>':'<li>단체 가입은 관리자가 확인한 뒤 승인돼요. 승인 전에는 단체가 공개되지 않아요</li>'}</ul></details></div></label>
-      <label><input type="checkbox" id="ob-a2" required><div><b>이용약관 동의</b><small>올린 소식은 다정여수 안에서 다른 참여자에게 보여요. 운영 정책을 어기면 글이 숨겨지거나 삭제될 수 있어요.</small></div></label>
-      <label><input type="checkbox" id="ob-a3" required><div><b>개인정보 처리 동의</b><small>${o.type==='org'?'담당자 이름과 연락처는 관리자 연락 목적으로만 쓰고, 프로필에는 문의처만 공개해요.':'닉네임, 지역, 소개는 프로필에 공개돼요. 그 밖의 정보는 모으지 않아요.'}</small></div></label>
-      </div><p class="err">${esc(o.err)}</p><div class="ob-f"><button class="btn pri" type="submit" id="ob-submit">동의하고 가입하기</button></div></form>`;
+    body=`<h2>함께 지킬 약속이에요</h2><p class="lead">다정여수는 이웃의 선한 소식만 모이는 곳이에요. 깨끗한 커뮤니티를 위해 아래 약속을 꼭 읽고 동의해 주세요.</p>
+    <form class="form" id="ob-form"><div class="pledge">
+      <section><span class="pn">01</span><div><h3>개인정보를 모으지 않아요</h3>
+        <ul><li>다정여수는 회원의 개인정보를 수집하지 않아요. 로그인에 쓰는 이메일은 계정 확인에만 쓰이고 누구에게도 공개되지 않아요.</li>
+        <li><b>1:1 메시지 내용은 수집하지도, 열람하지도 않아요.</b> 운영자도 볼 수 없어요.</li>
+        <li>서비스를 더 잘 운영하기 위해 방문 수 같은 <b>익명 활동 통계</b>는 모으며, 월말 정산 자료로 쓰일 수 있어요.</li>
+        <li>게시물·댓글·메시지에 직접 적은 연락처 등 개인정보의 관리는 작성자 본인의 몫이며, 다정여수는 이에 대해 책임지지 않아요.</li></ul></div></section>
+      <section><span class="pn">02</span><div><h3>이런 소식은 올릴 수 없어요</h3>
+        <ul><li><b>선행을 가장한 상업 광고</b> — 할인 홍보, 판매 유도, 업체 홍보가 목적인 글</li>
+        <li><b>정치 활동</b> — 정당·후보·정책 홍보, 선거 관련 글</li>
+        <li><b>포교를 위한 종교 활동</b> — 전도·예배 초대 등 신앙 권유가 목적인 글</li>
+        <li>비방, 혐오 표현, 다른 사람의 사진·소식을 허락 없이 올리는 글</li></ul></div></section>
+      <section><span class="pn">03</span><div><h3>종교 단체 가입 안내</h3>
+        <p>종교 단체는 다정여수가 확인한 <b>인증된 교파·교단</b>에 속한 경우에만 가입할 수 있어요. 그 밖의 경우에는 가입이 반려될 수 있어요. 가입 후에도 나눔·봉사 소식만 올릴 수 있어요.</p></div></section>
+      <section><span class="pn">04</span><div><h3>정치와는 거리를 둬요</h3>
+        <p>정당의 지역위원회, 정치·선거와 관련된 단체와 기관은 가입할 수 없어요.</p>
+        <p>모든 게시물·댓글·메시지에서 <b>시의원, 도의원, 국회의원, 시장, 도지사, 대통령</b> 같은 정치 직함과 <b>지역 전·현직 정치인의 이름</b>은 금지어로 설정돼 있어 올라가지 않아요. <span class="muted">(수산시장·전통시장처럼 ‘시장’이 장터를 뜻하는 말은 쓸 수 있어요.)</span></p></div></section>
+      <section><span class="pn">05</span><div><h3>계정 보호와 이용 제한</h3>
+        <ul><li>비정상적인 방법이나 자동화된 접근이 발견되면 <b>즉시 계정이 정지</b>돼요.</li>
+        <li>약속을 어긴 글은 숨겨지거나 삭제되고, 반복되면 이용이 정지·반려될 수 있어요.</li>
+        <li>신고가 누적된 글은 관리자가 확인할 때까지 자동으로 숨겨져요.</li>
+        ${o.type==='member'?'<li>개인 참여자의 소식과 수정 내용은 관리자 승인 후 공개돼요.</li>':'<li>단체 가입은 관리자가 확인한 뒤 승인되며, 승인 전에는 공개되지 않아요.</li>'}</ul></div></section>
+      <p class="pledge-end">깨끗하고 따뜻한 커뮤니티를 위한 약속이에요. 너른 양해 부탁드려요.</p>
+    </div>
+    <div class="agree">
+      <label><input type="checkbox" id="ob-all"><div><b>모두 동의해요</b></div></label>
+      <label><input type="checkbox" id="ob-a1" required><div><b>[필수] 개인정보·메시지 안내를 확인했어요</b><small>01 항목</small></div></label>
+      <label><input type="checkbox" id="ob-a2" required><div><b>[필수] 게시 제한과 정치·종교 원칙에 동의해요</b><small>02 · 03 · 04 항목</small></div></label>
+      <label><input type="checkbox" id="ob-a3" required><div><b>[필수] 계정 보호와 이용 제한에 동의해요</b><small>05 항목</small></div></label>
+    </div><p class="err">${esc(o.err)}</p><div class="ob-f"><button class="btn pri" type="submit" id="ob-submit">동의하고 가입하기</button></div></form>`;
   }
   else { /* done */
     const others=approvedOrgs().filter(x=>x.id!==o.createdId).slice(0,8);
@@ -2134,7 +2187,7 @@ async function obNext(){
       d.avatarId=avatarId; await saveMe(m=>{ m.profile={nickname:d.nickname,regions:d.regions,region:d.region,bio:d.bio||'',avatarId,type:'individual',agreedAt:Date.now(),joinedAt:Date.now()}; },true);
     }
     o.step++; obRender();
-  }catch(e){ btn.disabled=false; btn.textContent='동의하고 가입하기'; o.err='가입을 저장하지 못했어요. 잠시 후 다시 시도해 주세요'; obRender(); }
+  }catch(e){ btn.disabled=false; btn.textContent='동의하고 가입하기'; o.err=e&&e.code==='banned'?`‘${e.message}’은(는) 금지어라 단체 이름·소개에 쓸 수 없어요`:'가입을 저장하지 못했어요. 잠시 후 다시 시도해 주세요'; obRender(); }
 }
 
 /* ---------- images ---------- */
@@ -2240,6 +2293,7 @@ async function submitOrg(form){
 async function submitPost(){
   const err=$('#p-err'), btn=$('#p-submit'); err.textContent=''; pfCollect(); const pf=S.pf, edit=S.sheet&&S.sheet.edit;
   const cap=pf.cap.trim(); if(!cap){ err.textContent='문구를 적어 주세요'; return; }
+  { const w=bannedHit(cap,pf.loc); if(w){ err.textContent=`‘${w}’은(는) 금지어예요. 정치 관련 표현은 쓸 수 없어요`; return; } }
   const label=btn.textContent; btn.disabled=true; btn.textContent=pf.files.length?`사진 올리는 중 (0/${pf.files.length})`:'저장하는 중';
   const newIds=[];
   for(let i=0;i<pf.files.length;i++){ try{ newIds.push(await uploadFeed(pf.files[i],pf.ratio)); btn.textContent=`사진 올리는 중 (${i+1}/${pf.files.length})`; }
@@ -2265,6 +2319,7 @@ async function submitPost(){
 }
 async function submitComment(){
   const inp=$('#c-text'), t=inp.value.trim(); if(!t||!needWrite()) return;
+  { const w=bannedHit(t); if(w){ bannedToast(w); return; } }
   inp.value='';
   try{ await S.db.collection('comments').add({postId:S.sheet.pid,authorId:S.uid,text:t,createdAt:Date.now()}); }
   catch(e){ inp.value=t; writeErr(e); }
@@ -2372,6 +2427,7 @@ document.addEventListener('click', e=>{
   else if(a==='withdraw'){ if(needWrite()) withdrawSheet(); }
   else if(a==='managers') managersSheet(t.dataset.orgId);
   else if(a==='notif') openNotif();
+  else if(a==='ban-save') saveBanned();
   else if(a==='users-reload'){ S.users=null; schedule(); }
   else if(a==='clear-recent'){ try{ localStorage.removeItem('dj_recent'); }catch(_){} schedule(); }
   else if(a==='report'){ S.rpOrg=t.dataset.orgId; S.rpYear=new Date().getFullYear(); go('report'); }
@@ -2407,6 +2463,8 @@ document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.
   if(e.target.id==='st-text'){ S.stText=e.target.value; const p=$('#st-prev p'); if(p) p.textContent=e.target.value||'여기에 글귀가 보여요'; }
   if(e.target.id==='dm-q'){ S.dmQ=e.target.value; const sel=$('#dm-as'), as=sel&&sel.value; const pos=e.target.selectionStart; panel().innerHTML=dmNewSheet(); if(as&&$('#dm-as')) $('#dm-as').value=as; const q=$('#dm-q'); q.focus(); try{ q.setSelectionRange(pos,pos); }catch(_){} } });
 document.addEventListener('change', e=>{ const i=e.target;
+  if(i.id==='ob-all'){ ['ob-a1','ob-a2','ob-a3'].forEach(k=>{ const c=document.getElementById(k); if(c) c.checked=i.checked; }); return; }
+  if(/^ob-a[123]$/.test(i.id)){ const all=document.getElementById('ob-all'); if(all) all.checked=['ob-a1','ob-a2','ob-a3'].every(k=>document.getElementById(k).checked); }
   if((i.name==='p-kind'||i.id==='p-org')&&S.pf){ rerenderPostForm(); return; }
   if(i.name==='p-ratio'&&S.pf){ pfCollect(); /* 비율이 바뀌면 이전 비율로 잡은 구도 미리보기를 원본으로 되돌림 */ for(const f of S.pf.files){ if(f.crop&&f.crop.ratio!==S.pf.ratio){ if(f.srcUrl) f.url=f.srcUrl; } } rerenderPostForm(); return; }
   if(i.id==='p-file'&&S.pf){ const room=MAX_IMG-S.pf.existing.length-S.pf.files.length; const picked=[...i.files].filter(f=>f.type.startsWith('image/'));
