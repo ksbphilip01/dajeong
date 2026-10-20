@@ -290,6 +290,13 @@ input:focus-visible+.rb{outline:2px solid var(--sea);outline-offset:-2px}
 .praise-chip{background:var(--camellia,#B4233C)!important;color:#fff!important;box-shadow:none!important;font-weight:700;border-color:transparent!important}.praise-chip b{background:#fff;color:var(--camellia,#B4233C);border-radius:999px;padding:0 6px;font-size:11px;margin-left:2px}
 .pr-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}.pr-to{font-size:12px;color:var(--muted);letter-spacing:.02em}.pr-to b{display:block;font-size:17px;color:var(--ink,inherit);margin-top:2px}.pr-text{margin:0;white-space:pre-wrap;line-height:1.65;font-size:14.5px}.pr-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}.pr-foot .sp{flex:1}.pr-cheer{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--ink,inherit)}.pr-cheer.on{background:var(--camellia,#B4233C);color:#fff;border-color:transparent}
 .pr-hero{border-radius:18px;padding:20px 18px;background:linear-gradient(150deg,#B4233C,#D9536A);color:#fff;margin:4px 0 14px}.pr-hero h2{margin:0 0 6px;font-size:22px}.pr-hero p{margin:0;opacity:.92;font-size:13.5px;line-height:1.6}
+.ticker{display:flex;align-items:center;gap:8px;width:calc(100% - 32px);margin:12px 16px 0;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);text-align:left;cursor:pointer;color:inherit;font:inherit}
+.tk-ic{font-size:17px;flex:none}.tk-win{flex:1;overflow:hidden;white-space:nowrap;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.tk-run{display:inline-block;padding-left:4px;animation:tk-scroll linear infinite;font-size:14px;font-weight:600}.ticker:hover .tk-run{animation-play-state:paused}
+.tk-sep{margin:0 14px;color:var(--muted)}.tk-pin{display:inline-block;font-style:normal;font-size:10.5px;font-weight:700;color:#fff;background:var(--camellia,#B4233C);border-radius:6px;padding:1px 6px;margin-right:6px;vertical-align:1px}.tk-more{flex:none;color:var(--muted);font-size:18px}
+@keyframes tk-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.tk-run{animation:none}.tk-win{text-overflow:ellipsis}}
+.nt-hero{display:flex;gap:12px;align-items:center;border-radius:18px;padding:18px;background:linear-gradient(150deg,var(--sea),#2B7A9E);color:#fff;margin:4px 0 14px}.nt-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:13px;white-space:nowrap;color:var(--muted)}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 
@@ -936,6 +943,7 @@ function viewHtml(){
   if(S.tab==='report') return reportView();
   if(S.tab==='monthly') return monthlyView();
   if(S.tab==='praise') return praiseView();
+  if(S.tab==='notices') return noticesView();
   return homeView();
 }
 
@@ -1007,7 +1015,7 @@ function homeView(){
       <button class="btn pri" data-act="${isMember()?'new-post':'signup'}">${isMember()?'첫 소식 올리기':'가입하고 소식 올리기'}</button>
       ${isMember()?'':'<p class="muted" style="font-size:12.5px;margin:0">가입하지 않아도 올라오는 소식과 댓글은 볼 수 있어요.</p>'}
     </div></div>`;
-    return noticeHtml() + `<div class="chips gut" style="padding-top:10px"><button class="chip praise-chip" data-tab="praise">칭찬합니다${(S.praise||[]).length?` <b>${praiseList().length}</b>`:''}</button></div>` + cta + sampleFeed();
+    return `<div class="chips gut" style="padding-top:10px"><button class="chip praise-chip" data-tab="praise">칭찬합니다${(S.praise||[]).length?` <b>${praiseList().length}</b>`:''}</button></div>` + cta + sampleFeed();
   }
   const week=livePosts().filter(p=>NOW-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0);
   const upcoming=eventsOf().filter(e=>e.date>=new Date(Date.now()+9*3600e3).toISOString().slice(0,10)).length;
@@ -1020,8 +1028,8 @@ function homeView(){
     body = `<div class="feed">${top.length?`<div class="cf-band">★ 친한 친구의 새 소식 ${top.length}</div>${top.map(postCard).join('')}<div class="cf-band" style="color:var(--muted)">모든 이웃의 소식</div>`:''}${rest.map(postCard).join('')}</div>`;
   }
   else body = `<div class="feed">${posts.map(postCard).join('')}</div>`;
-  if(isGuest()) return noticeHtml() + banner + chips + body;
-  return (orgs.length?stories:'') + noticeHtml() + pulse + banner + chips + body;
+  if(isGuest()) return noticeTicker() + banner + chips + body;
+  return (orgs.length?stories:'') + pulse + noticeTicker() + banner + chips + body;
 }
 function metaHtml(p){
   const bits=[];
@@ -1069,7 +1077,7 @@ function sampleFeed(){
     ${orgs.map(o=>`<button class="story" data-sample-org="${o.id}"><span class="${o.createdAt>NOW-7*DAY?'newdot':''}">${avatar(o,58,true)}</span><span>${esc(o.name)}</span></button>`).join('')}</div>`;
   const likes=SAMPLE_POSTS.reduce((n,p)=>n+p.likes,0);
   const pulse=`<div class="pulse"><div><b>${SAMPLE_POSTS.length}</b><span>이번 주 좋은 소식</span></div><div><b>${orgs.length}</b><span>함께하는 단체</span></div><div><b>${likes}</b><span>응원 하트</span></div></div>`;
-  const bar=`<div class="sample-bar"><b>예시 화면</b><span>실제 단체와 소식이 아니에요. 첫 소식이 올라오면 이 화면은 사라지고 진짜 피드가 보여요.</span></div>`;
+  const bar=noticeTicker()||`<div class="sample-bar"><b>예시 화면</b><span>실제 단체와 소식이 아니에요. 첫 소식이 올라오면 이 화면은 사라지고 진짜 피드가 보여요.</span></div>`;
   const cards=SAMPLE_POSTS.map(p=>{ const o=orgs.find(x=>x.id===p.org); const v={id:p.id,kind:p.kind,caption:p.caption};
     return `<article class="post"><header class="post-h" style="padding-left:12px;padding-right:12px"><button class="org-chip" data-sample-org="${o.id}">${avatar(o,36)}<span><b>${esc(o.name)}</b><small>${esc(regionLabel(o))} · ${rel(NOW-p.ago)}</small></span></button><div class="ph-r"><span class="kind k-${p.kind}">${KINDS[p.kind]}</span></div></header>
       ${mediaHtml(v,o.name)}<div class="acts"><button class="act like" aria-label="좋아요">${HEART}</button><button class="act" aria-label="댓글">${BUBBLE}</button></div>
@@ -2014,6 +2022,17 @@ function relListHtml(){ const b=Object.keys(me().blocked||{}), m=Object.keys(me(
 
 /* ---------- 관리자 공지 ---------- */
 function liveNotices(){ return S.notices.filter(n=>n.pinned||Date.now()-n.createdAt<14*DAY_MS()).sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||b.createdAt-a.createdAt); }
+/* 관리자 공지: 스피커 + 흘러가는 제목. 누르면 공지 창으로 */
+function noticeTicker(){ const list=liveNotices(); if(!list.length) return '';
+  const titles=list.map(n=>`<span class="tk-item">${n.pinned?'<i class="tk-pin">공지</i>':''}${esc(n.title)}</span>`).join('<span class="tk-sep">•</span>');
+  const len=list.reduce((k,n)=>k+n.title.length,0)+list.length*4, dur=Math.max(10,Math.round(len*0.45));
+  return `<button class="ticker" data-tab="notices" aria-label="관리자 공지 ${list.length}개 보기"><span class="tk-ic" aria-hidden="true">📢</span><span class="tk-win"><span class="tk-run" style="animation-duration:${dur}s">${titles}<span class="tk-sep">•</span>${titles}<span class="tk-sep">•</span></span></span><span class="tk-more">›</span></button>`; }
+function noticesView(){ const list=liveNotices(), old=[...S.notices].filter(n=>!list.includes(n)).sort((a,b)=>b.createdAt-a.createdAt);
+  const card=n=>`<article class="nt-card"><div style="display:flex;align-items:center;gap:8px">${n.pinned?'<span class="tk-pin">공지</span>':''}<h3 style="margin:0;font-size:16.5px;flex:1">${esc(n.title)}</h3>${S.isAdmin?`<button class="btn sm ghost" data-notice-edit="${n.id}">수정</button>`:''}</div><p class="pr-text" style="margin:8px 0 6px">${richCaption(n.text)}</p><small class="ago">다정여수 운영자 · ${new Date(n.createdAt).toLocaleDateString('ko-KR')}${n.updatedAt?' (수정됨)':''}</small></article>`;
+  return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="notices-exit" style="padding:0">‹ 나가기</button><span style="flex:1"></span>${S.isAdmin?'<button class="btn sm pri" data-act="notice-new">공지 쓰기</button>':''}</div>
+    <div class="nt-hero"><span style="font-size:26px">📢</span><div><h2 style="margin:0">관리자 공지</h2><p style="margin:2px 0 0;font-size:13px;opacity:.9">다정여수 운영 소식과 안내를 전해 드려요.</p></div></div>
+    ${list.length?`<div style="display:flex;flex-direction:column;gap:12px">${list.map(card).join('')}</div>`:'<div class="empty"><h2>지금 올라온 공지가 없어요</h2></div>'}
+    ${old.length?`<h3 style="font-size:14px;color:var(--muted);margin:22px 0 10px">지난 공지</h3><div style="display:flex;flex-direction:column;gap:10px;opacity:.85">${old.slice(0,30).map(card).join('')}</div>`:''}</div>`; }
 function noticeHtml(){ const list=liveNotices().filter(n=>!S.noticeDismissed.has(n.id)).slice(0,2); if(!list.length) return '';
   return list.map(n=>`<div class="notice${S.noticeOpen===n.id?' open':''}" data-notice="${n.id}"><div class="nt"><b>${n.pinned?'<span class="pin">공지</span>':''}${esc(n.title)}</b><p>${richCaption(n.text)}</p><small class="ago">${rel(n.createdAt)}${n.text.length>80&&S.noticeOpen!==n.id?' · 더 보기':''}</small></div>${n.pinned?'':`<button class="x" data-notice-x="${n.id}" aria-label="닫기">×</button>`}</div>`).join(''); }
 function noticeForm(n){ const v=n||{}; return `${head(n?'공지 수정':'공지 쓰기')}<div class="panel-b"><form class="form gut" id="notice-form" data-id="${n?n.id:''}">
@@ -2529,17 +2548,18 @@ async function deletePost(pid){
 
 /* ---------- navigation + events ---------- */
 S.hist=[];
-function go(tab, orgId){ if(isGuest()&&!['home','landing','praise'].includes(tab)) return guestGate(); if(S.tab!=='org'||tab!=='org') S.hist.push(S.tab); S.tab=tab; S.orgId=orgId||null; S.ptab='posts'; closeSheet(); schedule(); window.scrollTo(0,0);
+function go(tab, orgId){ if(isGuest()&&!['home','landing','praise','notices'].includes(tab)) return guestGate(); if(S.tab!=='org'||tab!=='org') S.hist.push(S.tab); S.tab=tab; S.orgId=orgId||null; S.ptab='posts'; closeSheet(); schedule(); window.scrollTo(0,0);
   if(tab==='org'&&orgId){ try{ const k='org:'+orgId; const rec=JSON.parse(localStorage.getItem('dj_recent')||'[]').filter(x=>x!==k); rec.unshift(k); localStorage.setItem('dj_recent',JSON.stringify(rec.slice(0,12))); }catch(_){} } }
 function burst(el){ const b=el.querySelector('.burst'); if(!b) return; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); }
 
 document.addEventListener('click', e=>{
-  if(e.target.closest('[data-sample]')&&!e.target.closest('[data-act],[data-more]')){ toast('예시 화면이에요. 가입하면 실제 소식을 올리고 응원할 수 있어요'); return; }
+  if(e.target.closest('[data-sample]')&&!e.target.closest('[data-act],[data-more],.ticker')){ toast('예시 화면이에요. 가입하면 실제 소식을 올리고 응원할 수 있어요'); return; }
   if(S.tab==='landing'&&!isMember()&&e.target.closest('[data-org],[data-member],[data-hash],[data-tab],[data-filter-go],[data-like],[data-save],[data-dbl]')&&!e.target.closest('[data-act],[data-more],[data-car]')){ $('#gate').hidden=false; return; }
   if(isGuest()&&S.tab!=='landing'&&!e.target.closest('#onboard,#login,.login,[data-ob]')){
-    const g=e.target.closest('[data-tab]:not([data-tab="home"]):not([data-tab="praise"]),[data-org],[data-member],[data-hash],[data-story],[data-responders],[data-like],[data-save],[data-share],[data-act="search"],[data-act="notif"],[data-act="dm"],[data-act="dm-new"],[data-act="new-post"],[data-act="new-story"],[data-act="report"],[data-report]');
+    const g=e.target.closest('[data-tab]:not([data-tab="home"]):not([data-tab="praise"]):not([data-tab="notices"]),[data-org],[data-member],[data-hash],[data-story],[data-responders],[data-like],[data-save],[data-share],[data-act="search"],[data-act="notif"],[data-act="dm"],[data-act="dm-new"],[data-act="new-post"],[data-act="new-story"],[data-act="report"],[data-report]');
     if(g&&!e.target.closest('[data-more],[data-car]')){ e.preventDefault(); e.stopPropagation(); return guestGate(); } }
   const svb=e.target.closest('[data-sv]'); if(svb){ e.stopPropagation(); return svAction(svb.dataset.sv, svb); }
+  const nte=e.target.closest('[data-notice-edit]'); if(nte){ const n=S.notices.find(x=>x.id===nte.dataset.noticeEdit); if(n) openSheet('notice-form',{},noticeForm(n)); return; }
   const chb=e.target.closest('[data-cheer]'); if(chb){ e.stopPropagation(); return praiseCheer(chb.dataset.cheer); }
   const pdl=e.target.closest('[data-praise-del]'); if(pdl){ e.stopPropagation(); return praiseDelete(pdl.dataset.praiseDel); }
   const pmv=e.target.closest('[data-pfmove]'); if(pmv&&S.pf){ pfCollect(); const d=+pmv.dataset.pfmove, ne=S.pf.existing.length, a=S.pfCur, b=a+d; const tot=ne+S.pf.files.length; if(b<0||b>=tot) return;
@@ -2624,7 +2644,7 @@ document.addEventListener('click', e=>{
   else if(a==='edit-org'){ const o=S.orgs.get(t.dataset.orgId); if(o) openSheet('org-form',{},orgForm(o)); }
   else if(a==='edit-member'){ if(needWrite()) openSheet('member-form',{},memberForm()); }
   else if(a==='change-pw'){ openChangePw(); }
-  else if(a==='praise-exit'){ S.hist=[]; go('home'); }
+  else if(a==='praise-exit'||a==='notices-exit'){ S.hist=[]; go('home'); }
   else if(a==='praise-new'){ if(isGuest()) return guestGate(); if(needWrite()) praiseForm(); }
   else if(a==='set-rq'){ openSetRq(); }
   else if(a==='mail-reset'){ mailReset(); }
