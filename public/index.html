@@ -716,6 +716,7 @@ img,video,canvas{max-width:100%}
 .pr-hero p,.nt-hero p{font-size:clamp(12.5px,3.6vw,14px);line-height:1.6}
 .pr-card,.nt-card{padding:clamp(13px,4vw,16px)}
 .praise-chip{flex:none}
+.adm-cat{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);flex:none}.adm-cat select{font-size:12.5px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:120px}
 .av.official{display:inline-grid;place-items:center;border-radius:50%;background:linear-gradient(150deg,var(--sea),#2B7A9E);color:#fff;font-weight:800;letter-spacing:-.03em;flex:none}.off-badge{font-style:normal;font-size:10.5px;font-weight:700;color:#fff;background:var(--sea);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
 .chips{scroll-padding-inline:16px}
 @media (max-width:380px){
@@ -765,7 +766,8 @@ const KIND_HINT = {talent:'가진 재능으로 이웃을 돕는 소식', volunte
 /* 참여 신청(함께해요)·도움 응답(필요해요) 공통 설정 */
 const ASK = {recruit:{btn:'참여할게요', on:'참여 신청함', people:'참여', field:'joins', slotsLabel:'모집 인원 (선택)', dateLabel:'활동 날짜 (선택)', closeLabel:'모집 마감', closedText:'모집이 마감됐어요', full:'정원이 찼어요'},
              need:{btn:'도울게요', on:'돕기로 함', people:'도움', field:'helps', slotsLabel:'필요한 수량·인원 (선택)', dateLabel:'필요한 날짜까지 (선택)', closeLabel:'해결됐어요', closedText:'해결됐어요. 도와주신 분들 고마워요', full:'필요한 만큼 모였어요'}};
-const CATS = ['복지관·센터','봉사단체','동호회·모임','학교·청소년','종교단체','가게·기업','공공기관','개인','기타'];
+const CATS = ['복지관·센터','봉사단체','동호회·모임','학교·청소년','종교단체','재단·협회','의료계','가게·기업','공공기관','개인','기타'];
+function admCatSel(o){ return S.isAdmin?`<label class="adm-cat"><span>분류 변경 (관리자)</span><select data-admcat="${o.id}">${CATS.filter(c=>c!=='개인').map(c=>`<option${c===o.category?' selected':''}>${c}</option>`).join('')}${o.category&&!CATS.includes(o.category)?`<option selected>${esc(o.category)}</option>`:''}</select></label>`:''; }
 const AREAS = ['돌산읍','소라면','율촌면','화양면','남면','화정면','삼산면','동문동','한려동','중앙동','충무동','광림동','서강동','대교동','국동','월호동','여서동','문수동','미평동','둔덕동','만덕동','쌍봉동','시전동','여천동','주삼동','삼일동','묘도동','여수시 전역'];
 const HEART = '<svg viewBox="0 0 24 24"><path d="M12 20.5s-8-4.7-8-10.6A4.4 4.4 0 0 1 12 7.3a4.4 4.4 0 0 1 8 2.6c0 5.9-8 10.6-8 10.6z"/></svg>';
 const BUBBLE = '<svg viewBox="0 0 24 24"><path d="M20.5 11.5a8.3 8.3 0 0 1-12.2 7.3L3.5 20l1.3-4.4A8.3 8.3 0 1 1 20.5 11.5z"/></svg>';
@@ -1194,7 +1196,7 @@ function orgView(){
   return `<div class="gut" style="background:var(--surface);border-bottom:1px solid var(--line)">
     <button class="back" data-act="back">‹ 뒤로</button>${stbar}
     <div class="phead">${avatar(o,84,recent(o.id))}<div class="pstats"><div><b>${ps.length}</b><span>소식</span></div><div><b>${neighbors()}</b><span>이웃 단체</span></div><div><b>${likes}</b><span>받은 응원</span></div></div></div>
-    <div class="pname"><h2>${esc(o.name)}${vbadge(o)}${isNew(o)?'<span class="tag new" style="font-size:10.5px">NEW</span>':''}</h2><div class="handle">@${esc(o.handle||'')} · ${esc(o.category||'')} · ${esc(regionLabel(o))}</div>${o.religion?`<div class="handle">${esc(o.religion.faith||'')} · ${esc(o.religion.denomination||'')}${o.religion.sect?' · '+esc(o.religion.sect):''}</div>`:''}
+    <div class="pname"><h2>${esc(o.name)}${vbadge(o)}${isNew(o)?'<span class="tag new" style="font-size:10.5px">NEW</span>':''}</h2><div class="handle">@${esc(o.handle||'')} · ${esc(o.category||'')} · ${esc(regionLabel(o))}</div>${S.isAdmin?`<div style="margin-top:8px">${admCatSel(o)}</div>`:''}${o.religion?`<div class="handle">${esc(o.religion.faith||'')} · ${esc(o.religion.denomination||'')}${o.religion.sect?' · '+esc(o.religion.sect):''}</div>`:''}
       ${o.bio?`<p class="bio">${richCaption(o.bio)}</p>`:''}${o.contact?`<p class="bio" style="margin-top:4px;color:var(--muted);font-size:13px">문의 ${esc(o.contact)}</p>`:''}</div>
     ${mine&&!orgApproved(o)&&(()=>{ const pv=orgPriv(o.id); return pv!==null&&!(pv&&pv.managerContact); })()?`<div class="sample-bar" style="margin:10px 16px 0"><b>연락처 필요</b><span>사칭 방지를 위해 담당자 연락처를 등록해 주세요. 관리자만 볼 수 있어요. <button class="more" data-act="edit-org" data-org-id="${o.id}" style="color:var(--sea);padding:0">지금 등록 ›</button></span></div>`:''}${mine?`<div class="prow">${st==='approved'?`<button class="btn pri" data-act="new-post" data-org-id="${o.id}">소식 올리기</button>`:''}<button class="btn ghost" data-act="edit-org" data-org-id="${o.id}">프로필 수정</button><button class="btn ghost" data-act="managers" data-org-id="${o.id}">관리자 ${(o.ownerIds||[]).length}</button></div>
       ${st==='approved'?`<div class="prow" style="margin-top:0"><button class="btn ghost" data-act="report" data-org-id="${o.id}">활동 리포트</button>${!isVerified(o)?(o.verifyRequest&&!o.verifyRequest.done?'<span class="btn ghost" style="color:var(--muted)">인증 확인 중</span>':`<button class="btn ghost" data-act="verify-req" data-org-id="${o.id}">인증 요청</button>`):''}</div>`:''}`
@@ -1404,7 +1406,7 @@ function userSheet(id){
       <div class="handle">${esc(u.email)}</div>
       <p class="bio" style="font-size:13px;color:var(--muted)">가입 ${new Date(u.created_at).toLocaleString('ko-KR')} · 최근 로그인 ${u.last_sign_in_at?rel(new Date(u.last_sign_in_at).getTime()):'없음'}</p>
       ${u.status!=='active'?`<p class="bio" style="font-size:13px">사유: ${esc(u.reason||'(없음)')}${u.until?` · ${new Date(u.until).toLocaleDateString('ko-KR')}까지`:' · 기한 없음'}${u.hide_content?' · 콘텐츠 숨김':''}</p>`:''}</div>
-    ${orgs.length?`<div class="list">${orgs.map(o=>`<div class="row"><button class="org-chip" data-org="${o.id}" style="flex:1">${avatar(o,36)}<span><b>${esc(o.name)}</b><small>${ORG_STATE_LABEL[orgState(o)]} · 관리자 ${(o.ownerIds||[]).length}명</small></span></button></div>`).join('')}</div>`:''}
+    ${orgs.length?`<div class="list">${orgs.map(o=>`<div class="row"><button class="org-chip" data-org="${o.id}" style="flex:1">${avatar(o,36)}<span><b>${esc(o.name)}</b><small>${ORG_STATE_LABEL[orgState(o)]} · ${esc(o.category||'분류 없음')} · 관리자 ${(o.ownerIds||[]).length}명</small></span></button>${admCatSel(o)}</div>`).join('')}</div>`:''}
     ${pr?`<button class="btn ghost" data-member="${u.id}">개인 참여자 프로필 보기</button>`:''}
     <div class="pledge" style="margin:0;padding:12px 14px"><p style="margin:0 0 4px;font-weight:600">아이디(로그인 이메일)</p><div style="display:flex;gap:8px;align-items:center"><code style="flex:1;word-break:break-all">${esc(u.email)}</code><button class="btn sm ghost" data-copy="${esc(u.email)}">복사</button></div>
       <p class="muted" style="margin:8px 0 0;font-size:12.5px">비밀번호는 암호화되어 저장돼 관리자도 볼 수 없어요. 비밀번호를 잊은 사용자는 로그인 화면의 ‘비밀번호를 잊었어요’에서 본인이 정한 질문에 답해 임시 비밀번호를 받을 수 있어요.</p></div>
@@ -1711,6 +1713,7 @@ function orgPendCard(o){
     ${o.religion?`<div class="rep-prev" style="display:block"><p style="-webkit-line-clamp:unset"><b>종교</b> ${esc(o.religion.faith||'')} · <b>교단</b> ${esc(o.religion.denomination||'')} · <b>교파</b> ${esc(o.religion.sect||'')}</p></div>`:''}
     ${(()=>{ const pv=orgPriv(o.id); const mg=pv?pv.manager:o.manager; return `<div class="meta"><span>담당자 <em>${esc(mg||o.name||'')}${(pv&&pv.managerRole)||o.managerRole?' ('+esc((pv&&pv.managerRole)||o.managerRole)+')':''}</em></span>${pv&&pv.managerContact?`<span>연락처 <em>${esc(pv.managerContact)}</em></span>`:pv?'<span style="color:var(--camellia);font-weight:600">연락처 미등록 · 확인 필요</span>':''}${o.contact?`<span>문의처 <em>${esc(o.contact)}</em></span>`:''}</div>`; })()}
     ${rej?`<div class="field"><label for="rj-${o.id}">반려 사유 (신청자에게 보여요)</label><input id="rj-${o.id}" maxlength="120" placeholder="예: 단체 소개와 문의처를 더 자세히 적어 주세요"></div>`:''}
+    ${admCatSel(o)}
     <div class="rep-acts">${rej?`<button class="btn sm warn" data-appr="org-reject-confirm" data-pid="${o.id}">반려 확정</button><button class="btn sm ghost" data-appr="cancel" data-pid="${o.id}">취소</button>`
       :`<button class="btn sm pri" data-appr="org-approve" data-pid="${o.id}">가입 승인</button><button class="btn sm ghost" data-appr="org-reject" data-pid="${o.id}">반려</button><button class="btn sm ghost" data-org="${o.id}">프로필 보기</button>`}</div></article>`;
 }
@@ -2796,6 +2799,8 @@ document.addEventListener('change', e=>{ const i=e.target;
     picked.slice(0,Math.max(0,room)).forEach(f=>S.nf.files.push({file:f,url:URL.createObjectURL(f)})); i.value=''; nfRerender(); return; }
   if(i.id==='nt-video'&&S.nf&&i.files[0]){ const v=i.files[0]; if(v.size>NT_MAX_VIDEO_MB*1024*1024){ toast(`영상은 ${NT_MAX_VIDEO_MB}MB 이하만 올릴 수 있어요 (지금 ${Math.round(v.size/1048576)}MB)`); i.value=''; return; }
     nfCollect(); S.nf.videoFile=v; S.nf.videoUrl=URL.createObjectURL(v); S.nf.video=null; nfRerender(); return; }
+  if(i.dataset&&i.dataset.admcat&&S.isAdmin){ const id=i.dataset.admcat, o=S.orgs.get(id), v=i.value; if(!o||o.category===v) return; i.disabled=true;
+    S.db.doc('orgs/'+id).update({category:v}).then(()=>{ toast(`‘${o.name}’ 분류를 ${v}(으)로 바꿨어요`); }).catch(e=>writeErr(e)).finally(()=>{ i.disabled=false; }); return; }
   if(i.id==='rq-q'){ const w=document.getElementById('rq-own-wrap'); if(w) w.hidden=i.value!=='__own'; }
   if(i.id==='ob-faith'){ const w=document.getElementById('ob-faith-etc-wrap'); if(w) w.hidden=i.value!=='기타'; }
   if(i.id==='ob-all'){ ['ob-a1','ob-a2','ob-a3'].forEach(k=>{ const c=document.getElementById(k); if(c) c.checked=i.checked; }); return; }
