@@ -761,6 +761,7 @@ body{font-size:15px}
 .phead2 .btn{flex:none;margin-top:2px}
 /* hide old blocks */
 .hero,.boards{display:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);padding-block:14px 12px;border-bottom:1px solid var(--line)}.stats div{display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}.stats div+div::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--line)}.stats b{font-size:20px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}.stats span{font-size:12px;color:var(--muted)}
 .pulse-line{display:flex;align-items:center;gap:10px;padding-block:10px 0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden}.pulse-line i{width:1px;height:12px;background:var(--line);flex:none}.pulse-line b{color:var(--ink);margin-left:3px}
 .pulse-line b{font-family:var(--f-body);font-size:13px}
 /* ticker: plain row */
@@ -1109,8 +1110,9 @@ async function praiseDelete(id){ if(S.confirmPraise!==id){ S.confirmPraise=id; s
   S.confirmPraise=null; try{ await S.db.doc('praise/'+id).delete(); toast('삭제했어요'); }catch(e){ writeErr(e); } }
 
 const PETAL=`<svg class="petal" viewBox="0 0 120 120" aria-hidden="true"><g fill="currentColor"><circle cx="60" cy="30" r="24"/><circle cx="88" cy="50" r="24"/><circle cx="78" cy="84" r="24"/><circle cx="42" cy="84" r="24"/><circle cx="32" cy="50" r="24"/></g><circle cx="60" cy="60" r="13" fill="#F3D27A"/></svg>`;
-function homeStats(orgs){ const week=livePosts().filter(p=>Date.now()-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0); const n=v=>Number(v||0).toLocaleString('ko-KR');
-  return [[n(week),'이번 주 좋은 소식'],[n(orgs.length),'함께하는 단체'],[n(hearts),'응원 하트']]; }
+function memberCount(){ const ids=new Set(); for(const [uid,d] of S.people) if(d&&d.profile) ids.add(uid); for(const o of approvedOrgs()) for(const u of (o.ownerIds||[])) ids.add(u); return ids.size; }
+function homeStats(orgs){ const hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0); const n=v=>Number(v||0).toLocaleString('ko-KR');
+  return [[n(memberCount()),'회원'],[n(approvedOrgs().length),'단체'],[n(hearts),'누적 응원 하트']]; }
 function homeTabs(){ const nP=praiseList().filter(x=>Date.now()-x.createdAt<3*DAY).length, nT=togetherList().filter(x=>!x.closed&&Date.now()-x.createdAt<7*DAY).length;
   return `<nav class="htabs gut" aria-label="홈 메뉴"><button class="on" data-tab="home">소식</button><button data-tab="praise">칭찬합니다${nP?`<i>${nP}</i>`:''}</button><button data-tab="together">함께해요${nT?`<i>${nT}</i>`:''}</button></nav>`; }
 function homeIntro(){ if(isMember()||S.isAdmin) return ''; return `<div class="intro gut"><p>여수의 복지관·봉사단·가게·학교와 이웃들이 올리는 재능기부·봉사·기부·나눔 소식이에요. 보는 건 자유, 올리려면 가입해요.</p><button class="btn pri sm" data-act="signup">가입하기</button></div>`; }
@@ -1121,7 +1123,7 @@ function homeHero(orgs){ const st=homeStats(orgs), empty=!livePosts().length, me
   return `<section class="hero">${PETAL}<p class="hero-kicker">여수의 좋은 소식이 모이는 곳</p><h2 class="hero-h">${h}</h2><p class="hero-sub">${sub}</p><div class="hero-acts">${cta}</div>
     <dl class="hero-stats">${st.map(([v,l])=>`<div><dt>${l}</dt><dd>${v}</dd></div>`).join('')}</dl></section>`; }
 function homePulse(orgs){ const st=homeStats(orgs);
-  return `<div class="pulse-line gut">${st.map(([v,l],i)=>`${i?'<i></i>':''}<span>${l} <b>${v}</b></span>`).join('')}</div>`; }
+  return `<div class="stats gut" aria-live="polite">${st.map(([v,l])=>`<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>`; }
 function homePulseOld(orgs){ const week=livePosts().filter(p=>Date.now()-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0);
   const n=v=>Number(v||0).toLocaleString('ko-KR');
   return `<div class="pulse">${isGuest()?`<div><b>${n(week)}</b><span>이번 주 좋은 소식</span></div>`:`<button data-tab="monthly" style="text-align:center"><b>${n(week)}</b><span>이번 주 좋은 소식 ›</span></button>`}<div><b>${n(orgs.length)}</b><span>함께하는 단체</span></div><div><b>${n(hearts)}</b><span>누적 응원 하트</span></div></div>`; }
@@ -1231,7 +1233,7 @@ function homeView(){
   else if(S.filter!=='all') posts=posts.filter(p=>p.kind===S.filter);
   let body;
   if(!livePosts().length){
-    return homeTabs() + homeIntro() + noticeTicker() + `<div class="gut"><div class="empty"><h2>아직 올라온 소식이 없어요</h2><p>재능기부, 봉사, 기부, 나눔. 작은 일이라도 좋아요. 첫 소식을 올려 주세요.</p><button class="btn pri" data-act="${(isMember()||S.isAdmin)?'new-post':'signup'}">${(isMember()||S.isAdmin)?'첫 소식 올리기':'가입하고 올리기'}</button></div></div>`;
+    return homeTabs() + homeIntro() + noticeTicker() + homePulse(orgs) + `<div class="gut"><div class="empty"><h2>아직 올라온 소식이 없어요</h2><p>재능기부, 봉사, 기부, 나눔. 작은 일이라도 좋아요. 첫 소식을 올려 주세요.</p><button class="btn pri" data-act="${(isMember()||S.isAdmin)?'new-post':'signup'}">${(isMember()||S.isAdmin)?'첫 소식 올리기':'가입하고 올리기'}</button></div></div>`;
   }
   const pulse=homePulse(orgs);
   posts=feedOrder(posts);
@@ -1242,7 +1244,7 @@ function homeView(){
     body = `<div class="feed">${top.length?`<div class="cf-band">★ 친한 친구의 새 소식 ${top.length}</div>${top.map(postCard).join('')}<div class="cf-band" style="color:var(--muted)">모든 이웃의 소식</div>`:''}${rest.map(postCard).join('')}</div>`;
   }
   else body = `<div class="feed">${posts.map(postCard).join('')}</div>`;
-  if(isGuest()) return homeTabs() + homeIntro() + noticeTicker() + chips + body;
+  if(isGuest()) return homeTabs() + homeIntro() + noticeTicker() + pulse + chips + body;
   return homeTabs() + (orgs.length?stories:'') + noticeTicker() + pulse + chips + body;
 }
 function metaHtml(p){
