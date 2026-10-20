@@ -786,6 +786,14 @@ function shown(p){ if(!isMemberPost(p)) return p; const m=modOf(p); if(!(m&&m.ap
 function acctHidden(uid){ if(!uid) return false; const m=S.mod.get('acct_'+uid); if(!m||!m.hide) return false; return !m.until||m.until>Date.now(); }
 function visible(p){ return (p.orgId ? orgApproved(S.orgs.get(p.orgId)) : approvalState(p)==='approved') && !isHidden('post',p) && !(acctHidden(p.authorId)&&!S.isAdmin&&p.authorId!==S.uid); }
 function livePosts(){ return S.posts.filter(visible); }
+/* 홈 피드 순서: 최신순을 기본으로 하되, 가까운 시간대(약 하루 반) 안의 소식끼리는 무작위로 섞음.
+   방문(새로고침)마다, 그리고 홈 탭을 다시 누를 때마다 섞는 순서가 바뀜. 방금 올린 내 소식은 맨 위. */
+S.feedSeed=Math.random()*1e9|0;
+const FEED_JITTER=36*3600e3;
+function feedRand(id){ let h=S.feedSeed^2166136261; for(const ch of String(id)){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); } return ((h>>>0)%100000)/100000; }
+function feedOrder(list){ const now=Date.now();
+  const key=p=>{ const t=p.createdAt||0; if(canManage(p)&&now-t<10*60e3) return Infinity; return t+feedRand(p.id)*FEED_JITTER; };
+  return [...list].sort((a,b)=>key(b)-key(a)); }
 function collabOf(p0){ const ids=(shown(p0).collabs||[]).filter(id=>S.orgs.has(id)&&(p0.collabAccepted||{})[id]); return ids; }
 function orgPosts(id){ return livePosts().filter(p => p.orgId === id || collabOf(p).includes(id)); }
 function memberPosts(uid){ return livePosts().filter(p => isMemberPost(p) && p.authorId===uid); }
@@ -949,6 +957,7 @@ function homeView(){
   const week=livePosts().filter(p=>NOW-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0);
   const upcoming=eventsOf().filter(e=>e.date>=new Date(Date.now()+9*3600e3).toISOString().slice(0,10)).length;
   const pulse=`<div class="pulse"><button data-tab="monthly" style="text-align:center"><b>${week}</b><span>이번 주 좋은 소식 · 이달의 다정 ›</span></button><div><b>${orgs.length}</b><span>함께하는 단체</span></div><button data-tab="calendar" style="text-align:center"><b>${upcoming}</b><span>다가오는 활동 · 캘린더 ›</span></button></div>`;
+  posts=feedOrder(posts);
   if(!posts.length) body = `<div class="gut"><div class="empty"><h2>이 분류에는 아직 소식이 없어요</h2><p>다른 분류를 눌러 보거나 직접 소식을 올려 주세요.</p></div></div>`;
   else if(S.filter!=='close'&&closeSet().size){
     /* 친한 친구의 최근(7일) 소식을 먼저, 그다음 나머지를 최신순으로 */
@@ -2439,7 +2448,7 @@ document.addEventListener('click', e=>{
   if(t.dataset.open!==undefined) return openPost(t.dataset.open);
   if(t.dataset.org!==undefined) return go('org', t.dataset.org);
   if(t.dataset.follow!==undefined) return toggleFollow(t.dataset.follow);
-  if(t.dataset.tab!==undefined){ S.hist=[]; return go(t.dataset.tab); }
+  if(t.dataset.tab!==undefined){ S.hist=[]; if(t.dataset.tab==='home'&&S.tab==='home') S.feedSeed=Math.random()*1e9|0; return go(t.dataset.tab); }
   if(t.dataset.filter!==undefined){ S.filter=t.dataset.filter; return schedule(); }
   if(t.dataset.delC!==undefined){ S.db.doc('comments/'+t.dataset.delC).delete().catch(writeErr); return; }
   const a=t.dataset.act;
