@@ -1206,7 +1206,8 @@ function openLogin(mode){ mode=mode||'in'; if(mode==='up'&&!S.uid&&window.dj) re
     ${mode==='up'?pwField('lg-pw2','비밀번호 확인','new-password','한 번 더 입력')+rqFields(''):''}
     <p class="err" id="lg-err"></p>
     <button class="btn pri" type="submit" id="lg-submit">${mode==='in'?'로그인':'계정 만들기'}</button>
-    <div style="display:flex;justify-content:space-between;font-size:13px">${mode==='in'?'<button type="button" class="more" data-login="up" style="color:var(--sea)">계정 만들기</button><button type="button" class="more" data-login="reset">비밀번호를 잊었어요</button>':'<button type="button" class="more" data-login="in" style="color:var(--sea)">로그인으로 돌아가기</button>'}</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px">${mode==='in'?'<span></span><button type="button" class="more" data-login="reset">비밀번호를 잊었어요</button>':'<button type="button" class="more" data-login="in" style="color:var(--sea)">로그인으로 돌아가기</button>'}</div>
+    ${mode==='in'?'<div style="display:flex;align-items:center;gap:10px;margin-top:6px;color:var(--muted);font-size:12.5px"><i style="flex:1;height:1px;background:var(--line)"></i>처음 오셨나요?<i style="flex:1;height:1px;background:var(--line)"></i></div><button type="button" class="btn ghost" data-login="up" style="width:100%;min-height:50px;font-size:16px;font-weight:700;border:1.5px solid var(--sea);color:var(--sea)">계정 만들기</button>':''}
   </form></div>`); setTimeout(()=>{ const i=$('#lg-email'); if(i) i.focus(); },50); }
 function authErr(e){ const m=(e&&e.message)||''; return /Invalid login/i.test(m)?'이메일 또는 비밀번호가 맞지 않아요':/already registered/i.test(m)?'이미 가입된 이메일이에요. 로그인해 주세요':/Password should/i.test(m)?'비밀번호는 6자 이상이어야 해요':/rate limit/i.test(m)?'잠시 후 다시 시도해 주세요':'처리하지 못했어요: '+m; }
 async function submitLogin(form){ const mode=form.dataset.mode, err=$('#lg-err'), btn=$('#lg-submit'); err.textContent='';
