@@ -699,6 +699,35 @@ input:focus-visible+.rb{outline:2px solid var(--sea);outline-offset:-2px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13.5px;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .loading{padding:40px 0;text-align:center;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== 모바일 규격 정리 ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{overflow-x:clip;max-width:100%}
+body{word-break:keep-all;overflow-wrap:break-word}
+img,video,canvas{max-width:100%}
+/* 피드 카드: 공지 띠·공지 카드와 같은 좌우 여백(16px)과 둥근 모서리 */
+.feed{gap:14px;padding-top:12px}
+.post{margin-inline:max(16px,env(safe-area-inset-left,0px));border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(12,30,40,.05)}
+.sample .post{margin-inline:max(16px,env(safe-area-inset-left,0px))}
+.ticker{width:auto;margin-inline:max(16px,env(safe-area-inset-left,0px))}
+/* 배너(칭찬합니다·관리자 공지) */
+.pr-hero,.nt-hero{overflow:hidden;padding:clamp(16px,4.6vw,22px) clamp(14px,4.6vw,20px);max-width:100%}
+.pr-hero h2,.nt-hero h2{font-size:clamp(19px,5.8vw,23px);line-height:1.3}
+.pr-hero p,.nt-hero p{font-size:clamp(12.5px,3.6vw,14px);line-height:1.6}
+.pr-card,.nt-card{padding:clamp(13px,4vw,16px)}
+.praise-chip{flex:none}
+.chips{scroll-padding-inline:16px}
+@media (max-width:380px){
+  .brand h1{font-size:21px;gap:6px}
+  .top-in{gap:6px}
+  .icon-btn{width:32px}
+  #top-cta{padding-inline:10px;font-size:13px}
+  .pulse b{font-size:18px}.pulse span{font-size:11px}
+  .pr-foot{gap:6px}.pr-cheer{padding:6px 10px;font-size:12.5px}
+  .lb-a{width:42px;height:42px;font-size:26px}
+}
+
+
 </style>
 
 <div class="app">
