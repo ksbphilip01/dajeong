@@ -96,6 +96,7 @@
     collabAnswer:async(pid,orgId,accept)=>{ const {error}=await sb.rpc('collab_answer',{p_post:pid,p_org:orgId,p_accept:accept}); if(error) throw mapErr(error); },
     reportTarget:async(c,id,key)=>{ const {error}=await sb.rpc('report_target',{p_collection:c,p_id:id,p_key:key}); if(error) throw mapErr(error); },
     storySeen:async id=>{ await sb.rpc('story_seen',{p_id:id}); },
+    togetherJoin:async id=>{ const {error}=await sb.rpc('together_join',{p_id:id}); if(error) throw mapErr(error); },
     praiseCheer:async id=>{ const {error}=await sb.rpc('praise_cheer',{p_id:id}); if(error) throw mapErr(error); },
     deleteMe:async()=>{ const {error}=await sb.rpc('delete_me'); if(error) throw mapErr(error); await sb.auth.signOut(); },
     signIn:async(email,password)=>{ const {error}=await sb.auth.signInWithPassword({email,password}); if(error) throw error; },
