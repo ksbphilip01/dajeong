@@ -1196,7 +1196,7 @@ function orgView(){
     <div class="phead">${avatar(o,84,recent(o.id))}<div class="pstats"><div><b>${ps.length}</b><span>소식</span></div><div><b>${neighbors()}</b><span>이웃 단체</span></div><div><b>${likes}</b><span>받은 응원</span></div></div></div>
     <div class="pname"><h2>${esc(o.name)}${vbadge(o)}${isNew(o)?'<span class="tag new" style="font-size:10.5px">NEW</span>':''}</h2><div class="handle">@${esc(o.handle||'')} · ${esc(o.category||'')} · ${esc(regionLabel(o))}</div>${o.religion?`<div class="handle">${esc(o.religion.faith||'')} · ${esc(o.religion.denomination||'')}${o.religion.sect?' · '+esc(o.religion.sect):''}</div>`:''}
       ${o.bio?`<p class="bio">${richCaption(o.bio)}</p>`:''}${o.contact?`<p class="bio" style="margin-top:4px;color:var(--muted);font-size:13px">문의 ${esc(o.contact)}</p>`:''}</div>
-    ${mine?`<div class="prow">${st==='approved'?`<button class="btn pri" data-act="new-post" data-org-id="${o.id}">소식 올리기</button>`:''}<button class="btn ghost" data-act="edit-org" data-org-id="${o.id}">프로필 수정</button><button class="btn ghost" data-act="managers" data-org-id="${o.id}">관리자 ${(o.ownerIds||[]).length}</button></div>
+    ${mine&&!orgApproved(o)&&(()=>{ const pv=orgPriv(o.id); return pv!==null&&!(pv&&pv.managerContact); })()?`<div class="sample-bar" style="margin:10px 16px 0"><b>연락처 필요</b><span>사칭 방지를 위해 담당자 연락처를 등록해 주세요. 관리자만 볼 수 있어요. <button class="more" data-act="edit-org" data-org-id="${o.id}" style="color:var(--sea);padding:0">지금 등록 ›</button></span></div>`:''}${mine?`<div class="prow">${st==='approved'?`<button class="btn pri" data-act="new-post" data-org-id="${o.id}">소식 올리기</button>`:''}<button class="btn ghost" data-act="edit-org" data-org-id="${o.id}">프로필 수정</button><button class="btn ghost" data-act="managers" data-org-id="${o.id}">관리자 ${(o.ownerIds||[]).length}</button></div>
       ${st==='approved'?`<div class="prow" style="margin-top:0"><button class="btn ghost" data-act="report" data-org-id="${o.id}">활동 리포트</button>${!isVerified(o)?(o.verifyRequest&&!o.verifyRequest.done?'<span class="btn ghost" style="color:var(--muted)">인증 확인 중</span>':`<button class="btn ghost" data-act="verify-req" data-org-id="${o.id}">인증 요청</button>`):''}</div>`:''}`
       :`<div class="prow"><span class="btn on">서로 이웃</span>${isMember()&&S.writable&&!blockedEither(key)?`<button class="btn pri" data-dm-to="${key}">메시지</button>`:''}${S.uid&&S.writable&&!iBlock(key)?`<button class="btn sq ${closeSet().has(key)?'cf on':'ghost'}" data-close="${key}" aria-label="친한 친구" title="친한 친구">★</button>`:''}${S.uid&&S.writable?`<button class="btn sq ghost" data-act="rel-menu" data-key="${key}" aria-label="더보기">···</button>`:''}</div>
       <div class="prow" style="margin-top:0"><button class="btn ghost" data-act="report" data-org-id="${o.id}">활동 리포트</button></div>
@@ -1555,6 +1555,7 @@ function refreshSheet(){
     </div>`;
 }
 
+function isPhone(v){ v=(v||'').trim(); return /^[0-9+\-()\s]{9,20}$/.test(v)&&(v.replace(/\D/g,'').length>=9); }
 function orgForm(o){
   const v=o||{};
   return `${head(o?'단체 프로필 수정':'단체 등록')}<div class="panel-b"><form class="form gut" id="org-form" data-edit="${o?o.id:''}">
@@ -1565,7 +1566,11 @@ function orgForm(o){
     <div class="field"><label for="o-cat">분류</label><select id="o-cat">${CATS.map(c=>`<option${c===v.category?' selected':''}>${c}</option>`).join('')}</select></div>
     <div class="field"><span style="font-size:13px;font-weight:600">활동 지역 (여러 곳 선택 가능)</span>${regionPicker('o',o?regionsOf(v):null)}</div>
     <div class="field"><label for="o-bio">소개</label><textarea id="o-bio" maxlength="300" placeholder="어떤 일을 하는 단체인지 소개해 주세요">${esc(v.bio||'')}</textarea></div>
-    <div class="field"><label for="o-contact">문의처 (선택)</label><input id="o-contact" maxlength="40" value="${esc(v.contact||'')}" placeholder="061-000-0000 또는 카카오톡 채널"></div>
+    <div class="field"><label for="o-contact">문의처 (선택, 프로필에 공개)</label><input id="o-contact" maxlength="40" value="${esc(v.contact||'')}" placeholder="061-000-0000 또는 카카오톡 채널"></div>
+    ${(()=>{ const ap=o&&orgApproved(o), cur=o?((orgPriv(o.id)||{}).managerContact||''):'';
+      return `<div class="field"><label for="o-mcontact">담당자 연락처 ${ap?'(선택)':'<span style="color:var(--camellia)">*필수</span>'}</label><input id="o-mcontact" type="tel" inputmode="tel" ${ap?'':'required'} maxlength="20" value="${esc(cur)}" placeholder="010-0000-0000 또는 061-000-0000">
+        <span class="hint">${ap?'가입이 승인돼서 이제 연락처를 지워도 돼요. 지우면 관리자도 더 이상 볼 수 없어요.':'사칭 방지를 위한 확인용이에요. 관리자와 우리 단체 관리자만 볼 수 있고, 가입이 승인되면 지울 수 있어요.'}</span>
+        ${ap&&cur?`<button type="button" class="btn sm ghost" data-act="del-mcontact" data-org-id="${o.id}" style="align-self:flex-start;margin-top:6px;color:var(--camellia)">담당자 연락처 삭제</button>`:''}</div>`; })()}
     <p class="err" id="o-err"></p>
     <button class="btn pri" type="submit" id="o-submit">${o?'저장':'단체 등록'}</button></form></div>`;
 }
@@ -1697,14 +1702,14 @@ function pendCard(p){
 }
 function pendingOrgs(){ return [...S.orgs.values()].filter(o=>orgState(o)==='pending').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); }
 S.orgPriv=new Map();
-function orgPriv(id){ if(!S.orgPriv.has(id)){ S.orgPriv.set(id,null); S.db.doc('orgprivate/'+id).get().then(s=>{ if(s.exists){ S.orgPriv.set(id,s.data()); schedule(); } }).catch(()=>{}); } return S.orgPriv.get(id); }
+function orgPriv(id){ if(!S.orgPriv.has(id)){ S.orgPriv.set(id,null); S.db.doc('orgprivate/'+id).get().then(s=>{ S.orgPriv.set(id,s.exists?s.data():{}); schedule(); }).catch(()=>{}); } return S.orgPriv.get(id); }
 function orgPendCard(o){
   const rej=S.rejecting===o.id, m=S.mod.get('org_'+o.id)||{};
   return `<article class="rep"><div class="rep-h"><span class="tag">${m.rejected?'재신청':'단체 가입 신청'}</span><span class="st open">승인 대기</span><span class="ago" style="margin-left:auto">${rel(o.createdAt)}</span></div>
     <div class="post-h" style="padding:0"><button class="org-chip" data-org="${o.id}">${avatar(o,40)}<span><b>${esc(o.name)}</b><small>@${esc(o.handle||'')} · ${esc(o.category||'')} · ${esc(regionsOf(o).join(', '))}</small></span></button></div>
     ${o.bio?`<div class="rep-prev"><div style="min-width:0"><p style="-webkit-line-clamp:5">${esc(o.bio)}</p></div></div>`:''}
     ${o.religion?`<div class="rep-prev" style="display:block"><p style="-webkit-line-clamp:unset"><b>종교</b> ${esc(o.religion.faith||'')} · <b>교단</b> ${esc(o.religion.denomination||'')} · <b>교파</b> ${esc(o.religion.sect||'')}</p></div>`:''}
-    ${(()=>{ const pv=orgPriv(o.id); const mg=pv?pv.manager:o.manager; return `<div class="meta"><span>담당자 <em>${esc(mg||'미입력')}${(pv&&pv.managerRole)||o.managerRole?' ('+esc((pv&&pv.managerRole)||o.managerRole)+')':''}</em></span>${pv&&pv.managerContact?`<span>연락처 <em>${esc(pv.managerContact)}</em></span>`:''}${o.contact?`<span>문의처 <em>${esc(o.contact)}</em></span>`:''}</div>`; })()}
+    ${(()=>{ const pv=orgPriv(o.id); const mg=pv?pv.manager:o.manager; return `<div class="meta"><span>담당자 <em>${esc(mg||o.name||'')}${(pv&&pv.managerRole)||o.managerRole?' ('+esc((pv&&pv.managerRole)||o.managerRole)+')':''}</em></span>${pv&&pv.managerContact?`<span>연락처 <em>${esc(pv.managerContact)}</em></span>`:pv?'<span style="color:var(--camellia);font-weight:600">연락처 미등록 · 확인 필요</span>':''}${o.contact?`<span>문의처 <em>${esc(o.contact)}</em></span>`:''}</div>`; })()}
     ${rej?`<div class="field"><label for="rj-${o.id}">반려 사유 (신청자에게 보여요)</label><input id="rj-${o.id}" maxlength="120" placeholder="예: 단체 소개와 문의처를 더 자세히 적어 주세요"></div>`:''}
     <div class="rep-acts">${rej?`<button class="btn sm warn" data-appr="org-reject-confirm" data-pid="${o.id}">반려 확정</button><button class="btn sm ghost" data-appr="cancel" data-pid="${o.id}">취소</button>`
       :`<button class="btn sm pri" data-appr="org-approve" data-pid="${o.id}">가입 승인</button><button class="btn sm ghost" data-appr="org-reject" data-pid="${o.id}">반려</button><button class="btn sm ghost" data-org="${o.id}">프로필 보기</button>`}</div></article>`;
@@ -2379,9 +2384,9 @@ function obRender(){
       <span class="hint">관리자가 인증된 교단·교파인지 확인한 뒤 승인해요. 확인되지 않으면 반려될 수 있어요.</span></div>`:'';
     body=`<h2>${o.rel?'종교·교단과 담당자 정보':'단체를 소개해 주세요'}</h2><p class="lead">담당자 이름과 연락처는 <b>관리자 확인용</b>으로만 쓰이고 공개되지 않아요. 프로필에는 ‘문의처’만 보여요.</p><form class="form" id="ob-form">${relHtml}
       <div class="field"><label for="ob-bio">소개</label><textarea id="ob-bio" maxlength="300" placeholder="어떤 일을 하는 단체인지, 언제 어디서 활동하는지 적어 주세요">${esc(d.bio||'')}</textarea></div>
-      ${o.rel?'<p style="margin:6px 0 -4px;font-weight:600">담당자 <span style="color:var(--camellia)">*필수</span></p>':''}<div class="two"><div class="field"><label for="ob-manager">담당자 이름${o.rel?' *':''}</label><input id="ob-manager" required maxlength="20" value="${esc(d.manager||'')}" placeholder="홍길동"></div>
+      <div class="field"><label for="ob-mcontact">담당자 연락처 <span style="color:var(--camellia)">*필수</span></label><input id="ob-mcontact" type="tel" inputmode="tel" required maxlength="20" value="${esc(d.mcontact||'')}" placeholder="010-0000-0000 또는 061-000-0000"><span class="hint">사칭을 막기 위해 관리자가 이 번호로 단체·기관을 확인해요. 관리자만 볼 수 있고 공개되지 않아요.</span></div>
+      <div class="two"><div class="field"><label for="ob-manager">담당자 이름 (선택)</label><input id="ob-manager" maxlength="20" value="${esc(d.manager||'')}" placeholder="비워 두면 단체명으로 표시"></div>
         <div class="field"><label for="ob-role">직함 (선택)</label><input id="ob-role" maxlength="20" value="${esc(d.role||'')}" placeholder="사무국장"></div></div>
-      <div class="field"><label for="ob-mcontact">담당자 연락처${o.rel?' *':' (선택, 비공개)'}</label><input id="ob-mcontact" type="tel" inputmode="tel" ${o.rel?'required':''} maxlength="20" value="${esc(d.mcontact||'')}" placeholder="010-0000-0000"><span class="hint">관리자만 볼 수 있어요. 가입 확인 연락에 쓰여요.</span></div>
       <div class="field"><label for="ob-contact">문의처 (선택, 프로필에 공개)</label><input id="ob-contact" maxlength="40" value="${esc(d.contact||'')}" placeholder="061-000-0000 또는 카카오톡 채널"></div>
       <p class="err">${esc(o.err)}</p><div class="ob-f"><button class="btn pri" type="submit">다음</button></div></form>`;
   }
@@ -2456,8 +2461,7 @@ async function obNext(){
     else if(o.rel&&R.faith==='기타'&&!R.faithEtc) o.err='종교명을 직접 입력해 주세요';
     else if(o.rel&&R.denomination.length<2) o.err='교단(소속 총회·종단·교구)을 자세히 적어 주세요';
     else if(o.rel&&R.sect.length<2) o.err='교파를 적어 주세요';
-    else if(!d.manager) o.err='담당자 이름을 적어 주세요';
-    else if(o.rel&&!/^[0-9+\-()\s]{9,20}$/.test(d.mcontact||'')) o.err='담당자 연락처를 정확히 적어 주세요 (예: 010-0000-0000)'; }
+    else if(!isPhone(d.mcontact)) o.err='담당자 연락처를 정확히 적어 주세요 (예: 010-0000-0000)'; }
   if(o.type==='member'&&o.step===1&&(d.nickname||'').length<2) o.err='닉네임은 2자 이상 적어 주세요';
   const agreeStep=(o.type==='org'&&o.step===3)||(o.type==='member'&&o.step===2);
   if(agreeStep){ if(!['ob-a1','ob-a2','ob-a3'].every(id=>$('#'+id).checked)) o.err='세 가지 모두 동의해야 가입할 수 있어요'; }
@@ -2567,6 +2571,8 @@ async function submitOrg(form){
   const handle=$('#o-handle').value.trim().toLowerCase(), editId=form.dataset.edit;
   if(!/^[a-z0-9._]{3,20}$/.test(handle)){ err.textContent='아이디는 영문 소문자, 숫자, 점, 밑줄로 3~20자여야 해요'; return; }
   if([...S.orgs.values()].some(o=>o.handle===handle&&o.id!==editId)){ err.textContent='이미 쓰고 있는 아이디예요. 다른 아이디를 골라 주세요'; return; }
+  const mcontact=$('#o-mcontact').value.trim(), apOrg=editId&&orgApproved(S.orgs.get(editId)); if(!(apOrg&&!mcontact)&&!isPhone(mcontact)){ err.textContent='담당자 연락처를 정확히 적어 주세요 (예: 010-0000-0000)'; return; }
+  if(!editId&&$('#o-cat').value==='종교단체'){ err.textContent='종교 단체는 ‘가입하기 → 종교 기관으로 가입하기’에서 교단·교파와 함께 신청해 주세요'; return; }
   btn.disabled=true; btn.textContent='저장하는 중';
   try{
     const regions=readRegions('o');
@@ -2575,6 +2581,7 @@ async function submitOrg(form){
     let id=editId;
     if(editId){ const cur=S.orgs.get(editId); if(cur&&!orgApproved(cur)) data.rev=(cur.rev||0)+1; await S.db.doc('orgs/'+editId).update(data); }
     else { const ref=await S.db.collection('orgs').add({...data,avatarId:data.avatarId||null,ownerIds:[S.uid],rev:0,createdAt:Date.now()}); id=ref.id; }
+    try{ const prev=(S.orgPriv&&S.orgPriv.get(id))||{}; const nv={...prev,managerContact:mcontact||null,at:Date.now()}; await S.db.doc('orgprivate/'+id).set(nv); S.orgPriv.set(id,nv); }catch(_){}
     closeSheet(); S.tab='org'; S.orgId=id; S.hist=['home']; schedule(); toast(editId?'프로필을 저장했어요':'단체 가입을 신청했어요. 관리자 승인 후 공개돼요');
   }catch(e){ btn.disabled=false; btn.textContent=editId?'저장':'단체 등록'; writeErr(e); }
 }
@@ -2726,11 +2733,15 @@ document.addEventListener('click', e=>{
   if(a==='close') closeSheet();
   else if(a==='back'){ const prev=S.hist.pop()||'home'; S.tab=prev; S.orgId=null; schedule(); window.scrollTo(0,0); }
   else if(a==='new-org'){ if(needWrite()) openSheet('org-form',{},orgForm()); }
-  else if(a==='edit-org'){ const o=S.orgs.get(t.dataset.orgId); if(o) openSheet('org-form',{},orgForm(o)); }
+  else if(a==='edit-org'){ const o=S.orgs.get(t.dataset.orgId); if(o){ S.db.doc('orgprivate/'+o.id).get().then(x=>{ if(x.exists) S.orgPriv.set(o.id,x.data()); }).catch(()=>{}).finally(()=>openSheet('org-form',{},orgForm(o))); } }
   else if(a==='edit-member'){ if(needWrite()) openSheet('member-form',{},memberForm()); }
   else if(a==='change-pw'){ openChangePw(); }
   else if(a==='praise-exit'||a==='notices-exit'){ S.hist=[]; go('home'); }
   else if(a==='praise-new'){ if(isGuest()) return guestGate(); if(needWrite()) praiseForm(); }
+  else if(a==='del-mcontact'){ const id=t.dataset.orgId, o=S.orgs.get(id); if(!o||!orgApproved(o)) return;
+    if(!t.dataset.armed){ t.dataset.armed='1'; t.textContent='한 번 더 누르면 삭제'; setTimeout(()=>{ if(t.isConnected){ delete t.dataset.armed; t.textContent='담당자 연락처 삭제'; } },4000); return; }
+    t.disabled=true; const prev=S.orgPriv.get(id)||{}; const nv={...prev,managerContact:null,at:Date.now()};
+    S.db.doc('orgprivate/'+id).set(nv).then(()=>{ S.orgPriv.set(id,nv); const i=$('#o-mcontact'); if(i) i.value=''; t.remove(); toast('담당자 연락처를 삭제했어요'); }).catch(e=>{ t.disabled=false; writeErr(e); }); }
   else if(a==='set-rq'){ openSetRq(); }
   else if(a==='mail-reset'){ mailReset(); }
   else if(a==='signup'){ if(!S.uid&&window.dj) openLogin('up'); else openSignup(0); }
