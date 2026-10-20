@@ -769,6 +769,9 @@ function canSeeOrg(o){ return !!o&&(orgApproved(o)||S.isAdmin||(o.ownerIds||[]).
 const ORG_STATE_LABEL={pending:'가입 승인 대기',approved:'공개 중',rejected:'반려됨'};
 function myProfile(){ return me().profile||null; }
 function isMember(){ return hasOrg()||!!myProfile(); }
+/* 가입 전(비회원·가입 절차 미완료)에는 소식과 댓글 보기만 가능 */
+function isGuest(){ return !S.isAdmin&&!isMember(); }
+function guestGate(){ if(!S.uid&&window.dj){ toast('가입하면 이용할 수 있어요. 지금은 소식과 댓글만 볼 수 있어요'); openLogin('up'); } else { toast('가입을 마치면 이용할 수 있어요'); openSignup(0); } return false; }
 function isHidden(type, x){ const m=S.mod.get(type+'_'+x.id); if(m&&m.status==='hidden') return true; if(m&&m.status==='ok') return false;
   return Object.keys(x.reportedBy||{}).length >= AUTO_HIDE; }
 /* 개인 참여자 글: 승인 기록(mod/post_<id>, 관리자만 기록)에 담긴 내용만 공개 */
@@ -929,7 +932,7 @@ function homeView(){
   </div>`;
   const opts = [['all','전체'], ...(closeSet().size?[['close','★ 친한 친구']]:[]), ...Object.entries(KINDS)];
   const chips = `<div class="chips gut" role="group" aria-label="소식 종류">${opts.map(([k,l])=>`<button class="chip" data-filter="${k}" aria-pressed="${S.filter===k}">${l}</button>`).join('')}</div>`;
-  const banner = (!isMember() && !S.hideJoin && S.posts.length) ? `<div class="join"><div style="flex:1;min-width:0"><b>함께 소식을 나눠요</b><span>가입하지 않아도 모든 소식을 볼 수 있어요. 단체 또는 개인 참여자로 가입하면 직접 소식을 올릴 수 있어요.</span></div><button class="btn sm" data-act="signup">가입하기</button><button class="x" data-act="hide-join" aria-label="닫기">×</button></div>` : '';
+  const banner = (!isMember() && !S.hideJoin && S.posts.length) ? `<div class="join"><div style="flex:1;min-width:0"><b>함께 소식을 나눠요</b><span>가입하지 않아도 소식과 댓글은 볼 수 있어요. 가입하면 단체·스토리·검색·응원·댓글 쓰기 등 모든 기능을 쓸 수 있어요.</span></div><button class="btn sm" data-act="signup">가입하기</button><button class="x" data-act="hide-join" aria-label="닫기">×</button></div>` : '';
   let posts = livePosts().filter(p=>!hiddenForMe(p));
   if(S.filter==='close') posts=posts.filter(isClose);
   else if(S.filter!=='all') posts=posts.filter(p=>p.kind===S.filter);
@@ -939,7 +942,7 @@ function homeView(){
       <h2>여수의 첫 따뜻한 소식을 기다려요</h2>
       <p>재능기부, 봉사, 기부, 나눔 소식을 올리고 서로 좋아요와 댓글로 응원하는 곳이에요. 아래는 어떤 모습이 될지 보여주는 예시예요.</p>
       <button class="btn pri" data-act="${isMember()?'new-post':'signup'}">${isMember()?'첫 소식 올리기':'가입하고 소식 올리기'}</button>
-      ${isMember()?'':'<p class="muted" style="font-size:12.5px;margin:0">가입하지 않아도 올라오는 소식은 모두 볼 수 있어요.</p>'}
+      ${isMember()?'':'<p class="muted" style="font-size:12.5px;margin:0">가입하지 않아도 올라오는 소식과 댓글은 볼 수 있어요.</p>'}
     </div></div>`;
     return cta + sampleFeed();
   }
@@ -953,6 +956,7 @@ function homeView(){
     body = `<div class="feed">${top.length?`<div class="cf-band">★ 친한 친구의 새 소식 ${top.length}</div>${top.map(postCard).join('')}<div class="cf-band" style="color:var(--muted)">모든 이웃의 소식</div>`:''}${rest.map(postCard).join('')}</div>`;
   }
   else body = `<div class="feed">${posts.map(postCard).join('')}</div>`;
+  if(isGuest()) return noticeHtml() + banner + chips + body;
   return (orgs.length?stories:'') + noticeHtml() + pulse + banner + chips + body;
 }
 function metaHtml(p){
@@ -1079,7 +1083,7 @@ function orgView(){
   return `<div class="gut" style="background:var(--surface);border-bottom:1px solid var(--line)">
     <button class="back" data-act="back">‹ 뒤로</button>${stbar}
     <div class="phead">${avatar(o,84,recent(o.id))}<div class="pstats"><div><b>${ps.length}</b><span>소식</span></div><div><b>${neighbors()}</b><span>이웃 단체</span></div><div><b>${likes}</b><span>받은 응원</span></div></div></div>
-    <div class="pname"><h2>${esc(o.name)}${vbadge(o)}${isNew(o)?'<span class="tag new" style="font-size:10.5px">NEW</span>':''}</h2><div class="handle">@${esc(o.handle||'')} · ${esc(o.category||'')} · ${esc(regionLabel(o))}</div>
+    <div class="pname"><h2>${esc(o.name)}${vbadge(o)}${isNew(o)?'<span class="tag new" style="font-size:10.5px">NEW</span>':''}</h2><div class="handle">@${esc(o.handle||'')} · ${esc(o.category||'')} · ${esc(regionLabel(o))}</div>${o.religion?`<div class="handle">${esc(o.religion.faith||'')} · ${esc(o.religion.denomination||'')}${o.religion.sect?' · '+esc(o.religion.sect):''}</div>`:''}
       ${o.bio?`<p class="bio">${richCaption(o.bio)}</p>`:''}${o.contact?`<p class="bio" style="margin-top:4px;color:var(--muted);font-size:13px">문의 ${esc(o.contact)}</p>`:''}</div>
     ${mine?`<div class="prow">${st==='approved'?`<button class="btn pri" data-act="new-post" data-org-id="${o.id}">소식 올리기</button>`:''}<button class="btn ghost" data-act="edit-org" data-org-id="${o.id}">프로필 수정</button><button class="btn ghost" data-act="managers" data-org-id="${o.id}">관리자 ${(o.ownerIds||[]).length}</button></div>
       ${st==='approved'?`<div class="prow" style="margin-top:0"><button class="btn ghost" data-act="report" data-org-id="${o.id}">활동 리포트</button>${!isVerified(o)?(o.verifyRequest&&!o.verifyRequest.done?'<span class="btn ghost" style="color:var(--muted)">인증 확인 중</span>':`<button class="btn ghost" data-act="verify-req" data-org-id="${o.id}">인증 요청</button>`):''}</div>`:''}`
@@ -1331,7 +1335,7 @@ function openPost(pid){
   const p=S.posts.find(x=>x.id===pid); if(!p) return;
   if(!visible(p)&&!S.isAdmin&&!canManage(p)){ toast(isHidden('post',p)?'신고로 숨김 처리된 소식이에요':'아직 공개되지 않은 소식이에요'); return; }
   openSheet('post',{pid},`${head('소식')}<div class="panel-b" id="post-body"></div>
-    <div class="panel-f gut">${shown(p).commentsOff?'<p class="muted" style="margin:0">이 게시물은 댓글 기능이 꺼져 있어요.</p>':S.writable?`<form class="cform" id="c-form"><input id="c-text" maxlength="400" placeholder="따뜻한 응원 한마디" autocomplete="off" aria-label="댓글"><button class="btn pri sm" type="submit">게시</button></form>`:`<p class="muted" style="margin:0">로그인하고 참여 권한이 있으면 댓글을 달 수 있어요.</p>`}</div>`);
+    <div class="panel-f gut">${shown(p).commentsOff?'<p class="muted" style="margin:0">이 게시물은 댓글 기능이 꺼져 있어요.</p>':isGuest()?`<div class="row" style="gap:10px;align-items:center"><p class="muted" style="margin:0;flex:1">가입하면 댓글로 응원할 수 있어요.</p><button class="btn pri sm" data-act="signup">가입하기</button></div>`:S.writable?`<form class="cform" id="c-form"><input id="c-text" maxlength="400" placeholder="따뜻한 응원 한마디" autocomplete="off" aria-label="댓글"><button class="btn pri sm" type="submit">게시</button></form>`:`<p class="muted" style="margin:0">로그인하고 참여 권한이 있으면 댓글을 달 수 있어요.</p>`}</div>`);
   refreshSheet();
 }
 function refreshSheet(){
@@ -1499,12 +1503,15 @@ function pendCard(p){
       :`<button class="btn sm pri" data-appr="approve" data-pid="${p.id}">승인하고 공개</button><button class="btn sm ghost" data-appr="reject" data-pid="${p.id}">반려</button><button class="btn sm ghost" data-open="${p.id}">자세히</button>`}</div></article>`;
 }
 function pendingOrgs(){ return [...S.orgs.values()].filter(o=>orgState(o)==='pending').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); }
+S.orgPriv=new Map();
+function orgPriv(id){ if(!S.orgPriv.has(id)){ S.orgPriv.set(id,null); S.db.doc('orgprivate/'+id).get().then(s=>{ if(s.exists){ S.orgPriv.set(id,s.data()); schedule(); } }).catch(()=>{}); } return S.orgPriv.get(id); }
 function orgPendCard(o){
   const rej=S.rejecting===o.id, m=S.mod.get('org_'+o.id)||{};
   return `<article class="rep"><div class="rep-h"><span class="tag">${m.rejected?'재신청':'단체 가입 신청'}</span><span class="st open">승인 대기</span><span class="ago" style="margin-left:auto">${rel(o.createdAt)}</span></div>
     <div class="post-h" style="padding:0"><button class="org-chip" data-org="${o.id}">${avatar(o,40)}<span><b>${esc(o.name)}</b><small>@${esc(o.handle||'')} · ${esc(o.category||'')} · ${esc(regionsOf(o).join(', '))}</small></span></button></div>
     ${o.bio?`<div class="rep-prev"><div style="min-width:0"><p style="-webkit-line-clamp:5">${esc(o.bio)}</p></div></div>`:''}
-    <div class="meta"><span>담당자 <em>${esc(o.manager||'미입력')}${o.managerRole?' ('+esc(o.managerRole)+')':''}</em></span>${o.contact?`<span>문의처 <em>${esc(o.contact)}</em></span>`:''}</div>
+    ${o.religion?`<div class="rep-prev" style="display:block"><p style="-webkit-line-clamp:unset"><b>종교</b> ${esc(o.religion.faith||'')} · <b>교단</b> ${esc(o.religion.denomination||'')} · <b>교파</b> ${esc(o.religion.sect||'')}</p></div>`:''}
+    ${(()=>{ const pv=orgPriv(o.id); const mg=pv?pv.manager:o.manager; return `<div class="meta"><span>담당자 <em>${esc(mg||'미입력')}${(pv&&pv.managerRole)||o.managerRole?' ('+esc((pv&&pv.managerRole)||o.managerRole)+')':''}</em></span>${pv&&pv.managerContact?`<span>연락처 <em>${esc(pv.managerContact)}</em></span>`:''}${o.contact?`<span>문의처 <em>${esc(o.contact)}</em></span>`:''}</div>`; })()}
     ${rej?`<div class="field"><label for="rj-${o.id}">반려 사유 (신청자에게 보여요)</label><input id="rj-${o.id}" maxlength="120" placeholder="예: 단체 소개와 문의처를 더 자세히 적어 주세요"></div>`:''}
     <div class="rep-acts">${rej?`<button class="btn sm warn" data-appr="org-reject-confirm" data-pid="${o.id}">반려 확정</button><button class="btn sm ghost" data-appr="cancel" data-pid="${o.id}">취소</button>`
       :`<button class="btn sm pri" data-appr="org-approve" data-pid="${o.id}">가입 승인</button><button class="btn sm ghost" data-appr="org-reject" data-pid="${o.id}">반려</button><button class="btn sm ghost" data-org="${o.id}">프로필 보기</button>`}</div></article>`;
@@ -2069,12 +2076,12 @@ function openMember(uid){
     ${ps.length?`<div class="grid" style="margin-top:0">${ps.map(tile).join('')}</div>`:'<div class="gut"><p class="muted">아직 공개된 소식이 없어요.</p></div>'}</div>`);
 }
 
-const OB_ORG=['단체 정보','소개와 담당자','함께 지킬 약속','가입 완료'], OB_MEM=['참여자 정보','함께 지킬 약속','가입 완료'];
+const OB_REL=['기관 정보','종교·교단과 담당자','함께 지킬 약속','가입 신청'], OB_ORG=['단체 정보','소개와 담당자','함께 지킬 약속','가입 완료'], OB_MEM=['참여자 정보','함께 지킬 약속','가입 완료'];
 function openSignup(step){ closeSheet(); $('#gate').hidden=true; S.ob={step:step||0,type:null,data:{category:CATS[1],regions:[ALL_AREA],region:ALL_AREA},err:''}; obRender(); $('#onboard').hidden=false; document.body.style.overflow='hidden'; }
 function closeSignup(){ S.ob=null; $('#onboard').hidden=true; document.body.style.overflow=''; if(S.tab==='landing'&&isMember()){ const pid=S.landing; S.landing=null; S.tab='home'; schedule(); if(pid) openPost(pid); return; } schedule(); }
 function obRender(){
   const o=S.ob, box=$('#onboard .ob'); if(!o) return;
-  const steps=o.type==='org'?OB_ORG:o.type==='member'?OB_MEM:[];
+  const steps=o.type==='org'?(o.rel?OB_REL:OB_ORG):o.type==='member'?OB_MEM:[];
   const top=`<div class="ob-top">${o.step>0&&o.step<steps.length?`<button class="back" style="padding:0" data-ob="back">‹ 이전</button><span class="stepn">${o.step} / ${steps.length-1} · ${steps[o.step-1]}</span>`:'<span></span>'}<button class="x" data-ob="close" aria-label="닫기">×</button></div>
     ${o.type?`<div class="ob-prog">${steps.slice(0,-1).map((_,i)=>`<i class="${i<o.step?'on':''}"></i>`).join('')}</div>`:''}`;
   let body='', foot='';
@@ -2084,27 +2091,36 @@ function obRender(){
       <div class="ob-kinds">${Object.entries(KINDS).map(([k,l])=>`<span class="kind k-${k}">${l}</span>`).join('')}</div></div>
       <ul class="ob-props">
         <li><div class="n">단</div><div><b>단체로 가입</b><span>복지관, 봉사단, 동호회, 가게, 학교 등 단체 이름으로 소식을 올려요. 관리자가 가입을 승인하면 바로 소식을 올릴 수 있어요.</span></div></li>
+        <li><div class="n">종</div><div><b>종교 기관으로 가입</b><span>인증된 교단·교파에 속한 교회·성당·사찰 등의 봉사·나눔 부서가 가입해요. 종교명과 교단·교파, 담당자 연락처를 확인한 뒤 승인돼요.</span></div></li>
         <li><div class="n">개</div><div><b>개인 참여자로 가입</b><span>혼자서도 나눔·봉사 소식을 올릴 수 있어요. 소식마다 관리자가 확인한 뒤 공개돼요.</span></div></li>
         <li><div class="n">이</div><div><b>모두 서로 이웃</b><span>가입한 단체는 자동으로 맞팔로우돼요. 지금 ${approvedOrgs().length}개 단체가 함께해요.</span></div></li>
       </ul>
-      <p class="muted" style="margin:14px 0 0;font-size:13px">가입하지 않아도 소식 보기${S.uid?', 좋아요, 댓글':''}은 자유롭게 할 수 있어요.</p>`;
-    foot = S.writable ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
+      <p class="muted" style="margin:14px 0 0;font-size:13px">가입하지 않아도 소식과 댓글은 볼 수 있어요. 좋아요·댓글 쓰기·단체 둘러보기·스토리·검색은 가입 후 이용할 수 있어요.</p>`;
+    foot = S.writable ? `<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="type-org">단체로 가입하기</button><button class="btn ghost" data-ob="type-rel">종교 기관으로 가입하기</button><button class="btn ghost" data-ob="type-member">개인 참여자로 가입하기</button><button class="btn ghost" data-ob="join-code">초대 코드로 우리 단체 관리에 참여</button><button class="btn" style="color:var(--muted)" data-ob="close">먼저 둘러보기</button></div>`
       : `<div class="ob-f" style="flex-direction:column"><p class="muted" style="text-align:center;margin:0">${S.uid?'보기 전용으로 열려 있어 가입할 수 없어요. 관리자에게 참여 권한을 요청해 주세요.':'가입하려면 로그인한 상태로 열어 주세요.'}</p><button class="btn ghost" data-ob="close">둘러보기</button></div>`;
   }
   else if(o.type==='org'&&o.step===1){
-    body=`<h2>어떤 단체인가요?</h2><p class="lead">피드와 프로필에 보이는 기본 정보예요. 나중에 수정할 수 있어요.</p><form class="form" id="ob-form">
+    body=`<h2>${o.rel?'어떤 종교 기관인가요?':'어떤 단체인가요?'}</h2><p class="lead">${o.rel?'봉사·나눔 활동을 하는 부서나 기관 이름으로 가입해요. 피드와 프로필에 보이는 기본 정보예요.':'피드와 프로필에 보이는 기본 정보예요. 나중에 수정할 수 있어요.'}</p><form class="form" id="ob-form">
       <div class="pick"><div class="prev" id="ob-prev">${o.logoUrl?`<img src="${o.logoUrl}" alt="">`:'로고'}</div><div class="field" style="flex:1">${S.assets?`<label for="ob-logo">로고·대표 사진 (선택)</label><input id="ob-logo" type="file" accept="image/*">`:'<span class="hint">사진은 나중에 추가할 수 있어요.</span>'}</div></div>
-      <div class="field"><label for="ob-name">단체 이름</label><input id="ob-name" required maxlength="30" value="${esc(d.name||'')}" placeholder="예: 돌산 청소년 봉사단"></div>
+      <div class="field"><label for="ob-name">단체 이름</label><input id="ob-name" required maxlength="30" value="${esc(d.name||'')}" placeholder="${o.rel?'예: 여수○○교회 사랑나눔부, ○○성당 빈첸시오회':'예: 돌산 청소년 봉사단'}"></div>
       <div class="field"><label for="ob-handle">아이디</label><input id="ob-handle" required maxlength="20" value="${esc(d.handle||'')}" placeholder="dolsan_volunteer"><span class="hint">영문 소문자, 숫자, 점(.), 밑줄(_) 3~20자</span></div>
-      <div class="field"><label for="ob-cat">분류</label><select id="ob-cat">${CATS.map(c=>`<option${c===d.category?' selected':''}>${c}</option>`).join('')}</select></div>
+      ${o.rel?'<input type="hidden" id="ob-cat" value="종교단체">':`<div class="field"><label for="ob-cat">분류</label><select id="ob-cat">${CATS.map(c=>`<option${c===d.category?' selected':''}>${c}</option>`).join('')}</select><span class="hint">종교 단체라면 ‘종교단체’를 고르면 종교 기관 가입으로 이어져요.</span></div>`}
       <div class="field"><span style="font-size:13px;font-weight:600">활동 지역 (여러 곳 선택 가능)</span>${regionPicker('ob',d.regions)}</div>
       <p class="err">${esc(o.err)}</p><div class="ob-f"><button class="btn pri" type="submit">다음</button></div></form>`;
   }
   else if(o.type==='org'&&o.step===2){
-    body=`<h2>단체를 소개해 주세요</h2><p class="lead">담당자 정보는 관리자 연락용이에요. 프로필에는 ‘문의처’만 보여요.</p><form class="form" id="ob-form">
+    const R=d.religion||{};
+    const relHtml=o.rel?`<div class="pledge" style="margin:0;padding:4px 14px 12px"><p style="margin:10px 0 6px;font-weight:600">종교·교단 정보 <span style="color:var(--camellia)">*필수</span></p>
+      <div class="field"><label for="ob-faith">종교명 *</label><select id="ob-faith" required><option value="">선택해 주세요</option>${['개신교','천주교','불교','원불교','성공회','정교회','기타'].map(f=>`<option${f===R.faith?' selected':''}>${f}</option>`).join('')}</select></div>
+      <div class="field" id="ob-faith-etc-wrap" ${R.faith==='기타'?'':'hidden'}><label for="ob-faith-etc">종교명 직접 입력 *</label><input id="ob-faith-etc" maxlength="30" value="${esc(R.faithEtc||'')}" placeholder="예: 천도교"></div>
+      <div class="field"><label for="ob-denom">교단 (소속 총회·종단·교구) *</label><input id="ob-denom" required maxlength="60" value="${esc(R.denomination||'')}" placeholder="예: 대한예수교장로회 총회(통합) / 천주교 광주대교구 / 대한불교조계종"></div>
+      <div class="field"><label for="ob-sect">교파 *</label><input id="ob-sect" required maxlength="40" value="${esc(R.sect||'')}" placeholder="예: 장로교 / 로마 가톨릭 / 조계종"></div>
+      <span class="hint">관리자가 인증된 교단·교파인지 확인한 뒤 승인해요. 확인되지 않으면 반려될 수 있어요.</span></div>`:'';
+    body=`<h2>${o.rel?'종교·교단과 담당자 정보':'단체를 소개해 주세요'}</h2><p class="lead">담당자 이름과 연락처는 <b>관리자 확인용</b>으로만 쓰이고 공개되지 않아요. 프로필에는 ‘문의처’만 보여요.</p><form class="form" id="ob-form">${relHtml}
       <div class="field"><label for="ob-bio">소개</label><textarea id="ob-bio" maxlength="300" placeholder="어떤 일을 하는 단체인지, 언제 어디서 활동하는지 적어 주세요">${esc(d.bio||'')}</textarea></div>
-      <div class="two"><div class="field"><label for="ob-manager">담당자 이름</label><input id="ob-manager" required maxlength="20" value="${esc(d.manager||'')}" placeholder="홍길동"></div>
+      ${o.rel?'<p style="margin:6px 0 -4px;font-weight:600">담당자 <span style="color:var(--camellia)">*필수</span></p>':''}<div class="two"><div class="field"><label for="ob-manager">담당자 이름${o.rel?' *':''}</label><input id="ob-manager" required maxlength="20" value="${esc(d.manager||'')}" placeholder="홍길동"></div>
         <div class="field"><label for="ob-role">직함 (선택)</label><input id="ob-role" maxlength="20" value="${esc(d.role||'')}" placeholder="사무국장"></div></div>
+      <div class="field"><label for="ob-mcontact">담당자 연락처${o.rel?' *':' (선택, 비공개)'}</label><input id="ob-mcontact" type="tel" inputmode="tel" ${o.rel?'required':''} maxlength="20" value="${esc(d.mcontact||'')}" placeholder="010-0000-0000"><span class="hint">관리자만 볼 수 있어요. 가입 확인 연락에 쓰여요.</span></div>
       <div class="field"><label for="ob-contact">문의처 (선택, 프로필에 공개)</label><input id="ob-contact" maxlength="40" value="${esc(d.contact||'')}" placeholder="061-000-0000 또는 카카오톡 채널"></div>
       <p class="err">${esc(o.err)}</p><div class="ob-f"><button class="btn pri" type="submit">다음</button></div></form>`;
   }
@@ -2148,7 +2164,7 @@ function obRender(){
   else { /* done */
     const others=approvedOrgs().filter(x=>x.id!==o.createdId).slice(0,8);
     if(o.type==='org'){ const org=S.orgs.get(o.createdId)||{name:d.name,avatarId:d.avatarId};
-      body=`<div class="done"><span class="noring big">${avatar(org,84)}</span><h2 style="margin-top:6px">${esc(d.name)}, 가입 신청을 보냈어요</h2><p class="lead">관리자가 확인하면 단체가 공개되고, 승인과 동시에 ${approvedOrgs().length}개 단체와 자동으로 이웃이 돼요. 진행 상황은 ‘내 활동’에서 볼 수 있어요.</p>
+      body=`<div class="done"><span class="noring big">${avatar(org,84)}</span><h2 style="margin-top:6px">${esc(d.name)}, 가입 신청을 보냈어요</h2><p class="lead">${o.rel?'관리자가 교단·교파와 담당자 연락처를 확인한 뒤 승인해요. 필요하면 담당자에게 연락드릴 수 있어요. ':''}관리자가 확인하면 단체가 공개되고, 승인과 동시에 ${approvedOrgs().length}개 단체와 자동으로 이웃이 돼요. 진행 상황은 ‘내 활동’에서 볼 수 있어요.</p>
         ${others.length?`<p class="muted" style="font-size:13px">승인되면 이웃이 될 단체</p><div class="nb">${others.map(x=>`<div>${avatar(x,48)}<span>${esc(x.name)}</span></div>`).join('')}</div>`:''}</div>`;
       foot=`<div class="ob-f" style="flex-direction:column"><button class="btn pri" data-ob="finish-profile">내 단체 프로필 보기</button><button class="btn ghost" data-ob="finish-home">피드 보러 가기</button></div>`;
     } else {
@@ -2162,7 +2178,8 @@ function obRender(){
 }
 function obCollect(){ const o=S.ob, d=o.data;
   if(o.type==='org'&&o.step===1){ d.name=$('#ob-name').value.trim(); d.handle=$('#ob-handle').value.trim().toLowerCase(); d.category=$('#ob-cat').value; d.regions=readRegions('ob'); d.region=regionLabel(d); const f=$('#ob-logo'); if(f&&f.files[0]){ o.logo=f.files[0]; o.logoUrl=URL.createObjectURL(f.files[0]); } }
-  if(o.type==='org'&&o.step===2){ d.bio=$('#ob-bio').value.trim(); d.manager=$('#ob-manager').value.trim(); d.role=$('#ob-role').value.trim(); d.contact=$('#ob-contact').value.trim(); }
+  if(o.type==='org'&&o.step===2){ d.bio=$('#ob-bio').value.trim(); d.manager=$('#ob-manager').value.trim(); d.role=$('#ob-role').value.trim(); d.contact=$('#ob-contact').value.trim(); d.mcontact=$('#ob-mcontact').value.trim();
+    if(o.rel) d.religion={faith:$('#ob-faith').value, faithEtc:($('#ob-faith-etc')||{}).value?.trim()||'', denomination:$('#ob-denom').value.trim(), sect:$('#ob-sect').value.trim()}; }
   if(o.type==='member'&&o.step===1){ d.nickname=$('#ob-nick').value.trim(); d.regions=readRegions('ob'); d.region=regionLabel(d); d.bio=$('#ob-bio').value.trim(); const f=$('#ob-file'); if(f&&f.files[0]) o.logo=f.files[0]; }
 }
 async function obNext(){
@@ -2172,7 +2189,14 @@ async function obNext(){
     else if(!/^[a-z0-9._]{3,20}$/.test(d.handle)) o.err='아이디는 영문 소문자, 숫자, 점, 밑줄로 3~20자여야 해요';
     else if([...S.orgs.values()].some(x=>x.handle===d.handle)) o.err='이미 쓰고 있는 아이디예요. 다른 아이디를 골라 주세요';
   }
-  if(o.type==='org'&&o.step===2&&!d.manager) o.err='담당자 이름을 적어 주세요';
+  if(o.type==='org'&&o.step===1&&!o.err&&d.category==='종교단체'&&!o.rel){ o.rel=true; }
+  if(o.type==='org'&&o.step===2){ const R=d.religion||{};
+    if(o.rel&&!R.faith) o.err='종교명을 골라 주세요';
+    else if(o.rel&&R.faith==='기타'&&!R.faithEtc) o.err='종교명을 직접 입력해 주세요';
+    else if(o.rel&&R.denomination.length<2) o.err='교단(소속 총회·종단·교구)을 자세히 적어 주세요';
+    else if(o.rel&&R.sect.length<2) o.err='교파를 적어 주세요';
+    else if(!d.manager) o.err='담당자 이름을 적어 주세요';
+    else if(o.rel&&!/^[0-9+\-()\s]{9,20}$/.test(d.mcontact||'')) o.err='담당자 연락처를 정확히 적어 주세요 (예: 010-0000-0000)'; }
   if(o.type==='member'&&o.step===1&&(d.nickname||'').length<2) o.err='닉네임은 2자 이상 적어 주세요';
   const agreeStep=(o.type==='org'&&o.step===3)||(o.type==='member'&&o.step===2);
   if(agreeStep){ if(!['ob-a1','ob-a2','ob-a3'].every(id=>$('#'+id).checked)) o.err='세 가지 모두 동의해야 가입할 수 있어요'; }
@@ -2182,8 +2206,10 @@ async function obNext(){
   try{
     let avatarId=null; if(o.logo&&S.assets){ try{ avatarId=await upload(o.logo,480); }catch(_){} }
     if(o.type==='org'){
-      const ref=await S.db.collection('orgs').add({name:d.name,handle:d.handle,category:d.category,regions:d.regions,region:d.region,bio:d.bio||'',contact:d.contact||'',manager:d.manager,managerRole:d.role||'',avatarId,ownerIds:[S.uid],rev:0,agreedAt:Date.now(),createdAt:Date.now()});
+      const rel=o.rel&&d.religion?{faith:d.religion.faith==='기타'?d.religion.faithEtc:d.religion.faith,denomination:d.religion.denomination,sect:d.religion.sect}:null;
+      const ref=await S.db.collection('orgs').add({name:d.name,handle:d.handle,category:o.rel?'종교단체':d.category,religion:rel,regions:d.regions,region:d.region,bio:d.bio||'',contact:d.contact||'',avatarId,ownerIds:[S.uid],rev:0,agreedAt:Date.now(),createdAt:Date.now()});
       o.createdId=ref.id; d.avatarId=avatarId;
+      try{ await S.db.doc('orgprivate/'+ref.id).set({manager:d.manager,managerRole:d.role||'',managerContact:d.mcontact||'',at:Date.now()}); }catch(_){}
     } else {
       d.avatarId=avatarId; await saveMe(m=>{ m.profile={nickname:d.nickname,regions:d.regions,region:d.region,bio:d.bio||'',avatarId,type:'individual',agreedAt:Date.now(),joinedAt:Date.now()}; },true);
     }
@@ -2319,7 +2345,7 @@ async function submitPost(){
   }catch(e){ btn.disabled=false; btn.textContent=label; writeErr(e); }
 }
 async function submitComment(){
-  const inp=$('#c-text'), t=inp.value.trim(); if(!t||!needWrite()) return;
+  const inp=$('#c-text'), t=inp.value.trim(); if(isGuest()) return guestGate(); if(!t||!needWrite()) return;
   { const w=bannedHit(t); if(w){ bannedToast(w); return; } }
   inp.value='';
   try{ await S.db.collection('comments').add({postId:S.sheet.pid,authorId:S.uid,text:t,createdAt:Date.now()}); }
@@ -2338,13 +2364,16 @@ async function deletePost(pid){
 
 /* ---------- navigation + events ---------- */
 S.hist=[];
-function go(tab, orgId){ if(S.tab!=='org'||tab!=='org') S.hist.push(S.tab); S.tab=tab; S.orgId=orgId||null; S.ptab='posts'; closeSheet(); schedule(); window.scrollTo(0,0);
+function go(tab, orgId){ if(isGuest()&&!['home','landing'].includes(tab)) return guestGate(); if(S.tab!=='org'||tab!=='org') S.hist.push(S.tab); S.tab=tab; S.orgId=orgId||null; S.ptab='posts'; closeSheet(); schedule(); window.scrollTo(0,0);
   if(tab==='org'&&orgId){ try{ const k='org:'+orgId; const rec=JSON.parse(localStorage.getItem('dj_recent')||'[]').filter(x=>x!==k); rec.unshift(k); localStorage.setItem('dj_recent',JSON.stringify(rec.slice(0,12))); }catch(_){} } }
 function burst(el){ const b=el.querySelector('.burst'); if(!b) return; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); }
 
 document.addEventListener('click', e=>{
   if(e.target.closest('[data-sample]')&&!e.target.closest('[data-act],[data-more]')){ toast('예시 화면이에요. 가입하면 실제 소식을 올리고 응원할 수 있어요'); return; }
   if(S.tab==='landing'&&!isMember()&&e.target.closest('[data-org],[data-member],[data-hash],[data-tab],[data-filter-go],[data-like],[data-save],[data-dbl]')&&!e.target.closest('[data-act],[data-more],[data-car]')){ $('#gate').hidden=false; return; }
+  if(isGuest()&&S.tab!=='landing'&&!e.target.closest('#onboard,#login,.login,[data-ob]')){
+    const g=e.target.closest('[data-tab]:not([data-tab="home"]),[data-org],[data-member],[data-hash],[data-story],[data-responders],[data-like],[data-save],[data-share],[data-act="search"],[data-act="notif"],[data-act="dm"],[data-act="dm-new"],[data-act="new-post"],[data-act="new-story"],[data-act="report"],[data-report]');
+    if(g&&!e.target.closest('[data-more],[data-car]')){ e.preventDefault(); e.stopPropagation(); return guestGate(); } }
   const svb=e.target.closest('[data-sv]'); if(svb){ e.stopPropagation(); return svAction(svb.dataset.sv, svb); }
   const pc=e.target.closest('[data-pfcur]'); if(pc&&S.pf&&!e.target.closest('[data-th]')){ S.pfCur=+pc.dataset.pfcur; pfCollect(); panel().innerHTML=postForm(null,S.pf.editPost||null); return; }
   const cr=e.target.closest('[data-crop]'); if(cr&&S.pf){ e.preventDefault(); return openCrop(+cr.dataset.crop); }
@@ -2395,7 +2424,7 @@ document.addEventListener('click', e=>{
   if(t.dataset.ob!==undefined){ const k=t.dataset.ob, o=S.ob;
     if(k==='close') return closeSignup();
     if(k==='join-code'){ closeSignup(); return joinCodeSheet(); }
-    if(k==='type-org'||k==='type-member'){ if(!needWrite()) return; o.type=k==='type-org'?'org':'member'; o.step=1; return obRender(); }
+    if(k==='type-org'||k==='type-member'||k==='type-rel'){ if(!needWrite()) return; o.type=k==='type-member'?'member':'org'; o.rel=k==='type-rel'; if(o.rel) o.data.category='종교단체'; else if(o.data.category==='종교단체') o.data.category=CATS[1]; o.step=1; return obRender(); }
     if(k==='back'){ obCollect(); o.step--; if(o.step===0) o.type=null; return obRender(); }
     if(k==='finish-post'){ const id=o.createdId; closeSignup(); return openNewPost(id); }
     if(k==='finish-profile'){ const id=o.createdId; closeSignup(); return go('org',id); }
@@ -2451,7 +2480,7 @@ document.addEventListener('click', e=>{
   else if(a==='new-post') openNewPost(t.dataset.orgId);
   else if(a==='del-post'){ if(S.sheet.confirmDel) deletePost(S.sheet.pid); else { S.sheet.confirmDel=true; refreshSheet(); } }
 });
-document.addEventListener('dblclick', e=>{ const m=e.target.closest('[data-dbl]'); if(!m||e.target.closest('[data-car]')) return; if(toggleLike(m.dataset.dbl,true)!==false) burst(m); });
+document.addEventListener('dblclick', e=>{ const m=e.target.closest('[data-dbl]'); if(!m||e.target.closest('[data-car]')) return; if(isGuest()) return guestGate(); if(toggleLike(m.dataset.dbl,true)!==false) burst(m); });
 document.addEventListener('submit', e=>{ e.preventDefault();
   const id=e.target.id;
   if(id==='ustatus-form') setUserStatus(e.target.dataset.uid,e.target.dataset.act,e.target); else if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
@@ -2464,6 +2493,7 @@ document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.
   if(e.target.id==='st-text'){ S.stText=e.target.value; const p=$('#st-prev p'); if(p) p.textContent=e.target.value||'여기에 글귀가 보여요'; }
   if(e.target.id==='dm-q'){ S.dmQ=e.target.value; const sel=$('#dm-as'), as=sel&&sel.value; const pos=e.target.selectionStart; panel().innerHTML=dmNewSheet(); if(as&&$('#dm-as')) $('#dm-as').value=as; const q=$('#dm-q'); q.focus(); try{ q.setSelectionRange(pos,pos); }catch(_){} } });
 document.addEventListener('change', e=>{ const i=e.target;
+  if(i.id==='ob-faith'){ const w=document.getElementById('ob-faith-etc-wrap'); if(w) w.hidden=i.value!=='기타'; }
   if(i.id==='ob-all'){ ['ob-a1','ob-a2','ob-a3'].forEach(k=>{ const c=document.getElementById(k); if(c) c.checked=i.checked; }); return; }
   if(/^ob-a[123]$/.test(i.id)){ const all=document.getElementById('ob-all'); if(all) all.checked=['ob-a1','ob-a2','ob-a3'].every(k=>document.getElementById(k).checked); }
   if((i.name==='p-kind'||i.id==='p-org')&&S.pf){ rerenderPostForm(); return; }
