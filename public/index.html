@@ -1253,7 +1253,7 @@ function orgView(){
     ${mine&&!orgApproved(o)&&(()=>{ const pv=orgPriv(o.id); return pv!==null&&!(pv&&pv.managerContact); })()?`<div class="sample-bar" style="margin:10px 16px 0"><b>연락처 필요</b><span>사칭 방지를 위해 담당자 연락처를 등록해 주세요. 관리자만 볼 수 있어요. <button class="more" data-act="edit-org" data-org-id="${o.id}" style="color:var(--sea);padding:0">지금 등록 ›</button></span></div>`:''}${mine?`<div class="prow">${st==='approved'?`<button class="btn pri" data-act="new-post" data-org-id="${o.id}">소식 올리기</button>`:''}<button class="btn ghost" data-act="edit-org" data-org-id="${o.id}">프로필 수정</button><button class="btn ghost" data-act="managers" data-org-id="${o.id}">관리자 ${(o.ownerIds||[]).length}</button></div>
       ${st==='approved'?`<div class="prow" style="margin-top:0"><button class="btn ghost" data-act="report" data-org-id="${o.id}">활동 리포트</button>${!isVerified(o)?(o.verifyRequest&&!o.verifyRequest.done?'<span class="btn ghost" style="color:var(--muted)">인증 확인 중</span>':`<button class="btn ghost" data-act="verify-req" data-org-id="${o.id}">인증 요청</button>`):''}</div>`:''}`
       :`<div class="prow"><span class="btn on">서로 이웃</span>${isMember()&&S.writable&&!blockedEither(key)?`<button class="btn pri" data-dm-to="${key}">메시지</button>`:''}${S.uid&&S.writable&&!iBlock(key)?`<button class="btn sq ${closeSet().has(key)?'cf on':'ghost'}" data-close="${key}" aria-label="친한 친구" title="친한 친구">★</button>`:''}${S.uid&&S.writable?`<button class="btn sq ghost" data-act="rel-menu" data-key="${key}" aria-label="더보기">···</button>`:''}</div>
-      <div class="prow" style="margin-top:0"><button class="btn ghost" data-act="report" data-org-id="${o.id}">활동 리포트</button></div>
+      ${S.isAdmin?`<div class="prow" style="margin-top:0"><button class="btn ghost" data-act="report" data-org-id="${o.id}">활동 리포트 (관리자)</button></div>`:''}
       ${iBlock(key)?'<p class="blocked-bar" style="margin:8px -16px 0">차단한 단체예요. 소식과 메시지가 서로 보이지 않아요.</p>':iMute(key)?'<p class="blocked-bar" style="margin:8px -16px 0;background:var(--sea-soft);color:var(--sea)">뮤트한 단체예요. 내 피드에서만 숨겨져요.</p>':''}`}
     ${S.isAdmin&&!mine?`<div class="prow" style="margin-top:0"><button class="btn sm ${isVerified(o)?'ghost':'pri'}" data-verify="${o.id}" style="flex:0 0 auto">${isVerified(o)?'인증 해제':'인증 배지 부여'}</button>${o.verifyRequest&&!o.verifyRequest.done?`<span class="muted" style="font-size:12.5px;align-self:center">요청 메모: ${esc(o.verifyRequest.note||'')}</span>`:''}</div>`:''}
     <div class="segtab" style="margin-top:8px"><button data-ptab="posts" aria-pressed="${ptab==='posts'}">소식<i>${ps.length}</i></button><button data-ptab="tagged" aria-pressed="${ptab==='tagged'}">태그됨<i>${tagged.length}</i></button></div>
@@ -1318,6 +1318,7 @@ function mineView(){
       <section class="sec"><h2>내 활동 배지 <small>${earned.length}개 획득</small></h2>${badgeGrid(S.uid,true)}<span class="hint" style="display:block;margin-top:8px">응원과 참여가 쌓이면 Ⅰ→Ⅱ→Ⅲ 등급으로 올라가요.</span></section>
       <section class="sec"><h2>계정</h2><div class="list">
         ${pr?'<div class="row"><span class="dm-main"><b>개인 참여자 프로필</b><small>닉네임, 활동 지역, 소개, 사진</small></span><button class="btn sm ghost" data-act="edit-member">수정</button></div>':''}
+        ${pr?`<div class="row"><span class="dm-main"><b>내 활동 리포트</b><small>나만 볼 수 있어요 · PNG로 저장 가능</small></span><button class="btn sm ghost" data-act="report" data-member-uid="${S.uid}">보기</button></div>`:''}
         <div class="row"><span class="dm-main"><b>알림</b><small>좋아요·댓글·승인·콜라보 소식</small></span><button class="btn sm ghost" data-act="notif">열기</button></div>
         <div class="row"><span class="dm-main"><b>메시지</b><small>단체와 1:1 대화</small></span><button class="btn sm ghost" data-act="dm">열기</button></div>
         ${window.dj?`<div class="row"><span class="dm-main"><b>비밀번호 변경</b><small>현재 비밀번호를 확인한 뒤 새 비밀번호로 바꿔요</small></span><button class="btn sm ghost" data-act="change-pw">변경</button></div>`:''}
@@ -1461,8 +1462,8 @@ function userSheet(id){
       <div class="handle">${esc(u.email)}</div>
       <p class="bio" style="font-size:13px;color:var(--muted)">가입 ${new Date(u.created_at).toLocaleString('ko-KR')} · 최근 로그인 ${u.last_sign_in_at?rel(new Date(u.last_sign_in_at).getTime()):'없음'}</p>
       ${u.status!=='active'?`<p class="bio" style="font-size:13px">사유: ${esc(u.reason||'(없음)')}${u.until?` · ${new Date(u.until).toLocaleDateString('ko-KR')}까지`:' · 기한 없음'}${u.hide_content?' · 콘텐츠 숨김':''}</p>`:''}</div>
-    ${orgs.length?`<div class="list">${orgs.map(o=>`<div class="row"><button class="org-chip" data-org="${o.id}" style="flex:1">${avatar(o,36)}<span><b>${esc(o.name)}</b><small>${ORG_STATE_LABEL[orgState(o)]} · ${esc(o.category||'분류 없음')} · 관리자 ${(o.ownerIds||[]).length}명</small></span></button>${admCatSel(o)}</div>`).join('')}</div>`:''}
-    ${pr?`<button class="btn ghost" data-member="${u.id}">개인 참여자 프로필 보기</button>`:''}
+    ${orgs.length?`<div class="list">${orgs.map(o=>`<div class="row"><button class="org-chip" data-org="${o.id}" style="flex:1">${avatar(o,36)}<span><b>${esc(o.name)}</b><small>${ORG_STATE_LABEL[orgState(o)]} · ${esc(o.category||'분류 없음')} · 관리자 ${(o.ownerIds||[]).length}명</small></span></button>${admCatSel(o)}<button class="btn sm ghost" data-act="report" data-org-id="${o.id}" style="flex:none">리포트</button></div>`).join('')}</div>`:''}
+    ${pr?`<div class="rep-acts"><button class="btn ghost" data-member="${u.id}">개인 참여자 프로필 보기</button><button class="btn ghost" data-act="report" data-member-uid="${u.id}">개인 활동 리포트</button></div>`:''}
     <div class="pledge" style="margin:0;padding:12px 14px"><p style="margin:0 0 4px;font-weight:600">아이디(로그인 이메일)</p><div style="display:flex;gap:8px;align-items:center"><code style="flex:1;word-break:break-all">${esc(u.email)}</code><button class="btn sm ghost" data-copy="${esc(u.email)}">복사</button></div>
       <p class="muted" style="margin:8px 0 0;font-size:12.5px">비밀번호는 암호화되어 저장돼 관리자도 볼 수 없어요. 비밀번호를 잊은 사용자는 로그인 화면의 ‘비밀번호를 잊었어요’에서 본인이 정한 질문에 답해 임시 비밀번호를 받을 수 있어요.</p></div>
     ${u.is_admin?'<p class="muted" style="margin:0">관리자 계정은 정지하거나 반려할 수 없어요.</p>':u.id===S.uid?'':
@@ -2034,29 +2035,33 @@ function calendarView(){
 }
 
 /* ---------- 단체 활동 리포트 ---------- */
+function rpTarget(){ if(S.rpMember){ const uid=S.rpMember, pr=(S.people.get(uid)||{}).profile||{}; return {id:'me:'+uid,memberUid:uid,name:pr.nickname||displayName(uid)||'개인 참여자',category:'개인 참여자',regions:pr.regions,region:pr.region,ownerIds:[uid]}; } return S.orgs.get(S.rpOrg); }
+function canSeeReport(o){ return !!o&&(S.isAdmin||(o.ownerIds||[]).includes(S.uid)); }
+function openReportFor(orgId, memberUid){ S.rpOrg=orgId||null; S.rpMember=memberUid||null; S.rpYear=new Date().getFullYear(); closeSheet(); go('report'); }
 function orgReportData(o, year){
-  const all=livePosts().filter(p=>p.orgId===o.id||collabOf(p).includes(o.id));
+  const all=o.memberUid?livePosts().filter(p=>!p.orgId&&p.authorId===o.memberUid):livePosts().filter(p=>p.orgId===o.id||collabOf(p).includes(o.id));
   const inYear=p=>{ if(!year) return true; const d=new Date(p.createdAt); return d.getFullYear()===year; };
   const posts=all.filter(inYear);
   const likes=posts.reduce((n,p)=>n+(D.likes.get(p.id)?.size||0),0), comments=posts.reduce((n,p)=>n+(D.commentsBy.get(p.id)?.length||0),0);
   const joinSet=new Set(); let joins=0; for(const p of posts) for(const r of responders(p)){ joins++; joinSet.add(r.uid); }
   const months=Array.from({length:12},()=>0); for(const p of posts) months[new Date(p.createdAt).getMonth()]++;
   const byKind={}; for(const p of posts){ const k=shown(p).kind; byKind[k]=(byKind[k]||0)+1; }
-  const stories=S.stories.filter(s=>s.orgId===o.id&&inYear(s)).length;
+  const stories=o.memberUid?0:S.stories.filter(s=>s.orgId===o.id&&inYear(s)).length;
   const collabs=new Set(); for(const p of posts){ if(p.orgId===o.id) collabOf(p).forEach(id=>collabs.add(id)); else if(p.orgId) collabs.add(p.orgId); }
   const top=[...posts].sort((a,b)=>((D.likes.get(b.id)?.size||0)+(D.commentsBy.get(b.id)?.length||0)*2)-((D.likes.get(a.id)?.size||0)+(D.commentsBy.get(a.id)?.length||0)*2)).slice(0,3);
   const years=[...new Set(all.map(p=>new Date(p.createdAt).getFullYear()))].sort((a,b)=>b-a);
   return {posts:posts.length,likes,comments,joins,people:joinSet.size,months,byKind,stories,collabs:[...collabs].map(id=>S.orgs.get(id)).filter(Boolean),top,years};
 }
 function reportView(){
-  const o=S.orgs.get(S.rpOrg); if(!canSeeOrg(o)) return `<div class="gut"><button class="back" data-tab="home">‹ 홈으로</button><div class="empty"><h2>단체를 찾을 수 없어요</h2></div></div>`;
+  const o=rpTarget(); if(!o||(!o.memberUid&&!canSeeOrg(o))) return `<div class="gut"><button class="back" data-tab="home">‹ 홈으로</button><div class="empty"><h2>찾을 수 없어요</h2></div></div>`;
+  if(!canSeeReport(o)) return `<div class="gut"><button class="back" data-act="back">‹ 뒤로</button><div class="empty"><h2>활동 리포트는 볼 수 없어요</h2><p>활동 리포트는 해당 단체의 관리자(초대 코드로 함께 관리하는 계정 포함)와 다정여수 운영자만 볼 수 있어요.</p></div></div>`;
   const thisYear=new Date().getFullYear(); if(S.rpYear===undefined) S.rpYear=thisYear; const y=S.rpYear; const r=orgReportData(o,y);
   const max=Math.max(1,...r.months); const kinds=Object.entries(r.byKind).sort((a,b)=>b[1]-a[1]); const kmax=Math.max(1,...kinds.map(k=>k[1]));
   const yrs=[...new Set([thisYear,...r.years])].sort((a,b)=>b-a);
   return `<div class="gut"><button class="back" data-act="back">‹ 뒤로</button>
     <div class="chips" style="padding-top:0">${yrs.map(yy=>`<button class="chip" data-rp-year="${yy}" aria-pressed="${y===yy}">${yy}년</button>`).join('')}<button class="chip" data-rp-year="0" aria-pressed="${!y}">전체 기간</button></div>
     <div class="rp-card" id="rp-card">
-      <div class="rp-top"><div class="yr">${y?y+'년':'전체 기간'} 활동 리포트 · 다정여수</div><h2>${esc(o.name)}${isVerified(o)?' ✓':''}</h2><p>${esc(o.category||'')} · ${esc(regionLabel(o))}</p></div>
+      <div class="rp-top"><div class="yr">${y?y+'년':'전체 기간'} 활동 리포트 · 다정여수</div><h2>${esc(o.name)}${!o.memberUid&&isVerified(o)?' ✓':''}</h2><p>${esc(o.category||'')} · ${esc(regionLabel(o))}</p></div>
       <div class="rp-grid"><div><b>${r.posts}</b><span>올린 소식</span></div><div><b>${r.people}</b><span>참여·도움에 나선 사람${r.joins!==r.people?` (신청 ${r.joins}건)`:''}</span></div><div><b>${r.likes.toLocaleString()}</b><span>받은 응원 하트</span></div><div><b>${r.comments.toLocaleString()}</b><span>받은 댓글</span></div></div>
       ${y?`<div class="rp-sec"><h3>월별 소식</h3><div class="mbar">${r.months.map((n,i)=>`<div><i class="${n?'':'z'}" style="height:${Math.max(3,Math.round(n/max*60))}px" title="${i+1}월 ${n}건"></i><small>${i+1}</small></div>`).join('')}</div></div>`:''}
       ${kinds.length?`<div class="rp-sec"><h3>어떤 활동이었나</h3><div class="kbars">${kinds.map(([k,n])=>`<div class="k-${k}"><span>${KINDS[k]}</span><i style="width:${Math.round(n/kmax*100)}%"></i><b>${n}</b></div>`).join('')}</div></div>`:''}
@@ -2084,7 +2089,7 @@ async function reportPng(o, y, r){
   x.fillStyle='#5B6C77'; x.font=`400 22px ${F}`; x.fillText(`다정여수 · 여수의 좋은 소식이 모이는 곳 · ${new Date().toLocaleDateString('ko-KR')} 기준`,72,1300);
   return await new Promise(res=>c.toBlob(res,'image/png'));
 }
-async function saveReport(){ const o=S.orgs.get(S.rpOrg); if(!o) return; const y=S.rpYear, r=orgReportData(o,y);
+async function saveReport(){ const o=rpTarget(); if(!o||!canSeeReport(o)) return; const y=S.rpYear, r=orgReportData(o,y);
   const dl=await use('downloads'); if(!dl){ toast('이 화면에서는 파일 저장을 할 수 없어요'); return; }
   try{ const blob=await reportPng(o,y,r); await dl.save({filename:`${o.name}_${y||'전체'}_활동리포트.png`,data:blob}); toast('리포트 이미지를 저장했어요'); }
   catch(e){ if(e&&e.code==='declined') return; toast('저장하지 못했어요'); } }
@@ -2833,9 +2838,9 @@ document.addEventListener('click', e=>{
   else if(a==='ban-save') saveBanned();
   else if(a==='users-reload'){ S.users=null; schedule(); }
   else if(a==='clear-recent'){ try{ localStorage.removeItem('dj_recent'); }catch(_){} schedule(); }
-  else if(a==='report'){ S.rpOrg=t.dataset.orgId; S.rpYear=new Date().getFullYear(); go('report'); }
+  else if(a==='report'){ openReportFor(t.dataset.orgId||null, t.dataset.memberUid||null); }
   else if(a==='rp-save') saveReport();
-  else if(a==='rp-copy'){ const o=S.orgs.get(S.rpOrg); if(o){ const txt=reportText(o,S.rpYear,orgReportData(o,S.rpYear)); navigator.clipboard.writeText(txt).then(()=>toast('리포트 숫자를 복사했어요')).catch(()=>toast('복사하지 못했어요')); } }
+  else if(a==='rp-copy'){ const o=rpTarget(); if(o&&canSeeReport(o)){ const txt=reportText(o,S.rpYear,orgReportData(o,S.rpYear)); navigator.clipboard.writeText(txt).then(()=>toast('리포트 숫자를 복사했어요')).catch(()=>toast('복사하지 못했어요')); } }
   else if(a==='verify-req'){ if(needWrite()) verifyReqSheet(t.dataset.orgId); }
   else if(a==='rel-menu') relMenu(t.dataset.key);
   else if(a==='notice-new') openNoticeForm(null);
