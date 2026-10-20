@@ -101,6 +101,9 @@
     signUp:async(email,password,displayName)=>{ const {data,error}=await sb.auth.signUp({email,password,options:{data:{display_name:displayName}}}); if(error) throw error; return data; },
     signOut:async()=>{ await sb.auth.signOut(); },
     resetPassword:async email=>{ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname}); if(error) throw error; },
+    myStatus:async()=>{ if(!session) return null; const {data}=await sb.from('account_status').select('status,reason,until').eq('user_id',session.user.id).maybeSingle(); if(!data) return null; if(data.until&&new Date(data.until)<new Date()) return null; return data; },
+    listUsers:async()=>{ const {data,error}=await sb.rpc('admin_list_users'); if(error) throw mapErr(error); return data||[]; },
+    setStatus:async(uid,status,reason,days,hide)=>{ const {error}=await sb.rpc('admin_set_status',{p_user:uid,p_status:status,p_reason:reason||'',p_days:days||0,p_hide:!!hide}); if(error) throw mapErr(error); },
     session:()=>session, isAdmin:()=>admin
   };
   const ready=loadSession();

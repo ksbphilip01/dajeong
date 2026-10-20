@@ -770,7 +770,8 @@ function approvalState(p){ const m=modOf(p)||{}, rev=p.rev||0;
   return m.approved?'edit-pending':'pending'; }
 const APPROVAL_LABEL={pending:'승인 대기',"edit-pending":'수정 승인 대기',approved:'게시 중',rejected:'반려됨'};
 function shown(p){ if(!isMemberPost(p)) return p; const m=modOf(p); if(!(m&&m.approved)) return p; const v={...p,...m.approved.live}; if(p.ask&&v.ask) v.ask={...v.ask,closed:!!p.ask.closed}; return v; }
-function visible(p){ return (p.orgId ? orgApproved(S.orgs.get(p.orgId)) : approvalState(p)==='approved') && !isHidden('post',p); }
+function acctHidden(uid){ if(!uid) return false; const m=S.mod.get('acct_'+uid); if(!m||!m.hide) return false; return !m.until||m.until>Date.now(); }
+function visible(p){ return (p.orgId ? orgApproved(S.orgs.get(p.orgId)) : approvalState(p)==='approved') && !isHidden('post',p) && !(acctHidden(p.authorId)&&!S.isAdmin&&p.authorId!==S.uid); }
 function livePosts(){ return S.posts.filter(visible); }
 function collabOf(p0){ const ids=(shown(p0).collabs||[]).filter(id=>S.orgs.has(id)&&(p0.collabAccepted||{})[id]); return ids; }
 function orgPosts(id){ return livePosts().filter(p => p.orgId === id || collabOf(p).includes(id)); }
@@ -800,7 +801,7 @@ function iMute(key){ return !!(me().muted||{})[key]; }
 function theyBlockMe(key){ if(!S.uid) return false; const mine=myKeys(); for(const u of authorUids(key)){ const b=(S.people.get(u)||{}).blocked||{}; if(mine.some(k=>b[k])) return true; } return false; }
 function blockedEither(key){ return iBlock(key)||theyBlockMe(key); }
 function hiddenForMe(p){ const k=authorKey(p); if(canManage(p)) return false; return iMute(k)||blockedEither(k); }
-function commentHidden(c){ if(!S.uid||c.authorId===S.uid) return false; const k='me:'+c.authorId; return iMute(k)||iBlock(k)||(((S.people.get(c.authorId)||{}).blocked||{})['me:'+S.uid]); }
+function commentHidden(c){ if(acctHidden(c.authorId)&&!S.isAdmin&&c.authorId!==S.uid) return true; if(!S.uid||c.authorId===S.uid) return false; const k='me:'+c.authorId; return iMute(k)||iBlock(k)||(((S.people.get(c.authorId)||{}).blocked||{})['me:'+S.uid]); }
 function toggleBlock(key, kind){ if(!needWrite()) return; const f=kind==='blocked'?'blocked':'muted'; const has=!!(me()[f]||{})[key];
   saveMe(m=>{ m[f]=m[f]||{}; if(has) delete m[f][key]; else { m[f][key]=Date.now(); if(f==='blocked'&&m.close) delete m.close[key]; } });
   toast(has?(f==='blocked'?'차단을 해제했어요':'뮤트를 해제했어요'):(f==='blocked'?'차단했어요. 서로의 소식과 메시지가 보이지 않아요':'뮤트했어요. 이 계정의 소식이 내 피드에서 숨겨져요')); }
@@ -843,7 +844,8 @@ async function askSetClosed(pid, closed){ const p=S.posts.find(x=>x.id===pid); i
 function canManage(p){ if(!S.uid) return false; if(p.orgId){ const o=S.orgs.get(p.orgId); return !!o&&(o.ownerIds||[]).includes(S.uid); } return p.authorId===S.uid; }
 function recent(id){ const p = S.posts.find(p => p.orgId === id); return p && Date.now()-p.createdAt < 3*86400e3; }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2600); }
-function needWrite(){ if(S.writable) return true;
+function needWrite(){ if(S.myStatus){ toast(S.myStatus.status==='rejected'?'가입이 반려된 계정이라 이용할 수 없어요':'정지된 계정이라 지금은 이용할 수 없어요'); return false; }
+  if(S.writable) return true;
   if(!S.uid&&window.dj){ openLogin(); return false; }
   toast(S.uid ? '보기 전용으로 열려 있어 참여할 수 없어요' : '로그인하면 좋아요와 글쓰기를 할 수 있어요'); return false; }
 function writeErr(e){
@@ -852,7 +854,10 @@ function writeErr(e){
   else if(c==='quota_exceeded') toast('저장 공간이 가득 찼어요. 오래된 소식을 정리해 주세요');
   else toast('저장하지 못했어요. 잠시 후 다시 시도해 주세요');
 }
-function showNotice(){ const n=$('#notice'); n.hidden=true; }
+function showNotice(){ const n=$('#notice'); const st=S.myStatus;
+  if(st){ n.hidden=false; n.style.background='var(--camellia-soft)'; n.style.color='var(--ink)';
+    n.innerHTML=`<b style="color:var(--camellia)">${st.status==='rejected'?'가입이 반려된 계정이에요':'이용이 정지된 계정이에요'}</b>${st.until?` · ${new Date(st.until).toLocaleDateString('ko-KR')}까지`:''}<br><span style="font-size:12.5px">${esc(st.reason||'운영 정책에 따라 소식 올리기, 댓글, 좋아요, 메시지가 제한됐어요.')} 문의가 있으면 관리자에게 알려 주세요.</span>`; }
+  else n.hidden=true; }
 
 /* ---------- derive + paint ---------- */
 function derive(){
@@ -1165,6 +1170,58 @@ async function submitLogin(form){ const mode=form.dataset.mode, err=$('#lg-err')
 
 function afterSignup(){ let f=null; try{ f=localStorage.getItem('dj_after_signup'); localStorage.removeItem('dj_after_signup'); }catch(_){}
   if(f&&S.uid&&!isMember()){ toast('계정을 만들었어요. 이제 단체 또는 개인 참여자로 가입해 주세요'); openSignup(0); } }
+
+/* ---------- 관리자: 가입 계정 관리 (목록·정지·반려) ---------- */
+S.users=null; S.uq=''; S.uf='all';
+async function loadUsers(){ try{ S.users=await dj.listUsers(); }catch(e){ S.users=[]; toast('계정 목록을 불러오지 못했어요. 관리자 SQL(002)이 적용됐는지 확인해 주세요'); } schedule(); }
+function userRoles(u){ const orgs=[...S.orgs.values()].filter(o=>(o.ownerIds||[]).includes(u.id)); const pr=(S.people.get(u.id)||{}).profile; return {orgs,pr}; }
+const ST_LABEL={active:'정상',suspended:'정지',rejected:'반려'};
+function accountsHtml(){
+  if(!S.users){ loadUsers(); return '<p class="loading">계정 목록을 불러오는 중이에요</p>'; }
+  const q=S.uq.trim().toLowerCase();
+  const list=S.users.filter(u=>S.uf==='all'||u.status===S.uf||(S.uf==='member'&&u.status==='active'&&!userRoles(u).orgs.length&&!userRoles(u).pr)).filter(u=>!q||[u.email,u.display_name,(userRoles(u).pr||{}).nickname,...userRoles(u).orgs.map(o=>o.name)].join(' ').toLowerCase().includes(q));
+  const cnt=k=>S.users.filter(u=>u.status===k).length;
+  const row=u=>{ const {orgs,pr}=userRoles(u); const name=(pr&&pr.nickname)||u.display_name||u.email.split('@')[0];
+    const pill=u.is_admin?'<span class="st live">관리자</span>':`<span class="st ${u.status==='active'?'live':u.status==='rejected'?'hid':'open'}">${ST_LABEL[u.status]}</span>`;
+    return `<button class="row" data-user="${u.id}" style="width:100%;text-align:left">${avatar({name},40)}<span class="dm-main"><b>${esc(name)}</b><small>${esc(u.email)}</small><small>${orgs.length?`단체 ${orgs.map(o=>esc(o.name)).join(', ')} · `:''}${pr?'개인 참여자 · ':''}${!orgs.length&&!pr?'가입 전 · ':''}가입 ${new Date(u.created_at).toLocaleDateString('ko-KR')}</small></span>${pill}</button>`; };
+  return `<input id="uq" class="search" type="search" placeholder="이름, 이메일, 단체로 찾기" value="${esc(S.uq)}" style="margin:0 0 10px">
+    <div class="chips" style="padding-top:0">${[['all',`전체 ${S.users.length}`],['active',`정상 ${cnt('active')}`],['suspended',`정지 ${cnt('suspended')}`],['rejected',`반려 ${cnt('rejected')}`],['member','가입 전']].map(([k,l])=>`<button class="chip" data-uf="${k}" aria-pressed="${S.uf===k}">${l}</button>`).join('')}<button class="chip" data-act="users-reload">새로고침</button></div>
+    ${list.length?`<div class="list">${list.map(row).join('')}</div>`:'<div class="empty"><h2>해당하는 계정이 없어요</h2></div>'}
+    <span class="hint" style="display:block;margin-top:8px">정지·반려된 계정은 소식 올리기, 댓글, 좋아요, 메시지를 할 수 없고, 로그인하면 사유가 표시돼요. 관리자 계정은 바꿀 수 없어요.</span>`;
+}
+function userSheet(id){
+  const u=(S.users||[]).find(x=>x.id===id); if(!u) return; const {orgs,pr}=userRoles(u); const name=(pr&&pr.nickname)||u.display_name||u.email;
+  const posts=S.posts.filter(p=>p.authorId===u.id), cms=S.comments.filter(c=>c.authorId===u.id);
+  const reported=posts.reduce((n,p)=>n+Object.keys(p.reportedBy||{}).length,0)+cms.reduce((n,c)=>n+Object.keys(c.reportedBy||{}).length,0);
+  const act=S.uAct||null;
+  openSheet('user',{uid:id},`${head('계정 정보')}<div class="panel-b"><div class="gut" style="padding-block:14px;display:flex;flex-direction:column;gap:14px">
+    <div class="phead" style="padding:0">${avatar({name},64)}<div class="pstats"><div><b>${posts.length}</b><span>게시물</span></div><div><b>${cms.length}</b><span>댓글</span></div><div><b style="color:${reported?'var(--camellia)':'inherit'}">${reported}</b><span>받은 신고</span></div></div></div>
+    <div class="pname" style="padding:0"><h2>${esc(name)}${u.is_admin?' <span class="st live">관리자</span>':` <span class="st ${u.status==='active'?'live':u.status==='rejected'?'hid':'open'}">${ST_LABEL[u.status]}</span>`}</h2>
+      <div class="handle">${esc(u.email)}</div>
+      <p class="bio" style="font-size:13px;color:var(--muted)">가입 ${new Date(u.created_at).toLocaleString('ko-KR')} · 최근 로그인 ${u.last_sign_in_at?rel(new Date(u.last_sign_in_at).getTime()):'없음'}</p>
+      ${u.status!=='active'?`<p class="bio" style="font-size:13px">사유: ${esc(u.reason||'(없음)')}${u.until?` · ${new Date(u.until).toLocaleDateString('ko-KR')}까지`:' · 기한 없음'}${u.hide_content?' · 콘텐츠 숨김':''}</p>`:''}</div>
+    ${orgs.length?`<div class="list">${orgs.map(o=>`<div class="row"><button class="org-chip" data-org="${o.id}" style="flex:1">${avatar(o,36)}<span><b>${esc(o.name)}</b><small>${ORG_STATE_LABEL[orgState(o)]} · 관리자 ${(o.ownerIds||[]).length}명</small></span></button></div>`).join('')}</div>`:''}
+    ${pr?`<button class="btn ghost" data-member="${u.id}">개인 참여자 프로필 보기</button>`:''}
+    ${u.is_admin?'<p class="muted" style="margin:0">관리자 계정은 정지하거나 반려할 수 없어요.</p>':u.id===S.uid?'':
+      act?`<form class="form" id="ustatus-form" data-uid="${u.id}" data-act="${act}" style="padding:0;gap:10px">
+        <p style="margin:0;font-weight:600">${act==='suspended'?'계정 정지':'가입 반려'}</p>
+        ${act==='suspended'?`<div class="field"><label for="us-days">정지 기간</label><select id="us-days"><option value="7">7일</option><option value="30">30일</option><option value="90">90일</option><option value="0">기한 없음</option></select></div>`:''}
+        <div class="field"><label for="us-reason">사유 (본인에게 보여요)</label><input id="us-reason" maxlength="120" required placeholder="${act==='suspended'?'예: 상업 광고 반복 게시':'예: 단체 실체를 확인할 수 없어요'}"></div>
+        <label class="tgl" style="border:0;padding:0"><span><b>올린 게시물·댓글도 숨기기</b><small>다른 사람에게 이 계정의 콘텐츠가 보이지 않아요</small></span><input type="checkbox" id="us-hide"${act==='rejected'?' checked':''}></label>
+        ${act==='rejected'&&orgs.some(o=>(o.ownerIds||[]).length===1)?'<span class="hint">이 계정만 관리하는 단체는 함께 반려돼요.</span>':''}
+        <div class="rep-acts"><button class="btn warn" type="submit">${act==='suspended'?'정지하기':'반려하기'}</button><button class="btn ghost" type="button" data-uact="">취소</button></div></form>`
+      :`<div class="rep-acts">${u.status==='active'?`<button class="btn ghost" data-uact="suspended">정지</button><button class="btn ghost" data-uact="rejected" style="color:var(--camellia)">반려</button>`:`<button class="btn pri" data-ustatus="active" data-uid="${u.id}">${u.status==='suspended'?'정지 해제':'반려 취소'}</button>`}${myParties().length&&!u.is_admin?`<button class="btn ghost" data-dm-to="me:${u.id}">메시지</button>`:''}</div>`}
+  </div></div>`);
+}
+async function setUserStatus(uid,status,form){
+  const reason=form?$('#us-reason').value.trim():'', days=form&&$('#us-days')?+$('#us-days').value:0, hide=form?$('#us-hide').checked:false;
+  if(form&&!reason){ toast('사유를 적어 주세요'); return; }
+  try{ await dj.setStatus(uid,status,reason,days,hide);
+    if(status==='rejected'){ for(const o of [...S.orgs.values()].filter(o=>(o.ownerIds||[]).length===1&&o.ownerIds[0]===uid)){ const cur=S.mod.get('org_'+o.id)||{}; const n={...cur,rejected:{rev:o.rev||0,reason,at:Date.now(),by:S.uid}}; delete n.approved; try{ await S.db.doc('mod/org_'+o.id).set(n); }catch(_){} } }
+    S.uAct=null; toast({active:'정상 계정으로 되돌렸어요',suspended:'계정을 정지했어요',rejected:'가입을 반려했어요'}[status]); await loadUsers(); userSheet(uid);
+  }catch(e){ toast(/admin/.test(e.message||'')?'관리자 계정은 바꿀 수 없어요':'처리하지 못했어요: '+(e.message||'')); }
+}
+
 /* ---------- 회원 탈퇴 ---------- */
 function withdrawPlan(){
   const mo=myOrgs(), sole=mo.filter(o=>(o.ownerIds||[]).length<=1), shared=mo.filter(o=>(o.ownerIds||[]).length>1);
@@ -1451,7 +1508,8 @@ function adminView(){
   const hiddenN=S.posts.filter(p=>isHidden('post',p)).length+S.comments.filter(c=>isHidden('comment',c)).length;
   const list=(S.admFilter==='open'?open:groups.filter(x=>!x.open)).sort((a,b)=>b.latest-a.latest);
   let body;
-  if(S.admFilter==='pending'){
+  if(S.admFilter==='accounts'){ body=accountsHtml(); }
+  else if(S.admFilter==='pending'){
     const vreq=[...S.orgs.values()].filter(o=>o.verifyRequest&&!o.verifyRequest.done&&!isVerified(o));
     body = (vreq.length?`<h2 style="font-size:16px;margin:4px 0 8px">인증 배지 요청 <small>${vreq.length}건</small></h2><div class="list" style="margin-bottom:14px">${vreq.map(o=>`<div class="row"><button class="org-chip" data-org="${o.id}" style="flex:1">${avatar(o,40)}<span><b>${esc(o.name)}</b><small>${esc(o.verifyRequest.note||'')}</small></span></button><button class="btn sm pri" data-verify="${o.id}">부여</button></div>`).join('')}</div>`:'')
       + (porgs.length?`<h2 style="font-size:16px;margin:4px 0 8px">단체 가입 신청 <small>${porgs.length}건</small></h2><div class="reps">${porgs.map(orgPendCard).join('')}</div>`:'')
@@ -1462,7 +1520,7 @@ function adminView(){
   return `<div class="gut"><section class="sec"><h2>관리 <small>관리자에게만 보여요</small></h2>${adminNoticesHtml()}
     <div class="stat-row"><div><b>${pend.length+porgs.length}</b><span>승인 대기</span></div><div><b>${open.length}</b><span>신고 대기</span></div><div><b>${hiddenN}</b><span>숨김 중</span></div></div>
     <p class="muted" style="margin:0">단체 가입과 개인 참여자의 글은 승인해야 공개돼요. 서로 다른 ${AUTO_HIDE}명이 신고한 소식·댓글은 확인 전까지 자동으로 숨겨져요.</p>
-    <div class="chips"><button class="chip" data-adm="pending" aria-pressed="${S.admFilter==='pending'}">승인 대기 ${pend.length+porgs.length}</button><button class="chip" data-adm="open" aria-pressed="${S.admFilter==='open'}">신고 ${open.length}</button><button class="chip" data-adm="done" aria-pressed="${S.admFilter==='done'}">처리 완료</button></div>
+    <div class="chips"><button class="chip" data-adm="pending" aria-pressed="${S.admFilter==='pending'}">승인 대기 ${pend.length+porgs.length}</button>${window.dj?`<button class="chip" data-adm="accounts" aria-pressed="${S.admFilter==='accounts'}">계정 ${S.users?S.users.length:''}</button>`:''}<button class="chip" data-adm="open" aria-pressed="${S.admFilter==='open'}">신고 ${open.length}</button><button class="chip" data-adm="done" aria-pressed="${S.admFilter==='done'}">처리 완료</button></div>
     ${body}
   </section></div>`;
 }
@@ -2253,6 +2311,10 @@ document.addEventListener('click', e=>{
   const cm=e.target.closest('[data-cal]'); if(cm){ const [Y,M]=S.calYM; const d=new Date(Y,M+(+cm.dataset.cal),1); S.calYM=[d.getFullYear(),d.getMonth()]; S.calSel=null; return schedule(); }
   const mo=e.target.closest('[data-mo]'); if(mo){ S.moOff=Math.max(0,(S.moOff||0)+(+mo.dataset.mo)); return schedule(); }
   const vf=e.target.closest('[data-verify]'); if(vf){ return verifyToggle(vf.dataset.verify); }
+  const ur=e.target.closest('[data-user]'); if(ur){ S.uAct=null; return userSheet(ur.dataset.user); }
+  const ua=e.target.closest('[data-uact]'); if(ua){ S.uAct=ua.dataset.uact||null; return userSheet(S.sheet.uid); }
+  const us=e.target.closest('[data-ustatus]'); if(us){ return setUserStatus(us.dataset.uid,us.dataset.ustatus,null); }
+  const uf=e.target.closest('[data-uf]'); if(uf){ S.uf=uf.dataset.uf; return schedule(); }
   const ry=e.target.closest('[data-rp-year]'); if(ry){ S.rpYear=+ry.dataset.rpYear||0; return schedule(); }
   const lgm=e.target.closest('[data-login]'); if(lgm){ return openLogin(lgm.dataset.login); }
   const rl=e.target.closest('[data-rel]'); if(rl){ toggleBlock(rl.dataset.key, rl.dataset.rel); if(S.sheet&&S.sheet.kind==='rel') closeSheet(); return; }
@@ -2310,6 +2372,7 @@ document.addEventListener('click', e=>{
   else if(a==='withdraw'){ if(needWrite()) withdrawSheet(); }
   else if(a==='managers') managersSheet(t.dataset.orgId);
   else if(a==='notif') openNotif();
+  else if(a==='users-reload'){ S.users=null; schedule(); }
   else if(a==='clear-recent'){ try{ localStorage.removeItem('dj_recent'); }catch(_){} schedule(); }
   else if(a==='report'){ S.rpOrg=t.dataset.orgId; S.rpYear=new Date().getFullYear(); go('report'); }
   else if(a==='rp-save') saveReport();
@@ -2334,12 +2397,13 @@ document.addEventListener('click', e=>{
 document.addEventListener('dblclick', e=>{ const m=e.target.closest('[data-dbl]'); if(!m||e.target.closest('[data-car]')) return; if(toggleLike(m.dataset.dbl,true)!==false) burst(m); });
 document.addEventListener('submit', e=>{ e.preventDefault();
   const id=e.target.id;
-  if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
+  if(id==='ustatus-form') setUserStatus(e.target.dataset.uid,e.target.dataset.act,e.target); else if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
   else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); });
 document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.value; schedule(); }
   if(e.target.id==='crop-zoom'){ cropZoomTo(+e.target.value); return; }
   if(e.target.id==='p-cap'){ const c=$('#p-cnt'); if(c) c.textContent=e.target.value.length+'/2200'; }
   if(e.target.id==='sq'){ S.sq=e.target.value; schedule(); }
+  if(e.target.id==='uq'){ S.uq=e.target.value; schedule(); }
   if(e.target.id==='st-text'){ S.stText=e.target.value; const p=$('#st-prev p'); if(p) p.textContent=e.target.value||'여기에 글귀가 보여요'; }
   if(e.target.id==='dm-q'){ S.dmQ=e.target.value; const sel=$('#dm-as'), as=sel&&sel.value; const pos=e.target.selectionStart; panel().innerHTML=dmNewSheet(); if(as&&$('#dm-as')) $('#dm-as').value=as; const q=$('#dm-q'); q.focus(); try{ q.setSelectionRange(pos,pos); }catch(_){} } });
 document.addEventListener('change', e=>{ const i=e.target;
@@ -2373,6 +2437,7 @@ svEl.addEventListener('click', e=>{ if(S.svSkip){ S.svSkip=false; e.stopPropagat
   const [db,user,assets,dl]=await Promise.all([use('db'),use('user'),use('assets'),use('downloads')]);
   S.db=db; S.user=user; S.assets=assets; S.canDownload=!!dl;
   if(user){ S.uid=await user.id(); const cw=await user.can('data.write'); S.writable=!!S.uid&&cw!==false; S.isAdmin=await user.canEdit(); }
+  if(window.dj&&S.uid&&!S.isAdmin){ try{ S.myStatus=await dj.myStatus(); }catch(_){} if(S.myStatus) S.writable=false; }
   if(!db){ S.dbState='off'; S.writable=false; showNotice(); schedule(); return; }
   showNotice();
   let pending=5; const ready=()=>{ if(--pending===0){ S.dbState='ok'; setTimeout(openFromHash,300); setTimeout(afterSignup,400); } schedule(); };
