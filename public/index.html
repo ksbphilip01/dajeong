@@ -1239,8 +1239,8 @@ async function submitRecover(form){ const r=S.rec, err=$('#lg-err'), btn=$('#lg-
 async function mailReset(){ const r=S.rec||{}; const em=(($('#lg-email')||{}).value||r.email||'').trim(); if(!em){ toast('이메일을 먼저 적어 주세요'); return; }
   try{ await dj.resetPassword(em); closeSheet(); toast('재설정 메일을 보냈어요. 메일의 링크를 누르면 새 비밀번호를 정할 수 있어요'); }catch(e){ toast(authErr(e)); } }
 /* 이메일 링크로 들어온 경우: 새 비밀번호 정하기 */
-function openNewPw(){ openSheet('login',{},`${head('새 비밀번호 정하기')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="newpw">
-    <p class="muted" style="margin:0">재설정 링크로 들어왔어요. 새 비밀번호를 정해 주세요.</p>
+function openNewPw(temp){ openSheet('login',{},`${head('새 비밀번호 정하기')}<div class="panel-b"><form class="form gut" id="login-form" data-mode="newpw">
+    <p class="muted" style="margin:0">${temp?'임시 비밀번호로 로그인했어요. 계속 쓰려면 새 비밀번호를 정해 주세요.':'재설정 링크로 들어왔어요. 새 비밀번호를 정해 주세요.'}</p>
     ${pwField('lg-pw','새 비밀번호','new-password')}${pwField('lg-pw2','새 비밀번호 확인','new-password','한 번 더 입력')}
     <p class="err" id="lg-err"></p><button class="btn pri" type="submit" id="lg-submit">바꾸기</button></form></div>`); }
 async function submitNewPw(form){ const err=$('#lg-err'), pw=$('#lg-pw').value; if(pw!==$('#lg-pw2').value){ err.textContent='새 비밀번호 확인이 맞지 않아요'; return; }
@@ -1253,7 +1253,9 @@ async function openSetRq(){ if(!needWrite()) return; let cur=null; try{ cur=awai
 async function submitSetRq(form){ const err=$('#lg-err'), r=rqValue(), m=rqCheck(r); if(m){ err.textContent=m; return; }
   try{ await dj.setRecovery(r.q,r.a); S.hasRq=true; closeSheet(); toast('비밀번호 찾기 질문을 저장했어요'); schedule(); }catch(e){ err.textContent='저장하지 못했어요: '+((e&&e.message)||''); } }
 
-function afterSignup(){ let rcv=null; try{ rcv=localStorage.getItem('dj_pw_recovery'); localStorage.removeItem('dj_pw_recovery'); }catch(_){} if(rcv&&S.uid){ openNewPw(); return; }
+function confirmTwice(btn,msg){ if(btn.dataset.armed){ return true; } btn.dataset.armed='1'; const old=btn.textContent; btn.textContent='정말 발급할까요? 한 번 더 누르기'; toast(msg); setTimeout(()=>{ if(btn.isConnected){ delete btn.dataset.armed; btn.textContent=old; } },5000); return false; }
+function afterSignup(){ if(S.uid&&window.dj&&dj.tempPending) dj.tempPending().then(p=>{ if(p){ openNewPw(true); } }).catch(()=>{});
+  let rcv=null; try{ rcv=localStorage.getItem('dj_pw_recovery'); localStorage.removeItem('dj_pw_recovery'); }catch(_){} if(rcv&&S.uid){ openNewPw(); return; }
   if(S.uid&&window.dj&&dj.myRecoveryQuestion) dj.myRecoveryQuestion().then(q=>{ S.hasRq=!!q; schedule(); }).catch(()=>{});
   let f=null; try{ f=localStorage.getItem('dj_after_signup'); localStorage.removeItem('dj_after_signup'); }catch(_){}
   if(f&&S.uid&&!isMember()){ toast('계정을 만들었어요. 이제 단체 또는 개인 참여자로 가입해 주세요'); openSignup(0); } }
@@ -1289,6 +1291,10 @@ function userSheet(id){
       ${u.status!=='active'?`<p class="bio" style="font-size:13px">사유: ${esc(u.reason||'(없음)')}${u.until?` · ${new Date(u.until).toLocaleDateString('ko-KR')}까지`:' · 기한 없음'}${u.hide_content?' · 콘텐츠 숨김':''}</p>`:''}</div>
     ${orgs.length?`<div class="list">${orgs.map(o=>`<div class="row"><button class="org-chip" data-org="${o.id}" style="flex:1">${avatar(o,36)}<span><b>${esc(o.name)}</b><small>${ORG_STATE_LABEL[orgState(o)]} · 관리자 ${(o.ownerIds||[]).length}명</small></span></button></div>`).join('')}</div>`:''}
     ${pr?`<button class="btn ghost" data-member="${u.id}">개인 참여자 프로필 보기</button>`:''}
+    <div class="pledge" style="margin:0;padding:12px 14px"><p style="margin:0 0 4px;font-weight:600">아이디(로그인 이메일)</p><div style="display:flex;gap:8px;align-items:center"><code style="flex:1;word-break:break-all">${esc(u.email)}</code><button class="btn sm ghost" data-copy="${esc(u.email)}">복사</button></div>
+      <p style="margin:12px 0 4px;font-weight:600">비밀번호</p>
+      <p class="muted" style="margin:0 0 8px;font-size:12.5px">비밀번호는 암호화되어 저장돼 누구도 볼 수 없어요. 대신 임시 비밀번호를 발급해 사용자에게 알려 주면, 사용자가 로그인한 뒤 바로 새 비밀번호를 정해요.</p>
+      ${u.is_admin?'<p class="muted" style="margin:0;font-size:12.5px">관리자 계정은 이메일 재설정만 가능해요.</p>':S.tempPw&&S.tempPw.uid===u.id?`<div style="display:flex;gap:8px;align-items:center"><code style="flex:1;font-size:18px;letter-spacing:1px">${esc(S.tempPw.pw)}</code><button class="btn sm pri" data-copy="${esc(S.tempPw.pw)}">복사</button></div><p class="muted" style="margin:6px 0 0;font-size:12px">이 창을 닫으면 다시 볼 수 없어요. 기존 비밀번호와 로그인 상태는 모두 해제됐어요.</p>`:`<button class="btn sm ghost" data-act="temp-pw" data-uid="${u.id}">임시 비밀번호 발급</button>`}</div>
     ${u.is_admin?'<p class="muted" style="margin:0">관리자 계정은 정지하거나 반려할 수 없어요.</p>':u.id===S.uid?'':
       act?`<form class="form" id="ustatus-form" data-uid="${u.id}" data-act="${act}" style="padding:0;gap:10px">
         <p style="margin:0;font-weight:600">${act==='suspended'?'계정 정지':'가입 반려'}</p>
@@ -1386,7 +1392,7 @@ async function withdraw(){
 /* ---------- sheets ---------- */
 const panel = () => $('#sheet .panel');
 function openSheet(kind, data, html){ S.sheet={kind,...data}; panel().innerHTML=html; $('#sheet').hidden=false; document.body.style.overflow='hidden'; }
-function closeSheet(){
+function closeSheet(){ S.tempPw=null;
   if(S.sheet&&S.sheet.kind==='crop'&&S.pf){ S.sheet=null; openComposer(S.pf.editPost||null); return; }
   S.sheet=null; $('#sheet').hidden=true; panel().innerHTML=''; panel().classList.remove('tall'); document.body.style.overflow=''; if(S.dmUnsub){ S.dmUnsub(); S.dmUnsub=null; } S.dmOpen=null; }
 function head(t){ return `<div class="panel-h gut"><h3>${t}</h3><button class="x" data-act="close" aria-label="닫기">×</button></div>`; }
@@ -2473,6 +2479,7 @@ document.addEventListener('click', e=>{
   const us=e.target.closest('[data-ustatus]'); if(us){ return setUserStatus(us.dataset.uid,us.dataset.ustatus,null); }
   const uf=e.target.closest('[data-uf]'); if(uf){ S.uf=uf.dataset.uf; return schedule(); }
   const ry=e.target.closest('[data-rp-year]'); if(ry){ S.rpYear=+ry.dataset.rpYear||0; return schedule(); }
+  const cpy=e.target.closest('[data-copy]'); if(cpy){ e.preventDefault(); const v=cpy.dataset.copy; (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('복사했어요')).catch(()=>toast('복사하지 못했어요. 길게 눌러 직접 복사해 주세요')); return; }
   const eye=e.target.closest('[data-eye]'); if(eye){ e.preventDefault(); const inp=document.getElementById(eye.dataset.eye); if(inp){ const show=inp.type==='password'; inp.type=show?'text':'password'; eye.setAttribute('aria-pressed',show); eye.setAttribute('aria-label',show?'숨기기':'보기'); inp.focus(); } return; }
   const lgm=e.target.closest('[data-login]'); if(lgm){ return openLogin(lgm.dataset.login); }
   const rl=e.target.closest('[data-rel]'); if(rl){ toggleBlock(rl.dataset.key, rl.dataset.rel); if(S.sheet&&S.sheet.kind==='rel') closeSheet(); return; }
@@ -2521,6 +2528,7 @@ document.addEventListener('click', e=>{
   else if(a==='new-org'){ if(needWrite()) openSheet('org-form',{},orgForm()); }
   else if(a==='edit-org'){ const o=S.orgs.get(t.dataset.orgId); if(o) openSheet('org-form',{},orgForm(o)); }
   else if(a==='edit-member'){ if(needWrite()) openSheet('member-form',{},memberForm()); }
+  else if(a==='temp-pw'){ const uid=t.dataset.uid; if(!confirmTwice(t,'한 번 더 누르면 기존 비밀번호가 바로 바뀌어요')) return; t.disabled=true; dj.tempPassword(uid).then(pw=>{ S.tempPw={uid,pw}; userSheet(uid); }).catch(e=>{ t.disabled=false; toast('발급하지 못했어요: '+((e&&e.message)||'')); }); }
   else if(a==='set-rq'){ openSetRq(); }
   else if(a==='mail-reset'){ mailReset(); }
   else if(a==='signup'){ if(!S.uid&&window.dj) openLogin('up'); else openSignup(0); }
