@@ -22,16 +22,16 @@ body{margin:0;font:14px system-ui,-apple-system,sans-serif} img{max-width:100%} 
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: one phone-width column (feed app), sticky top bar, fixed bottom tabs, bottom sheets for detail and forms. Sea blue + camellia red (여수 동백). */
 :root{
-  --bg:#EEF2F1; --surface:#FFFFFF; --ink:#10202B; --muted:#5E6E78; --line:#E2E8E8; --night:#0E2538; --night-ink:#F3F6F4; --sand:#F6EEDD;
-  --sea:#1F5B78; --sea-soft:#E3EDF1; --camellia:#CF2B43; --camellia-soft:#FBE7EA; --leaf:#1E6B52; --leaf-soft:#E2F1EA;
+  --bg:#FFFFFF; --surface:#FFFFFF; --ink:#111417; --muted:#6B7580; --line:#ECEEF0; --night:#111417; --night-ink:#F3F6F4; --sand:#F6EEDD;
+  --sea:#1F5B78; --sea-soft:#EEF3F6; --camellia:#E8334B; --camellia-soft:#FDECEF; --leaf:#1E6B52; --leaf-soft:#E6F2EC;
   --k-talent:#5E47A8; --k-volunteer:#2A7553; --k-donation:#A9502A; --k-share:#8F6A0E; --k-recruit:#1B5876; --k-need:#0E7C86;
   --k-talent-bg:#ECE8F7; --k-volunteer-bg:#E3F1EA; --k-donation-bg:#F7E9E2; --k-share-bg:#F5EDD8; --k-recruit-bg:#E1EDF3; --k-need-bg:#DFF3F4;
   --scrim:rgba(10,20,26,.45); --shadow:0 10px 40px rgba(12,30,40,.16);
-  --f-display:"Hahmlet", "Gowun Batang", "Nanum Myeongjo", serif;
+  --f-display:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --f-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
@@ -314,7 +314,7 @@ input:focus-visible+.rb{outline:2px solid var(--sea);outline-offset:-2px}
 @media (min-width:600px){.post{border:1px solid var(--line);border-radius:14px;overflow:hidden}}
 .post-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px}
 .org-chip{display:flex;align-items:center;gap:10px;text-align:left;min-width:0}
-.org-chip span{display:flex;flex-direction:column;min-width:0}
+.org-chip span{display:flex;flex-direction:column;min-width:0}.org-chip span .vf{display:inline-grid}.org-chip>span>b{display:flex;align-items:center;gap:3px}
 .org-chip b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .org-chip small{font-size:12px;color:var(--muted)}
 .kind{font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;white-space:nowrap;letter-spacing:.02em}
@@ -741,74 +741,83 @@ img,video,canvas{max-width:100%}
 
 
 
-/* ===== 다정여수 비주얼 시스템: 밤바다(남색) + 동백(빨강) + 바다안개(배경), Hahmlet 명조 ===== */
-.top{border-bottom:0;box-shadow:inset 0 -1px 0 var(--line)}
-.brand h1{font-family:var(--f-display);font-weight:800;font-size:25px;letter-spacing:-.02em;gap:8px}
-.brand h1::before{width:13px;height:13px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:inset -2px -2px 0 rgba(0,0,0,.18)}
-.btn{border-radius:999px;padding:10px 16px}
-.btn.sm{padding:7px 12px}
-.btn.pri{background:var(--night);color:var(--night-ink)}
-.btn.ghost{background:transparent}
+/* ===== 심플 모드: 흰 바탕, 산세리프, 목록형 피드, 포인트 색 하나(동백) ===== */
+body{font-size:15px}
+.top{box-shadow:inset 0 -1px 0 var(--line);border:0}
+.top-in{padding-block:11px}
+.brand h1{font-family:var(--f-body);font-weight:700;font-size:21px;letter-spacing:-.02em;gap:6px}
+.brand h1::before{width:10px;height:10px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:none}
+.brand h1 i{color:var(--camellia)}
+.icon-btn svg{stroke-width:1.7}
+#top-cta{border-radius:8px;padding:7px 12px;font-size:13px}
 #top-cta.pri{background:var(--camellia);color:#fff}
-/* hero */
-.hero{position:relative;overflow:hidden;background:var(--night);color:var(--night-ink);padding:30px max(20px,env(safe-area-inset-left,0px)) 22px;isolation:isolate}
-.hero .petal{position:absolute;right:-44px;top:-40px;width:150px;height:150px;color:var(--camellia);opacity:.95;z-index:-1;transform:rotate(12deg)}
-.hero-kicker{margin:0 0 10px;font-size:13px;color:rgba(243,246,244,.72)}
-.hero-h{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(26px,7.6vw,34px);line-height:1.24;letter-spacing:-.025em;text-wrap:balance;max-width:11em;padding-right:28px}
-.hero-sub{margin:14px 0 0;font-size:14px;line-height:1.65;color:rgba(243,246,244,.82);max-width:30ch;word-break:keep-all}
-.hero-acts{display:flex;align-items:center;gap:14px;margin-top:20px;flex-wrap:wrap}
-.hero-cta{background:#fff;color:var(--night);font-weight:700;padding:12px 20px;border-radius:999px}
-.hero-cta:active{transform:translateY(1px)}
-.hero-link{font-size:13.5px;color:rgba(243,246,244,.85);text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(243,246,244,.4)}
-.hero-stats{display:flex;gap:0;margin:26px 0 0;padding:14px 0 0;border-top:1px solid rgba(243,246,244,.18)}
-.hero-stats div{flex:1;min-width:0;padding-right:10px}
-.hero-stats div+div{border-left:1px solid rgba(243,246,244,.18);padding-left:14px}
-.hero-stats dt{font-size:11.5px;color:rgba(243,246,244,.66);margin:0 0 2px;white-space:nowrap}
-.hero-stats dd{margin:0;font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
-/* member stats line (quiet) */
-.pulse-line{display:flex;align-items:center;gap:10px;padding-block:12px 0;font-size:12.5px;color:var(--muted);overflow:hidden;white-space:nowrap}
-.pulse-line b{font-family:var(--f-display);font-weight:700;color:var(--ink);font-size:14px;margin-left:2px}
-.pulse-line i{width:1px;height:12px;background:var(--line);flex:none}
-/* boards: flat blocks, typography-led */
-.boards{gap:10px;margin-top:14px}
-.board{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;border-radius:18px;padding:14px 14px 12px;min-height:92px;box-shadow:none;color:#fff;text-align:left}
-.board .tx{display:flex;flex-direction:column;gap:6px;min-width:0}
-.board small{font-size:11.5px;font-weight:500;opacity:.85}
-.board small em{font-style:normal;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.22);font-size:10.5px;font-weight:700}
-.board b{font-family:var(--f-display);font-weight:700;font-size:clamp(16px,4.6vw,19px);line-height:1.25;letter-spacing:-.02em}
-.board .go{font-size:22px;line-height:1;opacity:.7;flex:none;padding-bottom:2px}
-.b-praise{background:var(--camellia)}.b-together{background:var(--leaf)}
-/* ticker */
-.ticker{border-radius:14px;background:var(--sand);border-color:transparent}
-.tk-pin{background:var(--night)}
+#top-cta.ghost{border:1px solid var(--line);color:var(--ink)}
+.btn{border-radius:8px;padding:9px 14px;font-weight:600}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn.pri{background:var(--camellia);color:#fff}
+.btn.ghost{background:#fff;border:1px solid var(--line)}
+/* home tabs */
+.htabs{display:flex;gap:22px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:calc(57px + env(safe-area-inset-top,0px));z-index:5}
+.htabs button{position:relative;padding:12px 0 11px;font-size:15px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+.htabs button.on{color:var(--ink)}
+.htabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ink)}
+.htabs button i{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--camellia);border-radius:999px;padding:0 6px;line-height:16px}
+.intro{display:flex;align-items:center;gap:12px;padding-block:14px;border-bottom:1px solid var(--line)}
+.intro p{margin:0;flex:1;font-size:13px;line-height:1.55;color:var(--muted);word-break:keep-all}
+.phead2{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 0 12px;border-bottom:1px solid var(--line)}
+.phead2 h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.phead2 p{margin:4px 0 0;font-size:13px;color:var(--muted);line-height:1.5;word-break:keep-all}
+.phead2 .btn{flex:none;margin-top:2px}
+/* hide old blocks */
+.hero,.boards{display:none}
+.pulse-line{display:flex;align-items:center;gap:10px;padding-block:10px 0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden}.pulse-line i{width:1px;height:12px;background:var(--line);flex:none}.pulse-line b{color:var(--ink);margin-left:3px}
+.pulse-line b{font-family:var(--f-body);font-size:13px}
+/* ticker: plain row */
+.ticker{width:100%;max-width:none;margin:0;padding:10px max(16px,env(safe-area-inset-left,0px));border:0;border-bottom:1px solid var(--line);border-radius:0;background:#fff}
+.tk-run{font-weight:500;font-size:13.5px}
+.tk-pin{background:var(--camellia)}
 /* chips */
-.chip{font-weight:500}
-.chip[aria-pressed="true"]{background:var(--night);border-color:var(--night);color:var(--night-ink)}
-/* posts: quiet paper cards */
-.post{border:1px solid var(--line);border-radius:18px;box-shadow:none}
-.post-h{padding:12px 14px}
-.feed{gap:16px}
-/* sections / boards pages */
-.sec h2{font-weight:700;letter-spacing:-.02em}
-.pr-hero,.nt-hero,.tg-hero{background:var(--night)!important;border-radius:20px}
-.pr-hero h2,.nt-hero h2{font-family:var(--f-display);font-weight:800;letter-spacing:-.02em}
-.pr-hero small{color:var(--camellia-soft)}.tg-hero small{color:#CFEBDD}
-.pr-card,.nt-card,.tg-card{border-radius:18px}
-.pr-cheer.on{background:var(--camellia)}.pr-cheer.tg.on{background:var(--leaf)}
-.rc-badge{color:var(--leaf);background:var(--leaf-soft)}
-.empty{border-radius:18px}
-.empty h2{font-weight:700;letter-spacing:-.02em}
+.chips{padding-block:10px 6px}
+.chip{border:1px solid var(--line);box-shadow:none;background:#fff;color:var(--ink);font-weight:500;padding:6px 12px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+/* stories */
+.stories{border-bottom:1px solid var(--line);padding-block:12px}
+/* feed: list rows, no card chrome */
+.feed{gap:0;padding-top:0}
+.post{margin-inline:0;border:0;border-radius:0;border-bottom:8px solid var(--bg2,#F4F5F7);box-shadow:none}
+.sample .post{margin-inline:0}
+.post-h{padding:12px 16px 10px}
+.post .acts{padding:6px 10px 0}
+.media{margin-inline:0}
+/* sections, boards */
+.sec h2{font-weight:700;letter-spacing:-.02em;font-size:17px}
+.pr-card,.nt-card,.tg-card{border:0;border-radius:0;border-bottom:1px solid var(--line);padding:16px 0}
+.pr-card:first-child,.tg-card:first-child{padding-top:14px}
+.pr-cheer{border-radius:8px}
+.pr-cheer.on{background:var(--camellia);color:#fff}
+.pr-cheer.tg.on{background:var(--leaf);color:#fff}
+.rc-badge{border-radius:6px}
+.nt-hero{background:none!important;color:var(--ink);padding:16px 0 12px!important;border-radius:0;border-bottom:1px solid var(--line);margin:0 0 4px}.nt-hero h2{font-size:20px;font-weight:700;letter-spacing:-.02em}.nt-hero p{color:var(--muted)!important;opacity:1!important}.nt-hero>span{display:none}
+.nt-card{padding:16px 0}
+.empty{border:0;background:transparent;padding:44px 18px}
+.empty h2{font-weight:700;font-size:18px;letter-spacing:-.02em}
+.join{background:#fff;border:1px solid var(--line);border-radius:12px}
+.join .btn{background:var(--camellia);color:#fff}
 /* bottom tabs */
-.tabs{border-top:0;box-shadow:inset 0 1px 0 var(--line)}
-.tab[aria-current="page"]{color:var(--night)}
-.tab[aria-current="page"]::after{background:var(--camellia)}
-/* join banner on feed for guests is replaced by hero; keep member banner quiet */
-.join{background:var(--sand);border:0;border-radius:16px}
-.join .btn{background:var(--night);color:var(--night-ink)}
-/* login/gate marks */
-.ob-mark{font-family:var(--f-display);font-weight:800;letter-spacing:-.02em}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .hero-cta{background:var(--night-ink);color:var(--night)} }
-@media (min-width:600px){ .hero{border-radius:0 0 24px 24px} }
+.tabs{box-shadow:inset 0 1px 0 var(--line);border:0}
+.tab{font-size:10.5px}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"]::after{display:none}
+.tab svg{stroke-width:1.7}
+.tab[aria-current="page"] svg{stroke-width:2.2}
+/* sheets & forms */
+.panel{border-radius:16px 16px 0 0}
+.field input,.field select,.field textarea{border-radius:8px}
+.ob-mark{font-family:var(--f-body);font-weight:800;letter-spacing:-.03em}
+.av{font-family:var(--f-body)}
+.rp-card{border-radius:12px}
+.pw-eye{border-radius:6px}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .htabs,:root:not([data-theme="light"]) .ticker,:root:not([data-theme="light"]) .chip,:root:not([data-theme="light"]) .btn.ghost,:root:not([data-theme="light"]) .join{background:var(--surface)} :root:not([data-theme="light"]) .post{border-bottom-color:#0B151C} :root:not([data-theme="light"]) .chip[aria-pressed="true"]{background:var(--ink);color:var(--surface)} :root:not([data-theme="light"]) .htabs button.on::after{background:var(--ink)} }
 
 </style>
 
@@ -1083,8 +1092,8 @@ function praiseView(){
       <div class="pr-foot"><span>From. <b>${esc(praiseFrom(x))}</b> · ${rel(x.createdAt)}</span><span class="sp"></span>
         <button class="pr-cheer${on?' on':''}" data-cheer="${x.id}">👏 저도 칭찬해요${cheers.length?' '+cheers.length:''}</button></div>
       <div class="pr-foot" style="justify-content:flex-end">${mine||S.isAdmin?`<button class="more" data-praise-del="${x.id}">${S.confirmPraise===x.id?'한 번 더 누르면 삭제':'삭제'}</button>`:''}${!mine&&S.uid?`<button class="more" data-report="praise" data-tid="${x.id}">신고</button>`:''}</div></article>`; };
-  return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="praise-exit" style="padding:0">‹ 나가기</button><span class="sp" style="flex:1"></span>${!isGuest()?`<button class="btn sm pri" data-act="praise-new">칭찬 글 쓰기</button>`:`<button class="btn sm ghost" data-act="signup">가입하고 칭찬하기</button>`}</div>
-    <div class="pr-hero"><small style="opacity:.85;font-weight:600">칭찬합니다</small><h2>칭찬은 이웃도 춤추게</h2><p>우리 동네에서 만난 고마운 사람, 단체, 가게를 칭찬해 주세요. 작은 친절도 좋아요. 따뜻한 한마디가 또 다른 선행으로 이어져요.</p>${isGuest()?'<p style="margin-top:8px;font-size:12.5px;opacity:.85">칭찬 글은 누구나 볼 수 있어요. 글을 올리거나 ‘저도 칭찬해요’를 누르려면 가입해 주세요.</p>':''}</div>
+  return `${homeTabs().replace('class="on" data-tab="home"','data-tab="home"').replace('data-tab="praise"','class="on" data-tab="praise"')}<div class="gut"><div class="phead2"><div><h2>칭찬합니다</h2><p>고마운 이웃, 단체, 가게에 한마디. 작은 친절도 좋아요.</p></div>${!isGuest()?`<button class="btn sm pri" data-act="praise-new">글쓰기</button>`:`<button class="btn sm ghost" data-act="signup">가입하기</button>`}</div>
+    <div class="pr-hero" hidden><small style="opacity:.85;font-weight:600">칭찬합니다</small><h2>칭찬은 이웃도 춤추게</h2><p>우리 동네에서 만난 고마운 사람, 단체, 가게를 칭찬해 주세요. 작은 친절도 좋아요. 따뜻한 한마디가 또 다른 선행으로 이어져요.</p>${isGuest()?'<p style="margin-top:8px;font-size:12.5px;opacity:.85">칭찬 글은 누구나 볼 수 있어요. 글을 올리거나 ‘저도 칭찬해요’를 누르려면 가입해 주세요.</p>':''}</div>
     ${list.length?`<div style="display:flex;flex-direction:column;gap:12px">${list.map(card).join('')}</div>`
       :`<div class="empty"><h2>첫 칭찬을 남겨 주세요</h2><p>봉사하는 이웃, 친절한 가게, 묵묵히 애쓰는 단체… 고마웠던 순간을 나눠요.</p>${!isGuest()?'<button class="btn pri" data-act="praise-new">칭찬 글 쓰기</button>':'<button class="btn pri" data-act="signup">가입하고 칭찬하기</button>'}</div>`}
     <p class="muted" style="font-size:12px;margin:18px 0 6px;line-height:1.6">칭찬받는 분의 연락처·주소 같은 개인정보는 적지 말아 주세요. 정치인 언급과 광고성 글은 올릴 수 없고, 신고가 쌓이면 자동으로 숨겨져요.</p></div>`;
@@ -1112,6 +1121,9 @@ async function praiseDelete(id){ if(S.confirmPraise!==id){ S.confirmPraise=id; s
 const PETAL=`<svg class="petal" viewBox="0 0 120 120" aria-hidden="true"><g fill="currentColor"><circle cx="60" cy="30" r="24"/><circle cx="88" cy="50" r="24"/><circle cx="78" cy="84" r="24"/><circle cx="42" cy="84" r="24"/><circle cx="32" cy="50" r="24"/></g><circle cx="60" cy="60" r="13" fill="#F3D27A"/></svg>`;
 function homeStats(orgs){ const week=livePosts().filter(p=>Date.now()-p.createdAt<7*DAY).length, hearts=[...D.likes.values()].reduce((n,s)=>n+s.size,0); const n=v=>Number(v||0).toLocaleString('ko-KR');
   return [[n(week),'이번 주 좋은 소식'],[n(orgs.length),'함께하는 단체'],[n(hearts),'응원 하트']]; }
+function homeTabs(){ const nP=praiseList().filter(x=>Date.now()-x.createdAt<3*DAY).length, nT=togetherList().filter(x=>!x.closed&&Date.now()-x.createdAt<7*DAY).length;
+  return `<nav class="htabs gut" aria-label="홈 메뉴"><button class="on" data-tab="home">소식</button><button data-tab="praise">칭찬합니다${nP?`<i>${nP}</i>`:''}</button><button data-tab="together">함께해요${nT?`<i>${nT}</i>`:''}</button></nav>`; }
+function homeIntro(){ if(isMember()||S.isAdmin) return ''; return `<div class="intro gut"><p>여수의 복지관·봉사단·가게·학교와 이웃들이 올리는 재능기부·봉사·기부·나눔 소식이에요. 보는 건 자유, 올리려면 가입해요.</p><button class="btn pri sm" data-act="signup">가입하기</button></div>`; }
 function homeHero(orgs){ const st=homeStats(orgs), empty=!livePosts().length, member=isMember()||S.isAdmin;
   const h=empty?`여수의 첫 번째<br>좋은 소식을 기다려요`:`오늘 여수에서<br>가장 다정한 소식`;
   const sub=empty?'재능기부, 봉사, 기부, 나눔. 작은 일이라도 좋아요. 첫 소식의 주인공이 되어 주세요.':'복지관, 봉사단, 가게, 학교, 그리고 이웃들이 올리는 재능기부·봉사·기부·나눔 이야기예요.';
@@ -1144,8 +1156,8 @@ function togetherView(){
       <div class="pr-foot"><span>From. <b>${esc(praiseFrom(x))}</b> · ${rel(x.createdAt)}</span><span class="sp"></span>
         ${actBtn}</div>
       <div class="pr-foot" style="justify-content:flex-end">${mine?`<button class="more" data-tg-close="${x.id}">${x.closed?'모집 다시 열기':'모집 마감'}</button>`:''}${mine&&!x.byOrg?'':(x.byOrg&&!mine?`<button class="more" data-dm-to="org:${x.byOrg}">메시지</button>`:'')}${mine||S.isAdmin?`<button class="more" data-tg-del="${x.id}">${S.confirmTg===x.id?'한 번 더 누르면 삭제':'삭제'}</button>`:''}${!mine&&S.uid?`<button class="more" data-report="together" data-tid="${x.id}">신고</button>`:''}</div>${tgComments(x)}</article>`; };
-  return `<div class="gut"><div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px"><button class="back" data-act="board-exit" style="padding:0">‹ 나가기</button><span style="flex:1"></span>${myVerifiedOrgs().length?`<button class="btn sm pri" data-act="together-new">모집 글 올리기</button>`:isGuest()?`<button class="btn sm ghost" data-act="signup">가입하고 함께하기</button>`:''}</div>
-    <div class="pr-hero tg-hero"><small style="opacity:.85;font-weight:600">함께해요</small><h2>같이 하면 더 다정해</h2><p>인증된 단체가 봉사·나눔에 함께할 이웃을 모아요. 마음이 맞으면 신청서를 내거나 ‘저도 함께할게요’로 손을 들어 주세요.</p><p class="tg-rule">✓ 모집 글은 <b>다정여수가 인증한 단체</b>만 올릴 수 있어요.<br>✓ 개인 참여자는 <b>댓글과 신청서</b>만 쓸 수 있어요.</p>${isGuest()?'<p style="margin-top:8px;font-size:12.5px;opacity:.85">글은 누구나 볼 수 있어요. 글을 올리거나 함께하려면 가입해 주세요.</p>':''}</div>
+  return `${homeTabs().replace('class="on" data-tab="home"','data-tab="home"').replace('data-tab="together"','class="on" data-tab="together"')}<div class="gut"><div class="phead2"><div><h2>함께해요</h2><p>인증된 단체가 봉사·나눔에 함께할 이웃을 모아요. 개인은 댓글과 신청서를 쓸 수 있어요.</p></div>${myVerifiedOrgs().length?`<button class="btn sm pri" data-act="together-new">모집 글</button>`:isGuest()?`<button class="btn sm ghost" data-act="signup">가입하기</button>`:''}</div>
+    <div class="pr-hero tg-hero" hidden><small style="opacity:.85;font-weight:600">함께해요</small><h2>같이 하면 더 다정해</h2><p>인증된 단체가 봉사·나눔에 함께할 이웃을 모아요. 마음이 맞으면 신청서를 내거나 ‘저도 함께할게요’로 손을 들어 주세요.</p><p class="tg-rule">✓ 모집 글은 <b>다정여수가 인증한 단체</b>만 올릴 수 있어요.<br>✓ 개인 참여자는 <b>댓글과 신청서</b>만 쓸 수 있어요.</p>${isGuest()?'<p style="margin-top:8px;font-size:12.5px;opacity:.85">글은 누구나 볼 수 있어요. 글을 올리거나 함께하려면 가입해 주세요.</p>':''}</div>
     ${list.length?`<div style="display:flex;flex-direction:column;gap:12px">${list.map(card).join('')}</div>`
       :`<div class="empty"><h2>아직 모집 중인 활동이 없어요</h2><p>인증된 단체가 봉사 모집을 올리면 여기에 보여요.</p>${myVerifiedOrgs().length?'<button class="btn pri" data-act="together-new">모집 글 올리기</button>':isGuest()?'<button class="btn pri" data-act="signup">가입하고 함께하기</button>':(myApprovedOrgs().length?'<p class="muted" style="font-size:12.5px;margin:0">우리 단체 프로필에서 ‘인증 요청’을 하면 모집 글을 올릴 수 있어요.</p>':'')}</div>`}
     <p class="muted" style="font-size:12px;margin:18px 0 6px;line-height:1.6">연락처·주소 같은 개인정보는 글에 적지 말고 메시지로 주고받아 주세요. 정치·선거 활동, 포교, 광고성 모집은 올릴 수 없어요.</p></div>`;
@@ -1229,7 +1241,7 @@ function homeView(){
   else if(S.filter!=='all') posts=posts.filter(p=>p.kind===S.filter);
   let body;
   if(!livePosts().length){
-    return homeHero(orgs) + noticeTicker() + boardRow() + `<p class="muted gut" style="font-size:12.5px;margin:18px 0 0;text-align:center">가입하지 않아도 올라오는 소식과 댓글은 볼 수 있어요.</p>`;
+    return homeTabs() + homeIntro() + noticeTicker() + `<div class="gut"><div class="empty"><h2>아직 올라온 소식이 없어요</h2><p>재능기부, 봉사, 기부, 나눔. 작은 일이라도 좋아요. 첫 소식을 올려 주세요.</p><button class="btn pri" data-act="${(isMember()||S.isAdmin)?'new-post':'signup'}">${(isMember()||S.isAdmin)?'첫 소식 올리기':'가입하고 올리기'}</button></div></div>`;
   }
   const pulse=homePulse(orgs);
   posts=feedOrder(posts);
@@ -1240,8 +1252,8 @@ function homeView(){
     body = `<div class="feed">${top.length?`<div class="cf-band">★ 친한 친구의 새 소식 ${top.length}</div>${top.map(postCard).join('')}<div class="cf-band" style="color:var(--muted)">모든 이웃의 소식</div>`:''}${rest.map(postCard).join('')}</div>`;
   }
   else body = `<div class="feed">${posts.map(postCard).join('')}</div>`;
-  if(isGuest()) return homeHero(orgs) + noticeTicker() + boardRow() + chips + body;
-  return (orgs.length?stories:'') + pulse + noticeTicker() + boardRow() + banner + chips + body;
+  if(isGuest()) return homeTabs() + homeIntro() + noticeTicker() + chips + body;
+  return homeTabs() + (orgs.length?stories:'') + noticeTicker() + pulse + chips + body;
 }
 function metaHtml(p){
   const bits=[];
@@ -1301,8 +1313,8 @@ function likeRow(p){
   const L=D.likes.get(p.id)||new Set(), on=L.has(S.uid), saved=!!(me().saved||{})[p.id];
   return `<div class="acts"><button class="act like${on?' on':''}" data-like="${p.id}" aria-pressed="${on}" aria-label="좋아요">${HEART}</button>${p.commentsOff?'':`<button class="act" data-open="${p.id}" aria-label="댓글">${BUBBLE}</button>`}<button class="act" data-share="${p.id}" aria-label="공유">${PLANE}</button><span class="sp"></span><button class="act save${saved?' on':''}" data-save="${p.id}" aria-pressed="${saved}" aria-label="저장">${BOOKMARK}</button></div>`;
 }
-function headerNames(a,p0){ const c=collabOf(p0).map(id=>S.orgs.get(id)); const star=isClose(p0)&&!canManage(p0)?'<span class="star" title="친한 친구">★</span>':''; const v=a.kind==='org'?vbadge(S.orgs.get(a.id)):''; if(!c.length) return `<b>${esc(a.name)}</b>${v}${star}`;
-  return `<b>${esc(a.name)}</b>${v}<b style="font-weight:400"> 및 </b>${c.map(o=>`<b data-org="${o.id}">${esc(o.name)}</b>${vbadge(o)}`).join('<b style="font-weight:400">, </b>')}${star}`; }
+function headerNames(a,p0){ const c=collabOf(p0).map(id=>S.orgs.get(id)); const star=isClose(p0)&&!canManage(p0)?'<span class="star" title="친한 친구">★</span>':''; const v=a.kind==='org'?vbadge(S.orgs.get(a.id)):''; if(!c.length) return `<b>${esc(a.name)}${v}${star}</b>`;
+  return `<b>${esc(a.name)}${v}</b><b style="font-weight:400"> 및 </b>${c.map(o=>`<b data-org="${o.id}">${esc(o.name)}</b>${vbadge(o)}`).join('<b style="font-weight:400">, </b>')}${star}`; }
 function countLine(p, p0){ const L=D.likes.get(p.id)||new Set(); if(p.hideLikes&&!canManage(p0||p)) return ''; return `<p class="count">좋아요 ${L.size}개${p.hideLikes?' <span class="muted" style="font-weight:400;font-size:12px">· 나에게만 보여요</span>':''}</p>`; }
 function withLine(p){ const ids=(p.tags||[]).filter(id=>S.orgs.has(id)); if(!ids.length) return ''; return `<div class="with">함께한 단체 ${ids.map(id=>`<button data-org="${id}">@${esc(S.orgs.get(id).handle||S.orgs.get(id).name)}</button>`).join('')}</div>`; }
 /* 인스타그램식 문구 접기: 첫 줄바꿈 또는 100자에서 자르고 ‘더 보기’로 그 자리에서 펼침 */
