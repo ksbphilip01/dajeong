@@ -1466,16 +1466,26 @@ function userSheet(id){
     <div class="pledge" style="margin:0;padding:12px 14px"><p style="margin:0 0 4px;font-weight:600">아이디(로그인 이메일)</p><div style="display:flex;gap:8px;align-items:center"><code style="flex:1;word-break:break-all">${esc(u.email)}</code><button class="btn sm ghost" data-copy="${esc(u.email)}">복사</button></div>
       <p class="muted" style="margin:8px 0 0;font-size:12.5px">비밀번호는 암호화되어 저장돼 관리자도 볼 수 없어요. 비밀번호를 잊은 사용자는 로그인 화면의 ‘비밀번호를 잊었어요’에서 본인이 정한 질문에 답해 임시 비밀번호를 받을 수 있어요.</p></div>
     ${u.is_admin?'<p class="muted" style="margin:0">관리자 계정은 정지하거나 반려할 수 없어요.</p>':u.id===S.uid?'':
-      act?`<form class="form" id="ustatus-form" data-uid="${u.id}" data-act="${act}" style="padding:0;gap:10px">
+      act==='delete'?`<form class="form" id="udel-form" data-uid="${u.id}" style="padding:12px;gap:10px;border:1.5px solid var(--camellia);border-radius:14px;background:var(--camellia-soft)">
+        <p style="margin:0;font-weight:700;color:var(--camellia)">계정 강제 삭제 (되돌릴 수 없어요)</p>
+        <p style="margin:0;font-size:13px;line-height:1.6">이 계정과 함께 개인 프로필, 이 계정이 쓴 소식·댓글·스토리·칭찬·함께해요 글이 모두 지워져요.${orgs.some(o=>(o.ownerIds||[]).length===1)?` 이 계정 혼자 관리하는 단체 <b>${orgs.filter(o=>(o.ownerIds||[]).length===1).map(o=>esc(o.name)).join(', ')}</b>와 그 단체의 소식도 삭제돼요.`:''}${orgs.some(o=>(o.ownerIds||[]).length>1)?' 함께 관리하는 단체에서는 관리자 명단에서만 빠져요.':''}</p>
+        <div class="field"><label for="ud-confirm">확인을 위해 이메일을 그대로 입력해 주세요</label><input id="ud-confirm" autocomplete="off" placeholder="${esc(u.email)}"></div>
+        <div class="rep-acts"><button class="btn warn" type="submit" id="ud-submit">영구 삭제</button><button class="btn ghost" type="button" data-uact="">취소</button></div></form>`
+      :act?`<form class="form" id="ustatus-form" data-uid="${u.id}" data-act="${act}" style="padding:0;gap:10px">
         <p style="margin:0;font-weight:600">${act==='suspended'?'계정 정지':'가입 반려'}</p>
         ${act==='suspended'?`<div class="field"><label for="us-days">정지 기간</label><select id="us-days"><option value="7">7일</option><option value="30">30일</option><option value="90">90일</option><option value="0">기한 없음</option></select></div>`:''}
         <div class="field"><label for="us-reason">사유 (본인에게 보여요)</label><input id="us-reason" maxlength="120" required placeholder="${act==='suspended'?'예: 상업 광고 반복 게시':'예: 단체 실체를 확인할 수 없어요'}"></div>
         <label class="tgl" style="border:0;padding:0"><span><b>올린 게시물·댓글도 숨기기</b><small>다른 사람에게 이 계정의 콘텐츠가 보이지 않아요</small></span><input type="checkbox" id="us-hide"${act==='rejected'?' checked':''}></label>
         ${act==='rejected'&&orgs.some(o=>(o.ownerIds||[]).length===1)?'<span class="hint">이 계정만 관리하는 단체는 함께 반려돼요.</span>':''}
         <div class="rep-acts"><button class="btn warn" type="submit">${act==='suspended'?'정지하기':'반려하기'}</button><button class="btn ghost" type="button" data-uact="">취소</button></div></form>`
-      :`<div class="rep-acts">${u.status==='active'?`<button class="btn ghost" data-uact="suspended">정지</button><button class="btn ghost" data-uact="rejected" style="color:var(--camellia)">반려</button>`:`<button class="btn pri" data-ustatus="active" data-uid="${u.id}">${u.status==='suspended'?'정지 해제':'반려 취소'}</button>`}${myParties().length&&!u.is_admin?`<button class="btn ghost" data-dm-to="me:${u.id}">메시지</button>`:''}</div>`}
+      :`<div class="rep-acts">${u.status==='active'?`<button class="btn ghost" data-uact="suspended">정지</button><button class="btn ghost" data-uact="rejected" style="color:var(--camellia)">반려</button>`:`<button class="btn pri" data-ustatus="active" data-uid="${u.id}">${u.status==='suspended'?'정지 해제':'반려 취소'}</button>`}${myParties().length&&!u.is_admin?`<button class="btn ghost" data-dm-to="me:${u.id}">메시지</button>`:''}<button class="btn ghost" data-uact="delete" style="color:var(--camellia);border-color:var(--camellia)">강제 삭제</button></div>`}
   </div></div>`);
 }
+async function deleteUser(form){ const uid=form.dataset.uid, u=(S.users||[]).find(x=>x.id===uid); if(!u) return;
+  if($('#ud-confirm').value.trim().toLowerCase()!==(u.email||'').toLowerCase()){ toast('이메일이 일치하지 않아요'); return; }
+  const btn=$('#ud-submit'); btn.disabled=true; btn.textContent='삭제하는 중';
+  try{ const r=await dj.deleteUser(uid); S.uAct=null; closeSheet(); toast(`계정을 삭제했어요${r.posts?` · 소식 ${r.posts}개`:''}${r.orgs?` · 단체 ${r.orgs}곳`:''}`); await loadUsers(); }
+  catch(e){ btn.disabled=false; btn.textContent='영구 삭제'; toast(/admin/.test(e.message||'')?'관리자 계정은 삭제할 수 없어요':'삭제하지 못했어요: '+(e.message||'')); } }
 async function setUserStatus(uid,status,form){
   const reason=form?$('#us-reason').value.trim():'', days=form&&$('#us-days')?+$('#us-days').value:0, hide=form?$('#us-hide').checked:false;
   if(form&&!reason){ toast('사유를 적어 주세요'); return; }
@@ -2846,7 +2856,7 @@ document.addEventListener('click', e=>{
 document.addEventListener('dblclick', e=>{ const m=e.target.closest('[data-dbl]'); if(!m||e.target.closest('[data-car]')) return; if(isGuest()) return guestGate(); if(toggleLike(m.dataset.dbl,true)!==false) burst(m); });
 document.addEventListener('submit', e=>{ e.preventDefault();
   const id=e.target.id;
-  if(id==='ustatus-form') setUserStatus(e.target.dataset.uid,e.target.dataset.act,e.target); else if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
+  if(id==='ustatus-form') setUserStatus(e.target.dataset.uid,e.target.dataset.act,e.target); else if(id==='udel-form') deleteUser(e.target); else if(id==='login-form') submitLogin(e.target); else if(id==='dm-form') sendDm(); else if(id==='verify-form'){ const oid=e.target.dataset.orgId; S.db.doc('orgs/'+oid).update({verifyRequest:{note:$('#vr-note').value.trim(),at:Date.now(),by:S.uid,done:false}}).then(()=>{ closeSheet(); toast('인증 요청을 보냈어요. 자료는 관리자에게 메시지로 보내 주세요'); }).catch(writeErr); }
   else if(id==='notice-form') submitNotice(e.target); else if(id==='join-form') joinByCode(); else if(id==='withdraw-form') withdraw(); else if(id==='story-form') submitStory(); else if(id==='org-form') submitOrg(e.target); else if(id==='post-form') submitPost(); else if(id==='c-form') submitComment(); else if(id==='report-form') submitReport(); else if(id==='member-form') submitMember(); else if(id==='ob-form') obNext(); else if(id==='ob-acct-form') obAccount(); else if(id==='praise-form') submitPraise(); else if(id==='together-form') submitTogether(); });
 document.addEventListener('input', e=>{ if(e.target.id==='org-q'){ S.q=e.target.value; schedule(); }
   if(e.target.id==='crop-zoom'){ cropZoomTo(+e.target.value); return; }
