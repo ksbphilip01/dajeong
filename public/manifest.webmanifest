@@ -1,2 +1,2 @@
-{ "name": "다정 여수", "short_name": "다정", "start_url": "./", "display": "standalone", "background_color": "#F3F6F8", "theme_color": "#1B5876", "lang": "ko",
+{ "name": "다정여수", "short_name": "다정여수", "start_url": "./", "display": "standalone", "background_color": "#F3F6F8", "theme_color": "#1B5876", "lang": "ko",
   "icons": [ { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" } ] }

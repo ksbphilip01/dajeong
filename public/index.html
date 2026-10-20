@@ -2397,8 +2397,8 @@ setInterval(schedule, 60000);
 </script>
 
 <script>
-(function(){ const C=window.DJ_CONFIG||{}; document.title=(C.BRAND||'다정')+' '+(C.CITY||'');
-  const mark=`${C.BRAND||'다정'}<i>${C.CITY||''}</i>`;
+(function(){ const C=window.DJ_CONFIG||{}; document.title=(C.BRAND||'다정')+(C.CITY||'');
+  const mark=`<span>${C.BRAND||'다정'}<i>${C.CITY||''}</i></span>`;
   document.querySelectorAll('.brand h1').forEach(h=>{ h.innerHTML=mark; });
   const tag=document.querySelector('.brand small'); if(tag&&C.TAGLINE) tag.textContent=C.TAGLINE;
   new MutationObserver(()=>{ document.querySelectorAll('.ob-mark').forEach(m=>{ if(m.dataset.b) return; m.dataset.b=1; m.innerHTML=mark; }); }).observe(document.body,{childList:true,subtree:true});
